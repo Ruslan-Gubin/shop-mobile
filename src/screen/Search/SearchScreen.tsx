@@ -32,6 +32,9 @@ export const SearchScreen = (props: Props) => {
   const history = searchStore((store) => store.history);
   const debounceFn = useDebounce();
   const recent = recentStore((state) => state.items);
+  const ids = Object.values(recent)
+    .map((r) => r)
+    .join(",");
 
   const fetchInitData = () => {
     fetchService
@@ -47,10 +50,9 @@ export const SearchScreen = (props: Props) => {
         fetchService
           .get<ProductModel[]>({
             url: "product/by-ids",
-            params: { ids: recent },
+            params: { ids },
           })
           .then((response) => {
-            console.log(response);
             if (response.status === "success" && Array.isArray(response.data)) {
               setRecentData(response.data);
             }
@@ -215,7 +217,6 @@ export const SearchScreen = (props: Props) => {
           navigation={props.navigation}
           title="Вы смотрели"
           data={recentData}
-          onSeeAll={recent.length > 6 ? () => props?.navigation?.push("Recent") : undefined}
         />
       )}
     </View>

@@ -3,30 +3,42 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
 import { CartScreen } from "../screen/Cart/CartScreen";
 import { CatalogScreen } from "../screen/Catalog/CatalogScreen";
+import { FavoritesScreen } from "../screen/Favorites/Favorites";
 import { HomeScreen } from "../screen/Home/HomeScreen";
 import { ProductInfoScreen } from "../screen/ProductInfo/ProductInfoScreen";
+import { ProfileScreen } from "../screen/Profile/ProfileScreen";
 import { RecentScreen } from "../screen/Recent/RecentScreen";
-import { SealBookingScreen } from "../screen/SealBooking/SealBookingScreen";
 import { SearchScreen } from "../screen/Search/SearchScreen";
 import { AccountSvg } from "../shared/svg/AccountSvg";
 import { CartSvg } from "../shared/svg/CartSvg";
 import { HomeSvg } from "../shared/svg/HomeSvg";
 import { MenuSvg } from "../shared/svg/MenuSvg";
+import { CountBasket } from "./CountBasket";
 
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
 
-function HomeStack() {
+const HomeStack = () => {
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
       <RootStack.Screen key="Home" name="Home" component={HomeScreen} />
       <RootStack.Screen key="Search" name="Search" component={SearchScreen} />
       <RootStack.Screen key="ProductInfo" name="ProductInfo" component={ProductInfoScreen} />
       <RootStack.Screen key="Catalog" name="Catalog" component={CatalogScreen} />
-      <RootStack.Screen key="Recent" name="Recent" component={RecentScreen} />
     </RootStack.Navigator>
   );
-}
+};
+
+const ProfileStack = () => {
+  return (
+    <RootStack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
+      <RootStack.Screen key="Profile" name="Profile" component={ProfileScreen} />
+      <RootStack.Screen key="Favorites" name="Favorites" component={FavoritesScreen} />
+      <RootStack.Screen key="Recent" name="Recent" component={RecentScreen} />
+      <RootStack.Screen key="ProductInfo" name="ProductInfo" component={ProductInfoScreen} />
+    </RootStack.Navigator>
+  );
+};
 
 export const TabNavigator = () => {
   return (
@@ -39,8 +51,8 @@ export const TabNavigator = () => {
       }}
     >
       <Tab.Screen
-        key="HomeScreen"
-        name="HomeScreen"
+        key="HomeStack"
+        name="HomeStack"
         component={HomeStack}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -53,7 +65,7 @@ export const TabNavigator = () => {
       <Tab.Screen
         key="Menu"
         name="Menu"
-        component={SealBookingScreen}
+        component={ProfileScreen}
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.menuItem}>
@@ -69,15 +81,16 @@ export const TabNavigator = () => {
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.menuItem}>
+              <CountBasket />
               <CartSvg size={20} fill={focused ? "#a73afd" : "#c8c8d1"} />
             </View>
           ),
         }}
       />
       <Tab.Screen
-        key="Accounting"
-        name="Accounting"
-        component={SealBookingScreen}
+        key="ProfileStack"
+        name="ProfileStack"
+        component={ProfileStack}
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.menuItem}>

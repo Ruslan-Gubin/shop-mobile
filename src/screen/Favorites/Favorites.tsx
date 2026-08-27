@@ -8,11 +8,11 @@ import { getWidthCard } from "../../shared/helpers/getWidthCard";
 import { ArrowBackIcon } from "../../shared/svg/ArrowBackIcon";
 import type { ProductModel } from "../../shared/types/products";
 import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
-import { recentStore } from "../../store/recent/store";
+import { favoritesStore } from "../../store/favorites/store";
 import { ProductCard } from "../../widgets/product/product-card/ProductCard";
 
 type Props = {
-  navigation?: NativeStackNavigationProp<ParamListBase, "Search">;
+  navigation?: NativeStackNavigationProp<ParamListBase, "Favorites">;
   route?: {
     key: string;
     name: string;
@@ -20,22 +20,23 @@ type Props = {
   };
 };
 
-export const RecentScreen = (props: Props) => {
-  const [recentData, setRecentData] = useState<ProductModel[]>([]);
+export const FavoritesScreen = (props: Props) => {
+  const [favoritesData, setFavoritesData] = useState<ProductModel[]>([]);
   const [isError, setIsError] = useState<boolean>(false);
-  const recent = recentStore((state) => state.items);
+  const favorites = favoritesStore((state) => state.items);
   const width = getWidthCard(Dimensions.get("window").width, 0, 4, 2);
-  const defaultErrorMessage = "Не удалось получить список просмотренных товаров";
+  const defaultErrorMessage = "Не удалось получить список избранных товаров";
+  const favoritesIds = Object.keys(favorites).join(",");
 
-  const fetchRecentData = () => {
+  const fetchFavoritesData = () => {
     fetchService
       .get<ProductModel[]>({
         url: "product/by-ids",
-        params: { ids: recent.toString() },
+        params: { ids: favoritesIds },
       })
       .then((response) => {
         if (response.status === "success" && Array.isArray(response.data)) {
-          setRecentData(response.data);
+          setFavoritesData(response.data);
         } else {
           throw response.message || defaultErrorMessage;
         }
@@ -56,7 +57,7 @@ export const RecentScreen = (props: Props) => {
             text: "Повторить",
             isPreferred: true,
             onPress: () => {
-              fetchRecentData();
+              fetchFavoritesData();
               setIsError(false);
             },
           },
@@ -65,18 +66,18 @@ export const RecentScreen = (props: Props) => {
   };
 
   useEffect(() => {
-    fetchRecentData();
-  }, []);
+    fetchFavoritesData();
+  }, [favoritesIds]);
 
   return (
     <View style={styles.root}>
       <View style={styles.header}>
         {props.navigation && (
-          <Pressable onPress={() => props.navigation?.goBack()} style={styles.buttonBackIcon}>
+          <Pressable onPress={() => props?.navigation?.goBack()} style={styles.buttonBackIcon}>
             <ArrowBackIcon fill="black" size={24} />
           </Pressable>
         )}
-        <Text style={styles.title}>Вы смотрели</Text>
+        <Text style={styles.title}>Избранное</Text>
       </View>
       {isError && (
         <ErrorAlert
@@ -89,9 +90,9 @@ export const RecentScreen = (props: Props) => {
           }}
         />
       )}
-      {recentData.length > 0 && (
+      {favoritesData.length > 0 && (
         <FlatList
-          data={recentData}
+          data={favoritesData}
           contentContainerStyle={styles.listContent}
           numColumns={2}
           columnWrapperStyle={{ columnGap: 4 }}
