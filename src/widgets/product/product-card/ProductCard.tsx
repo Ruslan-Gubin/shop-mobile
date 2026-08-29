@@ -72,13 +72,9 @@ export const ProductCard = (props: Props) => {
 };
 
 const styles = StyleSheet.create({
-  leftSideMargin: {
-    marginRight: 4,
-  },
   imageContainer: {
     aspectRatio: 3 / 4,
     maxWidth: "100%",
-    // width: "100%",
   },
   productInfoContainer: {
     padding: 8,

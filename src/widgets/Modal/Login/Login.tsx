@@ -125,14 +125,14 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: "center",
-    padding: 24,
+    padding: 12,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   avoiding: {
     justifyContent: "center",
   },
   card: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "white",
     borderRadius: 16,
     padding: 24,
   },

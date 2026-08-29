@@ -6,10 +6,10 @@ type Props = {
   navigation: NativeStackNavigationProp<ParamListBase, "Home">;
 };
 
-export const CartScreen = ({ navigation }: Props) => {
+export const CheckoutScreen = ({ navigation }: Props) => {
   return (
     <View style={styles.container}>
-      <Text>CartScreen</Text>
+      <Text>Checkout Screen</Text>
     </View>
   );
 };

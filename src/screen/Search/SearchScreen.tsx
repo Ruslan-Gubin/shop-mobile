@@ -7,12 +7,10 @@ import { getMessageError } from "../../shared/helpers/getMessageError";
 import { useDebounce } from "../../shared/hooks/useDebounce";
 import { CloseSvg } from "../../shared/svg/CloseSvg";
 import { SearchSvg } from "../../shared/svg/SearchSvg";
-import type { ProductModel } from "../../shared/types/products";
 import type { SearchModel } from "../../shared/types/search";
-import { recentStore } from "../../store/recent/store";
 import { searchAdapter } from "../../store/search/adapter";
 import { searchStore } from "../../store/search/store";
-import { HorizontalProductList } from "../../widgets/product/horizontal-product-list/HorizontalProductList";
+import { ProductRecent } from "../../widgets/product/product-recent/ProductRecent";
 
 type Props = {
   navigation?: NativeStackNavigationProp<ParamListBase, "Search">;
@@ -27,14 +25,9 @@ export const SearchScreen = (props: Props) => {
   const [popularList, setPopularList] = useState<string[]>([]);
   const [search, setSearch] = useState<string>("");
   const [findItems, setFindItems] = useState<string[]>([]);
-  const [recentData, setRecentData] = useState<ProductModel[]>([]);
   const [isError, setIsError] = useState<boolean>(false);
   const history = searchStore((store) => store.history);
   const debounceFn = useDebounce();
-  const recent = recentStore((state) => state.items);
-  const ids = Object.values(recent)
-    .map((r) => r)
-    .join(",");
 
   const fetchInitData = () => {
     fetchService
@@ -46,17 +39,6 @@ export const SearchScreen = (props: Props) => {
         if (response.status === "success" && Array.isArray(response.data)) {
           setPopularList(response.data.map((el) => el.text));
         }
-
-        fetchService
-          .get<ProductModel[]>({
-            url: "product/by-ids",
-            params: { ids },
-          })
-          .then((response) => {
-            if (response.status === "success" && Array.isArray(response.data)) {
-              setRecentData(response.data);
-            }
-          });
       });
   };
 
@@ -212,12 +194,8 @@ export const SearchScreen = (props: Props) => {
         </View>
       )}
 
-      {search.length === 0 && recentData.length > 0 && (
-        <HorizontalProductList
-          navigation={props.navigation}
-          title="Вы смотрели"
-          data={recentData}
-        />
+      {search.length === 0 && popularList.length > 0 && (
+        <ProductRecent navigation={props.navigation} />
       )}
     </View>
   );

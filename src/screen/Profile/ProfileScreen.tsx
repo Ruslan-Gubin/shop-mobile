@@ -1,50 +1,23 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useEffect, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { fetchService } from "../../shared/fetch-api";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { declOfNum } from "../../shared/helpers/declOfNum";
 import { ArrowBackIcon } from "../../shared/svg/ArrowBackIcon";
-import type { ProductModel } from "../../shared/types/products";
 import { favoritesStore } from "../../store/favorites/store";
-import { recentStore } from "../../store/recent/store";
-import { HorizontalProductList } from "../../widgets/product/horizontal-product-list/HorizontalProductList";
-import { PickedForYou } from "../../widgets/product/picked-for-you/PickedForYou";
-import { ProductCard } from "../../widgets/product/product-card/ProductCard";
+import { ProductRecent } from "../../widgets/product/product-recent/ProductRecent";
+import { ProductRecommended } from "../../widgets/product/product-recommended/ProductRecommended";
 
 type Props = {
   navigation: NativeStackNavigationProp<ParamListBase, "Profile">;
 };
 
 export const ProfileScreen = (props: Props) => {
-  const [recentData, setRecentData] = useState<ProductModel[]>([]);
-  const recent = recentStore((store) => store.items);
   const favorites = favoritesStore((store) => store.items);
   const favoritesCount = Object.values(favorites).length || 0;
   const favoritesValue =
     favoritesCount > 0
       ? `${favoritesCount} ${declOfNum(favoritesCount, ["товар", "товара", "товаров"])}`
       : "Нет товаров";
-  const ids = Object.values(recent)
-    .map((r) => r)
-    .join(",");
-
-  const fetchInitData = () => {
-    fetchService
-      .get<ProductModel[]>({
-        url: "product/by-ids",
-        params: { ids },
-      })
-      .then((response) => {
-        if (response.status === "success" && Array.isArray(response.data)) {
-          setRecentData(response.data);
-        }
-      });
-  };
-
-  useEffect(() => {
-    fetchInitData();
-  }, [recent]);
 
   const navigateList = [
     { label: "Заказы", value: "Ближайшие: не ожидаются", href: "Favorites" },
@@ -58,8 +31,6 @@ export const ProfileScreen = (props: Props) => {
     },
     { label: "Возврат товара", value: "", href: "Favorites" },
   ];
-
-  const mockArr = new Array(50);
 
   return (
     <View style={styles.root}>
@@ -92,28 +63,15 @@ export const ProfileScreen = (props: Props) => {
                 </Pressable>
               ))}
             </View>
-
-            {recentData.length > 0 && (
-              <HorizontalProductList
-                navigation={props.navigation}
-                title="Вы смотрели"
-                data={recentData}
-                onSeeAll={
-                  recentData.length > 6 ? () => props?.navigation?.push("Recent") : undefined
-                }
-              />
-            )}
-            {mockArr.map((item, index) => (
-              <Text key={index}>Item {index + 1}</Text>
-            ))}
+            <ProductRecent navigation={props.navigation} isHasNavigateSeeAll />
           </View>
         }
         showsVerticalScrollIndicator={false}
         ListFooterComponentStyle={styles.listFooterComponentStyle}
         ListFooterComponent={
-          <>
-            <PickedForYou title="Подобрали для вас" />
-          </>
+          <View>
+            <ProductRecommended title="Подобрали для вас" navigation={props.navigation} />
+          </View>
         }
       />
     </View>

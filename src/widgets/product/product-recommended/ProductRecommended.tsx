@@ -1,20 +1,15 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { useEffect, useEffectEvent, useState } from "react";
+import { Alert, Dimensions, FlatList, StyleSheet, Text, View } from "react-native";
 import { fetchService } from "../../../shared/fetch-api";
 import { getMessageError } from "../../../shared/helpers/getMessageError";
 import { getWidthCard } from "../../../shared/helpers/getWidthCard";
-import { useInfiniteScroll } from "../../../shared/hooks/useInfiniteScroll";
 import type { ProductModel } from "../../../shared/types/products";
+import { ErrorAlert } from "../../../shared/ui/ErrorAlert/ErrorAlert";
+import { basketStore } from "../../../store/basket/store";
+import { favoritesStore } from "../../../store/favorites/store";
+import { recentStore } from "../../../store/recent/store";
 import { ProductCard } from "../product-card/ProductCard";
 
 type Props = {
@@ -22,48 +17,61 @@ type Props = {
   navigation?: NativeStackNavigationProp<ParamListBase, string>;
 };
 
-export const PickedForYou = (props: Props) => {
+export const ProductRecommended = (props: Props) => {
+  const [data, setData] = useState<ProductModel[]>([]);
   const [isError, setIsError] = useState<boolean>(false);
+  const recent = recentStore((store) => store.items);
+  const favorites = favoritesStore((store) => store.items);
+  const basket = basketStore((store) => store.items);
+
+  const defaultErrorMessage = "Не удалось получить список рекомендуемых товаров";
+
+  const recentIds = recent.join(",");
+  const favoriteIds = Object.keys(favorites).join(",");
+  const basketIds = Object.keys(basket).join(",");
+
   const limit = 30;
   const width = getWidthCard(Dimensions.get("window").width, 24, 4, 2);
 
-  const { data, isHasMore, loadMore, loading, reload } = useInfiniteScroll({
-    limit,
-    fetchData: (page: number) =>
-      fetchService
-        .get<{ products: ProductModel[]; paginationPage: string; totalCount: number }>({
-          url: "product/main-page",
-          params: {
-            limit: String(limit),
-            page: page ? String(page) : "1",
-          },
-        })
-        .then((response) => {
-          if (response.status === "success" && response.data) {
-            return { data: response.data.products, total: response.data.totalCount };
-          } else {
-            throw response.message || "Не удалось загрузить товары";
-          }
-        })
-        .catch((error) => {
-          const message = getMessageError(error, "Не удалось загрузить товары");
+  const fetchRecommendedEvent = useEffectEvent(() =>
+    fetchService
+      .get<ProductModel[]>({
+        url: "product/recommended",
+        params: {
+          favorite_ids: favoriteIds,
+          cart_ids: basketIds,
+          viewed_ids: recentIds,
+          limit: String(limit),
+        },
+      })
+      .then((response) => {
+        if (response.status === "success" && Array.isArray(response.data)) {
+          setData(response.data);
+        } else {
+          throw response.message || defaultErrorMessage;
+        }
+      })
+      .catch((error) => {
+        const message = getMessageError(error, defaultErrorMessage);
 
-          Alert.alert("Ошибка", message, [
-            { text: "Отмена", style: "default" },
-            {
-              text: "Повторить",
-              isPreferred: true,
-              onPress: () => {
-                reload();
-                setIsError(false);
-              },
+        Alert.alert("Ошибка", message, [
+          { text: "Отмена", style: "default" },
+          {
+            text: "Повторить",
+            isPreferred: true,
+            onPress: () => {
+              setIsError(false);
             },
-          ]);
-          setIsError(true);
+          },
+        ]);
 
-          return { data: [], total: 0 };
-        }),
-  });
+        setIsError(true);
+      }),
+  );
+
+  useEffect(() => {
+    fetchRecommendedEvent();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -81,8 +89,6 @@ export const PickedForYou = (props: Props) => {
         contentContainerStyle={styles.listContent}
         numColumns={2}
         columnWrapperStyle={{ columnGap: 4 }}
-        onEndReached={() => isHasMore && !isError && loadMore()}
-        onEndReachedThreshold={1}
         showsVerticalScrollIndicator={false}
         renderItem={({ item, index }) => (
           <ProductCard
@@ -102,7 +108,7 @@ export const PickedForYou = (props: Props) => {
         )}
         ListFooterComponent={
           <View style={styles.footerListPadding}>
-            {loading && <ActivityIndicator size="small" color="#a73afd" />}
+            {isError && <ErrorAlert message={defaultErrorMessage} />}
           </View>
         }
       />

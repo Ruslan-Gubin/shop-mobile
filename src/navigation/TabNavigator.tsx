@@ -1,8 +1,9 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
-import { CartScreen } from "../screen/Cart/CartScreen";
+import { BasketScreen } from "../screen/Basket/BasketScreen";
 import { CatalogScreen } from "../screen/Catalog/CatalogScreen";
+import { CheckoutScreen } from "../screen/Checkout/CheckoutScreen";
 import { FavoritesScreen } from "../screen/Favorites/Favorites";
 import { HomeScreen } from "../screen/Home/HomeScreen";
 import { ProductInfoScreen } from "../screen/ProductInfo/ProductInfoScreen";
@@ -23,8 +24,18 @@ const HomeStack = () => {
     <RootStack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
       <RootStack.Screen key="Home" name="Home" component={HomeScreen} />
       <RootStack.Screen key="Search" name="Search" component={SearchScreen} />
-      <RootStack.Screen key="ProductInfo" name="ProductInfo" component={ProductInfoScreen} />
       <RootStack.Screen key="Catalog" name="Catalog" component={CatalogScreen} />
+      <RootStack.Screen key="ProductInfo" name="ProductInfo" component={ProductInfoScreen} />
+    </RootStack.Navigator>
+  );
+};
+
+const BasketStack = () => {
+  return (
+    <RootStack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
+      <RootStack.Screen key="Basket" name="Basket" component={BasketScreen} />
+      <RootStack.Screen key="Checkout" name="Checkout" component={CheckoutScreen} />
+      <RootStack.Screen key="ProductInfo" name="ProductInfo" component={ProductInfoScreen} />
     </RootStack.Navigator>
   );
 };
@@ -77,7 +88,7 @@ export const TabNavigator = () => {
       <Tab.Screen
         key="Cart"
         name="Cart"
-        component={CartScreen}
+        component={BasketStack}
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.menuItem}>

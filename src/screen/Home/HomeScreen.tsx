@@ -8,7 +8,7 @@ import { getWidthCard } from "../../shared/helpers/getWidthCard";
 import { useInfiniteScroll } from "../../shared/hooks/useInfiniteScroll";
 import type { ProductModel } from "../../shared/types/products";
 import { SearchNavigateButton } from "../../widgets/home/search-navigate-button/SearchNavigateButton";
-import { Login } from "../../widgets/Modal/Login/Login";
+import { Login } from "../../widgets/modal/login/Login";
 import { ProductCard } from "../../widgets/product/product-card/ProductCard";
 
 type Props = {

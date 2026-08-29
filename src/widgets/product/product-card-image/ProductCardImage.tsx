@@ -61,10 +61,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    // maxWidth: "50%",
-    // aspectRatio: 3 / 4,
     height: "100%",
-    // maxHeight: "100%",
     resizeMode: "cover",
   },
 });
