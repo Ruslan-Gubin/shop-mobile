@@ -83,7 +83,7 @@ export const HomeScreen = (props: Props) => {
               priceList={item.price_list}
               index={index}
               photos={item.photos}
-              accounting={true}
+              accounting={item.accounting}
               available={item.available}
               id={item.id}
               name={item.name}

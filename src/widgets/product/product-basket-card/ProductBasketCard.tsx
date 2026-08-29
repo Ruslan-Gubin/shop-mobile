@@ -51,7 +51,7 @@ export const ProductBasketCard = (props: Props) => {
         ]}
       >
         <Pressable onPress={() => handleNavigate(props.id)}>
-          <ImageMain uri={props.photos[0].url} style={styles.image} />
+          <ImageMain uri={props.photos?.[0]?.url} style={styles.image} />
         </Pressable>
         <View style={styles.checkBoxContainer}>
           <BasketProductCheckbox id={props.id} />

@@ -5,7 +5,6 @@ import { basketStore } from "../../../store/basket/store";
 
 type Props = {
   id: number;
-  available: number | null;
   revalidateBasketAction?: () => Promise<void>;
 };
 

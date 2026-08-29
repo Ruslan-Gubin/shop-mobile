@@ -49,11 +49,10 @@ export const ProductCard = (props: Props) => {
           id={props.id}
         />
         <ProductFavorites id={props.id} />
-        <AddBasket
-          available={props.available}
-          id={props.id}
-          revalidateBasketAction={revalidateBasketAction}
-        />
+        {((props.accounting && typeof props.available === "number" && props.available > 0) ||
+          !props.accounting) && (
+          <AddBasket id={props.id} revalidateBasketAction={revalidateBasketAction} />
+        )}
       </View>
 
       <Pressable onPress={() => handleNavigate(props.id)} style={styles.productInfoContainer}>

@@ -6,9 +6,13 @@ export const CountBasket = () => {
   const basketCount = Object.values(basket).length || 0;
 
   return (
-    <View style={styles.countContainer}>
-      <Text style={styles.countValue}>{basketCount < 100 ? basketCount : "99+"}</Text>
-    </View>
+    <>
+      {basketCount > 0 && (
+        <View style={styles.countContainer}>
+          <Text style={styles.countValue}>{basketCount < 100 ? basketCount : "99+"}</Text>
+        </View>
+      )}
+    </>
   );
 };
 

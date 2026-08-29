@@ -50,7 +50,11 @@ export const BasketHeader = () => {
   return (
     <View style={styles.header}>
       <View style={{ flex: 0.5 }}>
-        <Checkbox checked={isSelectAllBasket} label="Все" onPress={handleChangeAllSelect} />
+        <Checkbox
+          checked={totalCount > 0 && isSelectAllBasket}
+          label="Все"
+          onPress={handleChangeAllSelect}
+        />
       </View>
       <View style={styles.headerRightSide}>
         <Pressable

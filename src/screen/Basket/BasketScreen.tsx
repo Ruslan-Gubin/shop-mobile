@@ -10,6 +10,7 @@ import { BasketDeleteModal } from "../../widgets/modal/basket/BasketDeleteModal"
 import { BasketFooter } from "./components/BasketFooter";
 import { BasketHeader } from "./components/BasketHeader";
 import { BasketList } from "./components/BasketList";
+import { NotContent } from "../../widgets/not-content/NotContent";
 
 type Props = {
   navigation: NativeStackNavigationProp<ParamListBase, "Basket">;
@@ -56,6 +57,8 @@ export const BasketScreen = (props: Props) => {
             },
           ]);
         });
+    } else {
+      setBasketData([]);
     }
   });
 
@@ -78,9 +81,21 @@ export const BasketScreen = (props: Props) => {
         revalidateBasketAction={() => new Promise(() => console.log("revalidate basket"))}
       />
       <View style={styles.container}>
-        <BasketHeader />
-        <BasketList navigation={props.navigation} basketData={basketData} />
-        <BasketFooter navigation={props.navigation} />
+        {basketIds.length > 0 && (
+          <>
+            <BasketHeader />
+            <BasketList navigation={props.navigation} basketData={basketData} />
+            <BasketFooter navigation={props.navigation} />
+          </>
+        )}
+        {basketIds.length === 0 && (
+          <NotContent
+            title="В корзине пока пусто"
+            subTitle="Перейдите на главную и добавьте товары, которые могут вам понравиться."
+            navigateText="Перейти на главную"
+            onNavigate={() => props.navigation.navigate("HomeStack")}
+          />
+        )}
       </View>
     </>
   );

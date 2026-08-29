@@ -23,7 +23,7 @@ export const BasketList = (props: Props) => {
           cardImgHeight={cardImgHeight}
           priceList={item.price_list}
           photos={item.photos}
-          accounting={true}
+          accounting={item.accounting}
           available={item.available}
           id={item.id}
           name={item.name}

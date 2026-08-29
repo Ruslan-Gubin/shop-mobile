@@ -17,8 +17,7 @@ export const AddBasketLarge = (props: Props) => {
   const handleDecrementProduct = (id: number) => basketAdapter.decrement(id);
   const handleIncrement = (id: number) => basketAdapter.increment(id);
 
-  const disabledAddCount =
-    props.accounting && typeof props.available === "number" ? count >= props.available : false;
+  const disabledAddCount = props.accounting && count >= (props.available || 0);
 
   return (
     <View style={styles.addBasketContainer}>
