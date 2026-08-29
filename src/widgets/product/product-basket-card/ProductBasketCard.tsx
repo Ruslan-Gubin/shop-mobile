@@ -19,11 +19,8 @@ type Props = {
   rating: number;
   reviewCount: number;
   photos: PhotoModel[];
-  index: number;
   brand_name: string;
   navigation?: NativeStackNavigationProp<ParamListBase, string>;
-  width: number;
-  horizontal?: boolean;
   cardImgHeight: number;
 };
 
