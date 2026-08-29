@@ -1,34 +1,110 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useEffect, useEffectEvent, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, View } from "react-native";
 import { fetchService } from "../../shared/fetch-api";
 import { getMessageError } from "../../shared/helpers/getMessageError";
+import type { CartDiscountModel } from "../../shared/types/cart-discount";
 import type { ProductModel } from "../../shared/types/products";
+import type { PromotionModel } from "../../shared/types/promotion";
 import { basketStore } from "../../store/basket/store";
 import { BasketDeleteModal } from "../../widgets/modal/basket/BasketDeleteModal";
+import { NotContent } from "../../widgets/not-content/NotContent";
 import { BasketFooter } from "./components/BasketFooter";
 import { BasketHeader } from "./components/BasketHeader";
 import { BasketList } from "./components/BasketList";
-import { NotContent } from "../../widgets/not-content/NotContent";
 
 type Props = {
   navigation: NativeStackNavigationProp<ParamListBase, "Basket">;
 };
 
 export const BasketScreen = (props: Props) => {
-  const [selectAll, setSelectAll] = useState<boolean>(false);
   const [basketData, setBasketData] = useState<ProductModel[]>([]);
-  const [errorMessage, setErrorMessage] = useState<string>("");
-  const isHasSelect = false;
+  const [cartDiscounts, setCartDiscounts] = useState<CartDiscountModel[]>([]);
+  const [promotions, setPromotions] = useState<PromotionModel[]>([]);
   const basket = basketStore((store) => store.items);
-  const isNavigateCheckout = isHasSelect;
   const basketIds = Object.keys(basket).join(",");
-  const defaultErrorMessage = "Не удалось получить список просмотренных товаров";
+  const [errors, setErrors] = useState<{ basket: string; discounts: string; promotions: string }>({
+    basket: "",
+    promotions: "",
+    discounts: "",
+  });
 
-  const fetchBasketEvent = useEffectEvent((basketIds: string) => {
+  const updateError = (key: "basket" | "promotions" | "discounts", message: string) =>
+    setErrors((prev) => ({ ...prev, [key]: message }));
+  const resetError = (key: "basket" | "promotions" | "discounts") =>
+    setErrors((prev) => ({ ...prev, [key]: "" }));
+
+  const fetchDiscounts = async () => {
+    const discountDefaultErrorMessage = "Не удалось получить список скидок";
+
+    return fetchService
+      .get<CartDiscountModel[]>({
+        url: "cart-discounts/active",
+      })
+      .then((response) => {
+        if (response.status === "success" && Array.isArray(response.data)) {
+          setCartDiscounts(response.data);
+        } else if (response.status === "error") {
+          throw response.message || discountDefaultErrorMessage;
+        }
+      })
+      .catch((error) => {
+        const message = getMessageError(error, discountDefaultErrorMessage);
+        updateError("discounts", message);
+
+        Alert.alert("Ошибка", message, [
+          { text: "Отмена", style: "default" },
+          {
+            text: "Повторить",
+            isPreferred: true,
+            onPress: () => {
+              fetchDiscounts();
+              resetError("discounts");
+            },
+          },
+        ]);
+      });
+  };
+
+  const fetchPromotions = async () => {
+    const promotionDefaultErrorMessage = "Не удалось получить список акций";
+
+    return fetchService
+      .get<PromotionModel[]>({
+        url: "promotions/active",
+      })
+      .then((response) => {
+        if (response.status === "success" && Array.isArray(response.data)) {
+          setPromotions(response.data);
+        } else if (response.status === "error") {
+          throw response.message || promotionDefaultErrorMessage;
+        }
+      })
+      .catch((error) => {
+        const message = getMessageError(error, promotionDefaultErrorMessage);
+
+        updateError("promotions", message);
+
+        Alert.alert("Ошибка", message, [
+          { text: "Отмена", style: "default" },
+          {
+            text: "Повторить",
+            isPreferred: true,
+            onPress: () => {
+              fetchPromotions();
+              resetError("promotions");
+            },
+          },
+        ]);
+      });
+  };
+
+  const fetchBasketEvent = useEffectEvent(async (basketIds: string) => {
     if (basketIds.length > 0) {
-      fetchService
+      const defaultErrorMessage = "Не удалось получить список просмотренных товаров";
+
+      await fetchService
         .get<ProductModel[]>({
           url: "product/by-ids",
           params: { ids: basketIds },
@@ -43,7 +119,7 @@ export const BasketScreen = (props: Props) => {
         .catch((error) => {
           const message = getMessageError(error, defaultErrorMessage);
 
-          setErrorMessage(message);
+          updateError("basket", message);
 
           Alert.alert("Ошибка", message, [
             { text: "Отмена", style: "default" },
@@ -52,7 +128,7 @@ export const BasketScreen = (props: Props) => {
               isPreferred: true,
               onPress: () => {
                 fetchBasketEvent(basketIds);
-                setErrorMessage("");
+                resetError("basket");
               },
             },
           ]);
@@ -60,32 +136,31 @@ export const BasketScreen = (props: Props) => {
     } else {
       setBasketData([]);
     }
+
+    await fetchDiscounts();
+    await fetchPromotions();
   });
 
   useEffect(() => {
     fetchBasketEvent(basketIds);
   }, [basketIds]);
 
-  //const isHasOrderItems = props.basketProducts.length > 0;
-  const isHasOrderItems = 0;
-
-  // const orderInfo = useMemo(
-  //   () =>
-  //     calcBasketInfo(selected, basket, props.basketProducts, props.cartDiscounts, props.promotions),
-  //   [selected, basket, props.basketProducts, props.cartDiscounts, props.promotions],
-  // );
-
   return (
     <>
       <BasketDeleteModal
         revalidateBasketAction={() => new Promise(() => console.log("revalidate basket"))}
       />
-      <View style={styles.container}>
+      <View style={{ flex: 1 }}>
         {basketIds.length > 0 && (
           <>
             <BasketHeader />
             <BasketList navigation={props.navigation} basketData={basketData} />
-            <BasketFooter navigation={props.navigation} />
+            <BasketFooter
+              navigation={props.navigation}
+              basketProducts={basketData}
+              cartDiscounts={cartDiscounts}
+              promotions={promotions}
+            />
           </>
         )}
         {basketIds.length === 0 && (
@@ -100,9 +175,3 @@ export const BasketScreen = (props: Props) => {
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
