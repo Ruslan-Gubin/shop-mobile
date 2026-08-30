@@ -60,6 +60,7 @@ export const BasketFooter = (props: Props) => {
           response.data.length > 0
         ) {
           const updateStocksWarning = [];
+
           for (let i = 0; i < response.data.length; i++) {
             const item = response.data[i];
 
