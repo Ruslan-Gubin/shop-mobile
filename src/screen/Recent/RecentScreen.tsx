@@ -1,13 +1,13 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useEffect, useState } from "react";
-import { Alert, Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useEffectEvent, useState } from "react";
+import { Alert, Dimensions, FlatList, StyleSheet, View } from "react-native";
 import { fetchService } from "../../shared/fetch-api";
 import { getMessageError } from "../../shared/helpers/getMessageError";
 import { getWidthCard } from "../../shared/helpers/getWidthCard";
-import { ArrowBackIcon } from "../../shared/svg/ArrowBackIcon";
 import type { ProductModel } from "../../shared/types/products";
 import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
+import { PageHeader } from "../../shared/ui/header/PageHeader";
 import { recentStore } from "../../store/recent/store";
 import { ProductCard } from "../../widgets/product/product-card/ProductCard";
 
@@ -24,60 +24,56 @@ export const RecentScreen = (props: Props) => {
   const [recentData, setRecentData] = useState<ProductModel[]>([]);
   const [isError, setIsError] = useState<boolean>(false);
   const recent = recentStore((state) => state.items);
+  const recentIds = recent.join(",");
   const width = getWidthCard(Dimensions.get("window").width, 0, 4, 2);
   const defaultErrorMessage = "Не удалось получить список просмотренных товаров";
 
-  const fetchRecentData = () => {
-    fetchService
-      .get<ProductModel[]>({
-        url: "product/by-ids",
-        params: { ids: recent.toString() },
-      })
-      .then((response) => {
-        if (response.status === "success" && Array.isArray(response.data)) {
-          setRecentData(response.data);
-        } else {
-          throw response.message || defaultErrorMessage;
-        }
-      })
-      .catch((error) => {
-        const message = getMessageError(error, defaultErrorMessage);
-        setIsError(true);
+  const fetchRecentData = useEffectEvent((recentIds: string) => {
+    if (recentIds.length > 0) {
+      fetchService
+        .get<ProductModel[]>({
+          url: "product/by-ids",
+          params: { ids: recentIds },
+        })
+        .then((response) => {
+          if (response.status === "success" && Array.isArray(response.data)) {
+            setRecentData(response.data);
+          } else {
+            throw response.message || defaultErrorMessage;
+          }
+        })
+        .catch((error) => {
+          const message = getMessageError(error, defaultErrorMessage);
+          setIsError(true);
 
-        Alert.alert("Ошибка", message, [
-          {
-            text: "Отмена",
-            style: "default",
-            onPress: () => {
-              setIsError(false);
+          Alert.alert("Ошибка", message, [
+            {
+              text: "Отмена",
+              style: "default",
+              onPress: () => {
+                setIsError(false);
+              },
             },
-          },
-          {
-            text: "Повторить",
-            isPreferred: true,
-            onPress: () => {
-              fetchRecentData();
-              setIsError(false);
+            {
+              text: "Повторить",
+              isPreferred: true,
+              onPress: () => {
+                fetchRecentData(recentIds);
+                setIsError(false);
+              },
             },
-          },
-        ]);
-      });
-  };
+          ]);
+        });
+    }
+  });
 
   useEffect(() => {
-    fetchRecentData();
-  }, []);
+    fetchRecentData(recentIds);
+  }, [recentIds]);
 
   return (
     <View style={styles.root}>
-      <View style={styles.header}>
-        {props.navigation && (
-          <Pressable onPress={() => props.navigation?.goBack()} style={styles.buttonBackIcon}>
-            <ArrowBackIcon fill="black" size={24} />
-          </Pressable>
-        )}
-        <Text style={styles.title}>Вы смотрели</Text>
-      </View>
+      <PageHeader title="Вы смотрели" onBack={() => props?.navigation?.goBack()} />
       {isError && (
         <ErrorAlert
           message={defaultErrorMessage}
@@ -126,20 +122,6 @@ const styles = StyleSheet.create({
     rowGap: 16,
     backgroundColor: "white",
     flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 20,
-    paddingInline: 12,
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  buttonBackIcon: {
-    borderRadius: 8,
-    backgroundColor: "#f1f1f5",
   },
   listContent: {
     paddingBottom: 20,

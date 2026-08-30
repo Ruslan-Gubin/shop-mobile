@@ -1,13 +1,13 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useEffect, useEffectEvent, useState } from "react";
-import { Alert, Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Dimensions, FlatList, StyleSheet, View } from "react-native";
 import { fetchService } from "../../shared/fetch-api";
 import { getMessageError } from "../../shared/helpers/getMessageError";
 import { getWidthCard } from "../../shared/helpers/getWidthCard";
-import { ArrowBackIcon } from "../../shared/svg/ArrowBackIcon";
 import type { ProductModel } from "../../shared/types/products";
 import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
+import { PageHeader } from "../../shared/ui/header/PageHeader";
 import { favoritesStore } from "../../store/favorites/store";
 import { ProductCard } from "../../widgets/product/product-card/ProductCard";
 
@@ -68,25 +68,8 @@ export const FavoritesScreen = (props: Props) => {
 
   return (
     <View style={styles.root}>
-      <View style={styles.header}>
-        {props.navigation && (
-          <Pressable onPress={() => props?.navigation?.goBack()} style={styles.buttonBackIcon}>
-            <ArrowBackIcon fill="black" size={24} />
-          </Pressable>
-        )}
-        <Text style={styles.title}>Избранное</Text>
-      </View>
-      {isError && (
-        <ErrorAlert
-          message={defaultErrorMessage}
-          callback={{
-            action() {
-              props?.navigation?.navigate("HomeStack");
-            },
-            text: "Вернутся на главную",
-          }}
-        />
-      )}
+      <PageHeader title="Избранное" onBack={() => props?.navigation?.goBack()} />
+      {isError && <ErrorAlert message={defaultErrorMessage} />}
       {favoritesData.length > 0 && (
         <FlatList
           data={favoritesData}
@@ -121,25 +104,11 @@ export const FavoritesScreen = (props: Props) => {
 
 const styles = StyleSheet.create({
   root: {
-    rowGap: 16,
     backgroundColor: "white",
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 20,
-    paddingInline: 12,
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  buttonBackIcon: {
-    borderRadius: 8,
-    backgroundColor: "#f1f1f5",
-  },
   listContent: {
+    paddingBlock: 16,
     paddingBottom: 20,
     rowGap: 12,
   },
