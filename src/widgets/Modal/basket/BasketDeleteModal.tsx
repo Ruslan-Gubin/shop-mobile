@@ -28,8 +28,8 @@ export const BasketDeleteModal = (props: Props) => {
       errorText="Отменить данное действие будет невозможно!"
       title={deleteItems.length > 1 ? "Удалить выбранные товары" : "Удалить товар"}
       footerAction={{
-        cancel: { text: "Отменить", action: closeModal },
-        submit: { text: "Удалить", action: handleDeleteItemsInBasket },
+        cancel: { text: "Отменить", action: closeModal, backgroundColor: "#f6f6f9" },
+        submit: { text: "Удалить", action: handleDeleteItemsInBasket, backgroundColor: "#cd5c5c" },
       }}
     />
   );

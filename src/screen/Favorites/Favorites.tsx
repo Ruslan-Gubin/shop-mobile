@@ -1,6 +1,6 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { Alert, Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { fetchService } from "../../shared/fetch-api";
 import { getMessageError } from "../../shared/helpers/getMessageError";
@@ -28,7 +28,7 @@ export const FavoritesScreen = (props: Props) => {
   const defaultErrorMessage = "Не удалось получить список избранных товаров";
   const favoritesIds = Object.keys(favorites).join(",");
 
-  const fetchFavoritesData = () => {
+  const fetchFavoritesData = useEffectEvent((favoritesIds: string) => {
     fetchService
       .get<ProductModel[]>({
         url: "product/by-ids",
@@ -49,24 +49,21 @@ export const FavoritesScreen = (props: Props) => {
           {
             text: "Отмена",
             style: "default",
-            onPress: () => {
-              setIsError(false);
-            },
           },
           {
             text: "Повторить",
             isPreferred: true,
             onPress: () => {
-              fetchFavoritesData();
+              fetchFavoritesData(favoritesIds);
               setIsError(false);
             },
           },
         ]);
       });
-  };
+  });
 
   useEffect(() => {
-    fetchFavoritesData();
+    fetchFavoritesData(favoritesIds);
   }, [favoritesIds]);
 
   return (
@@ -84,7 +81,7 @@ export const FavoritesScreen = (props: Props) => {
           message={defaultErrorMessage}
           callback={{
             action() {
-              props?.navigation?.push("Home");
+              props?.navigation?.navigate("HomeStack");
             },
             text: "Вернутся на главную",
           }}

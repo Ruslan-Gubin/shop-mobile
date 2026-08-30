@@ -1,13 +1,16 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { fetchService } from "../../../shared/fetch-api";
 import { calcBasketInfo } from "../../../shared/helpers/calcBasketInfo";
 import { formatterRub } from "../../../shared/helpers/formatters";
+import { getMessageError } from "../../../shared/helpers/getMessageError";
 import type { CartDiscountModel } from "../../../shared/types/cart-discount";
 import type { ProductModel } from "../../../shared/types/products";
 import type { PromotionModel } from "../../../shared/types/promotion";
 import { basketStore } from "../../../store/basket/store";
+import { StockWarningModal } from "./StockWarningModal";
 
 type Props = {
   navigation: NativeStackNavigationProp<ParamListBase, "Basket">;
@@ -19,6 +22,9 @@ type Props = {
 export const BasketFooter = (props: Props) => {
   const selected = basketStore((store) => store.selected);
   const basket = basketStore((store) => store.items);
+  const [stocksWarning, setStocksWarning] = useState<
+    { product_id: number; available: number; name: string }[]
+  >([]);
 
   const orderInfo = useMemo(
     () =>
@@ -28,6 +34,13 @@ export const BasketFooter = (props: Props) => {
 
   const disabledSubmit = orderInfo.total === 0;
 
+  const fetchCheckingBalance = (selectedProducts: { product_id: number; quantity: number }[]) => {
+    return fetchService.post<{ product_id: number; available: number }[]>({
+      url: "product-stock/checking-balances",
+      payload: selectedProducts,
+    });
+  };
+
   const handleSubmitOrder = () => {
     const selectedProducts: { product_id: number; quantity: number }[] = [];
 
@@ -36,55 +49,109 @@ export const BasketFooter = (props: Props) => {
         selectedProducts.push({ product_id: Number(key), quantity: basket[key] });
       }
     }
-    console.log(selectedProducts);
-    // props?.navigation.push("Checkout")
 
-    // props.checkingBalanceAction(selectedProducts).then((response) => {
-    //   if (Array.isArray(response.data) && response.data.length > 0) {
-    //     setStocksWarning(
-    //       response.data.map((el) => ({
-    //         ...el,
-    //         name: `product name: ${el.product_id}`,
-    //       })),
-    //     );
-    //   } else if (Array.isArray(response.data) && response.data.length === 0) {
-    //     if (props.type === "basket") {
-    //       router.push("/checkout");
-    //     } else {
-    //       createOrder(selectedProducts);
-    //     }
-    //   }
-    // });
+    const defaultErrorMessage = "Не удалось проверить наличии товаров на складах";
+    console.log(selectedProducts);
+    fetchCheckingBalance(selectedProducts)
+      .then((response) => {
+        if (
+          response.status === "success" &&
+          Array.isArray(response.data) &&
+          response.data.length > 0
+        ) {
+          const updateStocksWarning = [];
+          updateStocksWarning.push({ product_id: 300, quantity: 50, name: "Item 1" });
+          updateStocksWarning.push({ product_id: 301, quantity: 50, name: "Item 2" });
+          updateStocksWarning.push({ product_id: 303, quantity: 50, name: "Item 3" });
+          updateStocksWarning.push({ product_id: 304, quantity: 50, name: "Item 4" });
+          updateStocksWarning.push({ product_id: 305, quantity: 50, name: "Item 5" });
+          updateStocksWarning.push({ product_id: 306, quantity: 50, name: "Item 6" });
+          updateStocksWarning.push({ product_id: 307, quantity: 50, name: "Item 7" });
+
+          for (let i = 0; i < response.data.length; i++) {
+            const item = response.data[i];
+
+            const findProduct = props.basketProducts.find(
+              (product) => product.id === item.product_id,
+            );
+
+            updateStocksWarning.push({
+              available: item.available,
+              product_id: item.product_id,
+              name: findProduct?.name || "",
+            });
+          }
+
+          setStocksWarning(updateStocksWarning);
+        } else if (
+          response.status === "success" &&
+          Array.isArray(response.data) &&
+          response.data.length === 0
+        ) {
+          props?.navigation?.push("Checkout");
+        } else if (response.status === "error") {
+          throw response.message || defaultErrorMessage;
+        }
+      })
+      .catch((error) => {
+        const message = getMessageError(error, defaultErrorMessage);
+
+        Alert.alert("Ошибка", message, [
+          { text: "Отмена", style: "default" },
+          {
+            text: "Повторить",
+            isPreferred: true,
+            onPress: () => {
+              handleSubmitOrder();
+            },
+          },
+        ]);
+      });
   };
 
   return (
-    <View style={styles.footer}>
-      <Pressable
-        disabled={disabledSubmit}
-        onPress={handleSubmitOrder}
-        style={[styles.footerButton, !disabledSubmit && styles.footerButtonActive]}
-      >
-        <Text style={[styles.footerButtonText, !disabledSubmit && styles.footerButtonTextActive]}>
-          {disabledSubmit ? "Выберите товары" : `К оформлению: ${orderInfo.productCount || ""}`}
-        </Text>
-
-        {!disabledSubmit && (
-          <Text
-            style={[styles.footerButtonText, !disabledSubmit && styles.footerButtonTextActiveTotal]}
-          >
-            {formatterRub.format(orderInfo.total)}
-            {orderInfo.totalDiscount > 0 && (
-              <>
-                {"  "}
-                <Text style={styles.discountText}>
-                  {formatterRub.format(orderInfo.totalDiscount + orderInfo.total)}
-                </Text>
-              </>
-            )}
+    <>
+      <StockWarningModal
+        navigation={props.navigation}
+        type={"basket"}
+        disabled={orderInfo.total === 0}
+        basket={basket}
+        active={stocksWarning.length > 0}
+        items={stocksWarning}
+        onClose={() => setStocksWarning([])}
+        onSubmit={handleSubmitOrder}
+      />
+      <View style={styles.footer}>
+        <Pressable
+          disabled={disabledSubmit}
+          onPress={handleSubmitOrder}
+          style={[styles.footerButton, !disabledSubmit && styles.footerButtonActive]}
+        >
+          <Text style={[styles.footerButtonText, !disabledSubmit && styles.footerButtonTextActive]}>
+            {disabledSubmit ? "Выберите товары" : `К оформлению: ${orderInfo.productCount || ""}`}
           </Text>
-        )}
-      </Pressable>
-    </View>
+
+          {!disabledSubmit && (
+            <Text
+              style={[
+                styles.footerButtonText,
+                !disabledSubmit && styles.footerButtonTextActiveTotal,
+              ]}
+            >
+              {formatterRub.format(orderInfo.total)}
+              {orderInfo.totalDiscount > 0 && (
+                <>
+                  {"  "}
+                  <Text style={styles.discountText}>
+                    {formatterRub.format(orderInfo.totalDiscount + orderInfo.total)}
+                  </Text>
+                </>
+              )}
+            </Text>
+          )}
+        </Pressable>
+      </View>
+    </>
   );
 };
 

@@ -3,6 +3,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -16,8 +17,8 @@ type Props = {
   onClose: () => void;
   children?: React.ReactNode;
   footerAction?: {
-    cancel?: { text: string; action: () => void };
-    submit?: { text: string; action: () => void };
+    cancel?: { text: string; action: () => void; backgroundColor: string; disabled?: boolean };
+    submit?: { text: string; action: () => void; backgroundColor: string; disabled?: boolean };
   };
 };
 
@@ -44,12 +45,28 @@ export const BaseModal = (props: Props) => {
             {props.footerAction && (
               <View style={styles.footer}>
                 {props.footerAction.cancel && (
-                  <Pressable style={styles.buttonCancel} onPress={props.footerAction.cancel.action}>
+                  <Pressable
+                    disabled={props.footerAction.cancel.disabled}
+                    style={[
+                      styles.buttonCancel,
+                      props.footerAction.cancel.disabled && styles.buttonDisabled,
+                      { backgroundColor: props.footerAction.cancel.backgroundColor },
+                    ]}
+                    onPress={props.footerAction.cancel.action}
+                  >
                     <Text style={styles.buttonCancelText}>{props.footerAction.cancel.text}</Text>
                   </Pressable>
                 )}
                 {props.footerAction.submit && (
-                  <Pressable style={styles.buttonDelete} onPress={props.footerAction.submit.action}>
+                  <Pressable
+                    disabled={props.footerAction.submit.disabled}
+                    style={[
+                      styles.buttonDelete,
+                      props.footerAction.submit.disabled && styles.buttonDisabled,
+                      { backgroundColor: props.footerAction.submit.backgroundColor },
+                    ]}
+                    onPress={props.footerAction.submit.action}
+                  >
                     <Text style={styles.buttonDeleteText}>{props.footerAction.submit.text}</Text>
                   </Pressable>
                 )}
@@ -72,6 +89,7 @@ const styles = StyleSheet.create({
   },
   avoiding: {
     justifyContent: "center",
+    backgroundColor: "red",
   },
   modalView: {
     backgroundColor: "white",
@@ -88,16 +106,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#242424",
   },
-
   content: {
     rowGap: 6,
   },
-
   subtitleText: {
     fontWeight: 500,
     color: "#242424",
   },
-
   errorText: {
     fontWeight: 500,
     color: "#f32d2d",
@@ -110,7 +125,6 @@ const styles = StyleSheet.create({
   },
   buttonCancel: {
     height: 36,
-    backgroundColor: "#f6f6f9",
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -122,7 +136,6 @@ const styles = StyleSheet.create({
   },
   buttonDelete: {
     height: 36,
-    backgroundColor: "#cd5c5c",
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -132,7 +145,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: 700,
   },
-
   button: {
     borderRadius: 20,
     padding: 10,
@@ -144,7 +156,9 @@ const styles = StyleSheet.create({
   buttonClose: {
     backgroundColor: "#2196F3",
   },
-
+  buttonDisabled: {
+    opacity: 0.4,
+  },
   textStyle: {
     color: "white",
     fontWeight: "bold",
