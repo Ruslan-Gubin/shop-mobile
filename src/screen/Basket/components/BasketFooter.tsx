@@ -51,7 +51,7 @@ export const BasketFooter = (props: Props) => {
     }
 
     const defaultErrorMessage = "Не удалось проверить наличии товаров на складах";
-    console.log(selectedProducts);
+
     fetchCheckingBalance(selectedProducts)
       .then((response) => {
         if (
@@ -60,14 +60,6 @@ export const BasketFooter = (props: Props) => {
           response.data.length > 0
         ) {
           const updateStocksWarning = [];
-          updateStocksWarning.push({ product_id: 300, quantity: 50, name: "Item 1" });
-          updateStocksWarning.push({ product_id: 301, quantity: 50, name: "Item 2" });
-          updateStocksWarning.push({ product_id: 303, quantity: 50, name: "Item 3" });
-          updateStocksWarning.push({ product_id: 304, quantity: 50, name: "Item 4" });
-          updateStocksWarning.push({ product_id: 305, quantity: 50, name: "Item 5" });
-          updateStocksWarning.push({ product_id: 306, quantity: 50, name: "Item 6" });
-          updateStocksWarning.push({ product_id: 307, quantity: 50, name: "Item 7" });
-
           for (let i = 0; i < response.data.length; i++) {
             const item = response.data[i];
 

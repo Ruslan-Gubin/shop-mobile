@@ -1,6 +1,6 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { basketAdapter } from "../../../store/basket/adapter";
 import { BaseModal } from "../../../widgets/modal/base-modal/BaseModal";
 

@@ -3,7 +3,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -25,12 +24,14 @@ type Props = {
 export const BaseModal = (props: Props) => {
   return (
     <Modal animationType="fade" transparent visible={props.visible} onRequestClose={props.onClose}>
-      <Pressable style={styles.centeredView} onPress={props.onClose}>
+      <View style={styles.centeredView}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={props.onClose} />
         <KeyboardAvoidingView
           style={styles.avoiding}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
+          pointerEvents="box-none"
         >
-          <Pressable style={styles.modalView} onPress={(event) => event.stopPropagation()}>
+          <View style={styles.modalView}>
             {props.title && (
               <View style={styles.header}>
                 <Text style={styles.headerTitle}>{props.title}</Text>
@@ -72,9 +73,9 @@ export const BaseModal = (props: Props) => {
                 )}
               </View>
             )}
-          </Pressable>
+          </View>
         </KeyboardAvoidingView>
-      </Pressable>
+      </View>
     </Modal>
   );
 };
@@ -89,7 +90,6 @@ const styles = StyleSheet.create({
   },
   avoiding: {
     justifyContent: "center",
-    backgroundColor: "red",
   },
   modalView: {
     backgroundColor: "white",
