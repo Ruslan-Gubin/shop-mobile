@@ -7,6 +7,7 @@ import { getMessageError } from "../../shared/helpers/getMessageError";
 import type { CartDiscountModel } from "../../shared/types/cart-discount";
 import type { ProductModel } from "../../shared/types/products";
 import type { PromotionModel } from "../../shared/types/promotion";
+import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
 import { basketStore } from "../../store/basket/store";
 import { BasketDeleteModal } from "../../widgets/modal/basket/BasketDeleteModal";
 import { NotContent } from "../../widgets/not-content/NotContent";
@@ -145,13 +146,23 @@ export const BasketScreen = (props: Props) => {
     fetchBasketEvent(basketIds);
   }, [basketIds]);
 
+  const hasError = Object.values(errors).some((el) => el.length > 0);
+
   return (
     <>
       <BasketDeleteModal
         revalidateBasketAction={() => new Promise(() => console.log("revalidate basket"))}
       />
       <View style={{ flex: 1 }}>
-        {basketIds.length > 0 && (
+        {hasError && (
+          <View style={{ paddingBlock: 4, rowGap: 4 }}>
+            {errors.basket && <ErrorAlert message={errors.basket} />}
+            {errors.discounts && <ErrorAlert message={errors.discounts} />}
+            {errors.promotions && <ErrorAlert message={errors.promotions} />}
+          </View>
+        )}
+
+        {basketIds.length > 0 && !hasError && (
           <>
             <BasketHeader />
             <BasketList navigation={props.navigation} basketData={basketData} />
@@ -163,7 +174,8 @@ export const BasketScreen = (props: Props) => {
             />
           </>
         )}
-        {basketIds.length === 0 && (
+
+        {basketIds.length === 0 && !hasError && (
           <NotContent
             title="В корзине пока пусто"
             subTitle="Перейдите на главную и добавьте товары, которые могут вам понравиться."

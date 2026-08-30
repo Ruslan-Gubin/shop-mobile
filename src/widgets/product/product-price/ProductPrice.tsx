@@ -11,7 +11,7 @@ type Props = {
 };
 
 export const ProductPrice = (props: Props) => {
-  const count = basketStore((state) => state.items[props.product_id]) || 0;
+  const count = basketStore((state) => state.items[props.product_id]) || 1;
 
   const currentPrice = useMemo(
     () => getCurrentPrice(count || 1, props.priceList),
@@ -23,7 +23,7 @@ export const ProductPrice = (props: Props) => {
       {currentPrice > 0 && (
         <View style={styles.priceContainer}>
           <CartPriceSvg fill="#10c10c" size={16} />
-          <Text style={styles.price}>{formatterRub.format(currentPrice)}</Text>
+          <Text style={styles.price}>{formatterRub.format(currentPrice * count)}</Text>
         </View>
       )}
     </View>
