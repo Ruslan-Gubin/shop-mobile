@@ -4,11 +4,11 @@ import { getActiveAddress } from "../../../shared/helpers/getActiveAddress";
 import { getFullAddressItem } from "../../../shared/helpers/getFullAddressItem";
 import { PinAddressSvg } from "../../../shared/svg/PinAddressSvg";
 import { checkoutAdapter } from "../../../store/checkout/adapter";
-import type { AddressItem } from "../../../store/checkout/types";
 import { checkoutStore } from "../../../store/checkout/store";
+import type { AddressItem } from "../../../store/checkout/types";
 import { AddressModal } from "./AddressModal";
-import { MapBox } from "./map/MapBox";
 import { ModalSelectAddress } from "./ModalSelectAddress";
+import { MapBox } from "./map/MapBox";
 
 type Props = {
   pickupAddress: AddressItem[];
@@ -36,8 +36,8 @@ export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
   const filterAddress = method_receipt === "pickup" ? pickupAddress : courierAddress;
 
   const selectAddress = activeAddress
-    ? filterAddress.find((el) => el.lng === activeAddress.lng && el.lat === activeAddress.lat) ??
-      null
+    ? (filterAddress.find((el) => el.lng === activeAddress.lng && el.lat === activeAddress.lat) ??
+      null)
     : null;
 
   const handleClickAddAddress = () => {
@@ -80,9 +80,7 @@ export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
             <Text style={styles.leftSideTitle}>
               {selectAddress.type === "courier" ? "Курьером по адресу:" : "Адрес самовывоза:"}
             </Text>
-            <Text style={styles.activeMarkerAddressText}>
-              {getFullAddressItem(selectAddress)}
-            </Text>
+            <Text style={styles.activeMarkerAddressText}>{getFullAddressItem(selectAddress)}</Text>
             <Text style={styles.activeMarkerAddressText}>
               Минимальная сумма заказа {method_receipt === "courier" ? 5000 : 0} ₽.
             </Text>
@@ -95,9 +93,7 @@ export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
 
       <View style={styles.leftSideFooter}>
         <Pressable style={styles.button} onPress={() => setSelectModal(true)}>
-          <Text style={styles.buttonText}>
-            {hasActive ? "Изменить адрес" : "Выбрать адрес"}
-          </Text>
+          <Text style={styles.buttonText}>{hasActive ? "Изменить адрес" : "Выбрать адрес"}</Text>
         </Pressable>
       </View>
 
@@ -133,14 +129,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   activeMarkerAddressText: {
-    fontSize: 14,
     color: "#242424",
   },
   leftSideFooter: {
     alignItems: "flex-start",
   },
   button: {
-    height: 40,
+    height: 36,
     paddingHorizontal: 24,
     borderRadius: 12,
     backgroundColor: "#a73afd",
@@ -149,7 +144,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#fff",
-    fontSize: 14,
     fontWeight: "600",
   },
   mapContainer: {
@@ -158,3 +152,4 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 });
+

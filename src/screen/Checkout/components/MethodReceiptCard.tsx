@@ -1,5 +1,5 @@
-import type { AddressItem } from "../../../store/checkout/types";
 import { checkoutStore } from "../../../store/checkout/store";
+import type { AddressItem } from "../../../store/checkout/types";
 import { CheckoutAddress } from "./CheckoutAddress";
 import { InfoCard } from "./InfoCard";
 import { SelectMethodReceipt } from "./SelectMethodReceipt";
@@ -19,3 +19,4 @@ export const MethodReceiptCard = ({ pickupAddress, defaultCenter }: Props) => {
     </InfoCard>
   );
 };
+

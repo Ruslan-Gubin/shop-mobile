@@ -1,9 +1,8 @@
-import { useMemo, useState } from "react";
-import { StyleSheet } from "react-native";
 import Mapbox, { type ScreenPointPayload } from "@rnmapbox/maps";
 import type { Feature, Point, Position } from "geojson";
-import type { AddressItem } from "../../../../store/checkout/types";
+import { useMemo, useState } from "react";
 import { CONFIG_APP } from "../../../../shared/config/config";
+import type { AddressItem } from "../../../../store/checkout/types";
 import { CustomMarker } from "./CustomMarker";
 
 Mapbox.setAccessToken(CONFIG_APP.MAPBOX_ACCESS_TOKEN);
@@ -21,7 +20,7 @@ export const MapBox = ({
   initCenter,
   active,
   markers,
-  initZoom = 15,
+  initZoom,
   onClickMarker,
   onClickMap,
 }: Props) => {
@@ -77,14 +76,14 @@ export const MapBox = ({
 
   return (
     <Mapbox.MapView
-      style={styles.map}
+      style={{ flex: 1 }}
       styleURL={CONFIG_APP.MAPBOX_STYLE}
       onPress={handleClickMap}
       onRegionDidChange={handleChangeRegion}
     >
       <Mapbox.Camera
         centerCoordinate={[center.lng, center.lat]}
-        zoomLevel={initZoom}
+        zoomLevel={initZoom || 15}
         animationDuration={400}
       />
       {sortedMarkers.map((marker) => (
@@ -106,9 +105,3 @@ export const MapBox = ({
     </Mapbox.MapView>
   );
 };
-
-const styles = StyleSheet.create({
-  map: {
-    flex: 1,
-  },
-});

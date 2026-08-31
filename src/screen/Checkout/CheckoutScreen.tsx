@@ -12,8 +12,8 @@ import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
 import { PageHeader } from "../../shared/ui/header/PageHeader";
 import { basketStore } from "../../store/basket/store";
 import type { AddressItem } from "../../store/checkout/types";
-import { CheckoutFooter } from "./components/CheckoutFooter";
 import { AdditionalInformation } from "./components/AdditionalInformation";
+import { CheckoutFooter } from "./components/CheckoutFooter";
 import { DeliveryDateCard } from "./components/DeliveryDateCard";
 import { MethodReceiptCard } from "./components/MethodReceiptCard";
 import { OrderSummary } from "./components/OrderSummary";
@@ -247,4 +247,3 @@ const styles = StyleSheet.create({
     rowGap: 8,
   },
 });
-

@@ -60,6 +60,26 @@ yarn ios
 
 If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
 
+## RNMapbox Maps — ручной фикс нативной правки
+
+`@rnmapbox/maps@10.3.5` несовместим с React Native 0.87: в `LayoutMetrics`
+поле `borderWidth` стало `EdgeInsets`, из-за чего сборка iOS падает в
+`RNMBXMarkerViewComponentView.mm` (ошибка `no viable conversion from
+'EdgeInsets' to 'Float'`).
+
+Исправленная копия файла хранится в репозитории:
+`patches/@rnmapbox/maps/ios/RNMBX/RNMBXMarkerViewComponentView.mm`
+
+После **каждой переустановки зависимостей** (`npm install` / `npm ci`,
+новый клон репозитория, новый Mac) примени её вручную:
+
+```sh
+cp patches/@rnmapbox/maps/ios/RNMBX/RNMBXMarkerViewComponentView.mm \
+   node_modules/@rnmapbox/maps/ios/RNMBX/RNMBXMarkerViewComponentView.mm
+```
+
+Затем пересобери нативную часть через `pod install` и Xcode.
+
 This is one way to run your app — you can also build it directly from Android Studio or Xcode.
 
 ## Step 3: Modify your app
