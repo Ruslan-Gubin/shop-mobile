@@ -64,7 +64,9 @@ export const AddressSearch = ({ onSelectCourier }: Props) => {
 
     fetchForwardAction(address)
       .then((payload) => {
-        setSearch(payload.place === payload.name ? payload.name : `${payload.place}, ${payload.name}`);
+        setSearch(
+          payload.place === payload.name ? payload.name : `${payload.place}, ${payload.name}`,
+        );
         onSelectCourier(payload);
       })
       .finally(() => {
@@ -74,11 +76,7 @@ export const AddressSearch = ({ onSelectCourier }: Props) => {
 
   return (
     <View style={styles.root}>
-      <FieldInput
-        value={search}
-        onChangeText={handleChangeSearch}
-        placeholder="Искать на карте"
-      />
+      <FieldInput value={search} onChangeText={handleChangeSearch} placeholder="Искать на карте" />
       {suggestions.length > 0 && (
         <View style={styles.searchList}>
           {suggestions.map((item) => (
@@ -138,3 +136,4 @@ const styles = StyleSheet.create({
     color: "#8a8999",
   },
 });
+

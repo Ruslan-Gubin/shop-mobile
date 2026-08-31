@@ -13,14 +13,14 @@ export const CustomMarker = ({ address, type, size, active }: Props) => {
   const Icon = type === "courier" ? UserSvg : WarehouseSvg;
 
   const pointSize = active ? 0 : size === "sm" ? 24 : size === "md" ? 40 : 60;
-  const iconSize = active ? 12 : size === "sm" ? 12 : size === "md" ? 20 : 22;
+  const iconSize = active ? 10 : size === "sm" ? 10 : size === "md" ? 16 : 18;
 
   return (
     <View style={styles.marker}>
       {active && (
         <View style={[styles.infoContainer, !address && styles.infoContainerNotAddress]}>
           <View style={styles.svgContainer}>
-            <Icon fill="#fff" size={24} />
+            <Icon fill="#fff" size={18} />
           </View>
           {address ? (
             <Text style={styles.addressText} numberOfLines={1}>
@@ -52,29 +52,22 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     position: "relative",
-    height: 60,
+    height: 50,
     borderRadius: 30,
-    backgroundColor: "#fff",
     padding: 8,
     flexDirection: "row",
     alignItems: "center",
     columnGap: 6,
-    borderWidth: 1.5,
-    borderColor: "rgba(0, 26, 52, 0.05)",
-    shadowColor: "#001a34",
-    shadowOffset: { width: 0, height: 9 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-    elevation: 6,
+    backgroundColor: "#fff",
   },
   infoContainerNotAddress: {
     paddingHorizontal: 10,
   },
   infoTail: {
     position: "absolute",
-    bottom: -14,
+    bottom: -6,
     left: "50%",
-    marginLeft: -10,
+    transform: [{ translateX: -2 }],
     width: 0,
     height: 0,
     borderLeftWidth: 10,
@@ -87,15 +80,14 @@ const styles = StyleSheet.create({
   svgContainer: {
     backgroundColor: "#f1117e",
     borderRadius: 50,
-    height: 44,
-    width: 44,
+    height: 36,
+    width: 36,
     alignItems: "center",
     justifyContent: "center",
   },
   point: {
     position: "absolute",
-    bottom: -6,
-    backgroundColor: "#f1117e",
+    bottom: 0,
     borderWidth: 3,
     borderColor: "#fff",
     borderRadius: 50,
@@ -103,38 +95,26 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     height: 12,
     width: 12,
+    backgroundColor: "#f1117e",
   },
   pointSmSize: {
+    position: "static",
     height: 24,
     width: 24,
-    shadowColor: "#001a34",
-    shadowOffset: { width: 0, height: 9 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-    elevation: 6,
+    backgroundColor: "red",
   },
   pointMdSize: {
+    position: "static",
     height: 40,
     width: 40,
-    shadowColor: "#001a34",
-    shadowOffset: { width: 0, height: 9 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-    elevation: 6,
   },
   pointLgSize: {
+    position: "static",
     height: 60,
     width: 60,
-    shadowColor: "#001a34",
-    shadowOffset: { width: 0, height: 9 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-    elevation: 6,
   },
   addressText: {
-    fontSize: 14,
     fontWeight: "500",
     maxWidth: 200,
-    color: "#242424",
   },
 });

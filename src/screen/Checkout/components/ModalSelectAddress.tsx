@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { getFullAddressItem } from "../../../shared/helpers/getFullAddressItem";
+import { DeleteSvg } from "../../../shared/svg/DeleteSvg";
+import { Checkbox } from "../../../shared/ui/checkbox/Checkbox";
+import { SelectMethodReceiptModal } from "../../../shared/ui/SelectMethodReceiptModal/SelectMethodReceiptModal";
 import { checkoutAdapter } from "../../../store/checkout/adapter";
 import type { AddressItem } from "../../../store/checkout/types";
 import { BaseModal } from "../../../widgets/modal/base-modal/BaseModal";
@@ -18,43 +21,99 @@ type Props = {
 };
 
 export const ModalSelectAddress = (props: Props) => {
+  const [methodReceipt, setMethodReceipt] = useState<"pickup" | "courier">("pickup");
   const [selectPickup, setSelectPickup] = useState<{ lng: number; lat: number } | null>(null);
+  const [selectCourier, setSelectCourier] = useState<{ lng: number; lat: number } | null>(null);
+
+  const handleChangeMethod = (value: "pickup" | "courier") => {
+    setMethodReceipt(value);
+  };
+
+  const handleSelectAddress = (lng: number, lat: number) => {
+    if (lng && lat) {
+      if (methodReceipt === "pickup") {
+        setSelectPickup({ lng, lat });
+      } else if (methodReceipt === "courier") {
+        setSelectCourier({ lng, lat });
+      }
+    }
+  };
+
+  const handleDeleteAddress = (lng: number, lat: number, name: string) => {
+    if (lng && lat && name) {
+      checkoutAdapter.deleteAddress(lng, lat, name);
+
+      if (selectCourier?.lng === lng && selectCourier?.lat === lat) {
+        if (props.activeCourier) {
+          setSelectCourier(props.activeCourier);
+        } else if (Array.isArray(props.courierAddress) && props.courierAddress[0]) {
+          setSelectCourier({ lng: props.courierAddress[0].lng, lat: props.courierAddress[0].lat });
+        }
+      }
+    }
+  };
+
+  const onSubmitAddress = () => {
+    checkoutAdapter.setMethodReceipt(methodReceipt);
+    if (methodReceipt === "pickup" && selectPickup) {
+      checkoutAdapter.setActiveAddress(selectPickup.lng, selectPickup.lat);
+    } else if (methodReceipt === "courier" && selectCourier) {
+      checkoutAdapter.setActiveAddress(selectCourier.lng, selectCourier.lat);
+    }
+    props.onClose();
+  };
 
   useEffect(() => {
     if (props.active) {
       if (selectPickup === null && props.activePickup) {
         setSelectPickup(props.activePickup);
       }
+
+      if (selectCourier === null && props.activeCourier) {
+        setSelectCourier(props.activeCourier);
+      }
     } else {
       setSelectPickup(null);
+      setSelectCourier(null);
     }
-  }, [props.active, props.activePickup, selectPickup]);
+  }, [props.active, selectPickup, selectCourier, props.activeCourier, props.activePickup]);
+
+  useEffect(() => {
+    if (props.active) {
+      setMethodReceipt(props.method_receipt);
+    }
+  }, [props.active, props.method_receipt]);
 
   const getIsActiveAddress = (lng: number, lat: number) => {
-    if (selectPickup && lng === selectPickup.lng && lat === selectPickup.lat) {
-      return true;
-    }
+    let isActive = false;
 
     if (
+      methodReceipt === "pickup" &&
+      selectPickup &&
+      lng === selectPickup.lng &&
+      lat === selectPickup.lat
+    ) {
+      isActive = true;
+    } else if (
+      methodReceipt === "pickup" &&
       !selectPickup &&
       lng === props.defaultCenter.lng &&
       lat === props.defaultCenter.lat
     ) {
-      return true;
+      isActive = true;
+    } else if (
+      methodReceipt === "courier" &&
+      selectCourier &&
+      lng === selectCourier.lng &&
+      lat === selectCourier.lat
+    ) {
+      isActive = true;
     }
 
-    return false;
+    return isActive;
   };
 
-  const onSubmitPickup = () => {
-    if (selectPickup) {
-      checkoutAdapter.setActiveAddress(selectPickup.lng, selectPickup.lat);
-    }
-    props.onClose();
-  };
-
-  const isPickup = props.method_receipt === "pickup";
-  const filterAddress = isPickup ? props.pickupAddress : props.courierAddress;
+  const filterAddress = methodReceipt === "pickup" ? props.pickupAddress : props.courierAddress;
 
   return (
     <BaseModal
@@ -63,80 +122,91 @@ export const ModalSelectAddress = (props: Props) => {
       title="Способ доставки"
       footerAction={{
         cancel: {
-          text: "Отмена",
-          action: props.onClose,
-          backgroundColor: "#f6f6f9",
+          text: methodReceipt === "courier" ? "Добавить" : "Отмена",
+          action: methodReceipt === "courier" ? props.onAddAddress : props.onClose,
+          backgroundColor: methodReceipt === "courier" ? "#a73afd" : "#f6f6f9",
+          color: methodReceipt === "courier" ? "white" : "gray",
         },
         submit: {
-          text: isPickup ? "Заберу отсюда" : "Добавить адрес",
-          action: isPickup ? onSubmitPickup : props.onAddAddress,
-          disabled: isPickup && !selectPickup,
+          text: methodReceipt === "courier" ? "Доставить сюда" : "Заберу отсюда",
+          action: onSubmitAddress,
+          disabled:
+            (methodReceipt === "pickup" && !selectPickup) ||
+            (methodReceipt === "courier" && !selectCourier),
           backgroundColor: "#a73afd",
         },
       }}
     >
-      {isPickup ? (
-        <>
-          <Text style={styles.hint}>Выберите склад самовывоза:</Text>
-          <ScrollView style={styles.addressList}>
-            {filterAddress.map((address) => {
-              const isActive = getIsActiveAddress(address.lng, address.lat);
+      <View style={styles.selectTypeRoot}>
+        <SelectMethodReceiptModal
+          methodReceipt={methodReceipt}
+          onChangeMethod={handleChangeMethod}
+        />
+      </View>
 
-              return (
+      <ScrollView style={styles.addressList}>
+        {filterAddress.map((address) => (
+          <View
+            key={`${address.lng}_${address.lat}_${address.type}_${address.name}`}
+            style={styles.addressItem}
+          >
+            <View style={{ flex: 1 }}>
+              <Checkbox
+                checked={getIsActiveAddress(address.lng, address.lat)}
+                onPress={() => handleSelectAddress(address.lng, address.lat)}
+                isRect
+                label={getFullAddressItem(address)}
+              />
+            </View>
+            {methodReceipt === "courier" &&
+              !(props.activeCourier !== null &&
+                props.activeCourier.lng === address.lng &&
+                props.activeCourier.lat === address.lat) && (
                 <Pressable
-                  key={`${address.lng}_${address.lat}_${address.type}_${address.name}`}
-                  style={[styles.addressItem, isActive && styles.addressItemActive]}
-                  onPress={() => setSelectPickup({ lng: address.lng, lat: address.lat })}
+                  onPress={() => handleDeleteAddress(address.lng, address.lat, address.name)}
+                  style={styles.deleteButton}
                 >
-                  <Text style={[styles.addressText, isActive && styles.addressTextActive]}>
-                    {getFullAddressItem(address)}
-                  </Text>
+                  <DeleteSvg fill="#a9a8b0" size={20} />
                 </Pressable>
-              );
-            })}
-          </ScrollView>
-        </>
-      ) : (
-        <Text style={styles.courierPlaceholder}>
-          Добавление адреса курьера появится вместе с картой. Пока можно подтвердить адрес
-          доставки вручную.
-        </Text>
-      )}
+              )}
+          </View>
+        ))}
+      </ScrollView>
     </BaseModal>
   );
 };
 
 const styles = StyleSheet.create({
-  hint: {
-    fontSize: 13,
-    color: "#8a8999",
-    marginBottom: 4,
-  },
-  addressList: {
-    maxHeight: 380,
-  },
-  addressItem: {
-    borderWidth: 1,
-    borderColor: "#f1f1f5",
-    borderRadius: 12,
-    padding: 12,
-    backgroundColor: "#25507e05",
-    marginBottom: 8,
-  },
-  addressItemActive: {
-    borderColor: "#ffcb54",
+  selectTypeRoot: {
     backgroundColor: "#fff",
   },
-  addressText: {
-    fontSize: 14,
-    color: "#868695",
+  addressList: {
+    maxHeight: 350,
+    minHeight: 350,
+    flexGrow: 0,
   },
-  addressTextActive: {
-    color: "#242424",
+  addressItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    columnGap: 8,
+    paddingVertical: 8,
   },
-  courierPlaceholder: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#8a8999",
+  deleteButton: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addButton: {
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "#a73afd",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addButtonText: {
+    color: "#fff",
+    fontWeight: "600",
   },
 });

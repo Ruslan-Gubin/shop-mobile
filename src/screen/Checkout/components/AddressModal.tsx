@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { fetchReverseAction } from "../../../shared/helpers/geocode";
 import { getActiveAddress } from "../../../shared/helpers/getActiveAddress";
 import { getInitCenter } from "../../../shared/helpers/getInitCenter";
-import { fetchReverseAction } from "../../../shared/helpers/geocode";
 import { FieldInput } from "../../../shared/ui/FieldInput/FieldInput";
 import { SelectMethodReceiptModal } from "../../../shared/ui/SelectMethodReceiptModal/SelectMethodReceiptModal";
 import { checkoutAdapter } from "../../../store/checkout/adapter";
@@ -141,7 +141,10 @@ export const AddressModal = (props: Props) => {
     (methodReceipt === "pickup" && !selectPickup) ||
     (methodReceipt === "courier" && !selectCourier);
 
-  const handleChangeValues = (value: string, key: keyof Omit<AddressItem, "type" | "lng" | "lat" | "name" | "place">) => {
+  const handleChangeValues = (
+    value: string,
+    key: keyof Omit<AddressItem, "type" | "lng" | "lat" | "name" | "place">,
+  ) => {
     setSelectCourier((prev) => (prev ? { ...prev, [key]: value } : null));
   };
 
@@ -149,7 +152,9 @@ export const AddressModal = (props: Props) => {
     <BaseModal
       visible={props.active}
       onClose={props.onClose}
-      title={methodReceipt === "courier" && selectCourier?.name ? selectCourier.name : "Способ доставки"}
+      title={
+        methodReceipt === "courier" && selectCourier?.name ? selectCourier.name : "Способ доставки"
+      }
       footerAction={{
         cancel: {
           text: "Отмена",
@@ -188,7 +193,18 @@ export const AddressModal = (props: Props) => {
       <ScrollView style={styles.formContent} showsVerticalScrollIndicator={false}>
         {methodReceipt === "courier" && (
           <View style={styles.searchSection}>
-            <AddressSearch onSelectCourier={(payload) => setSelectCourier({ ...payload, entrance: "", flat: "", floor: "", intercom: "", type: "courier" })} />
+            <AddressSearch
+              onSelectCourier={(payload) =>
+                setSelectCourier({
+                  ...payload,
+                  entrance: "",
+                  flat: "",
+                  floor: "",
+                  intercom: "",
+                  type: "courier",
+                })
+              }
+            />
             {!selectCourier && (
               <>
                 <Text style={styles.subTitle}>Куда доставить заказ?</Text>
@@ -280,6 +296,7 @@ const styles = StyleSheet.create({
   },
   formContent: {
     maxHeight: 320,
+    flexGrow: 0,
   },
   searchSection: {
     rowGap: 4,
@@ -335,3 +352,4 @@ const styles = StyleSheet.create({
     color: "#8a8999",
   },
 });
+

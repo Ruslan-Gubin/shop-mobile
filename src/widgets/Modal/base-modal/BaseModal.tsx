@@ -16,8 +16,20 @@ type Props = {
   onClose: () => void;
   children?: React.ReactNode;
   footerAction?: {
-    cancel?: { text: string; action: () => void; backgroundColor: string; disabled?: boolean };
-    submit?: { text: string; action: () => void; backgroundColor: string; disabled?: boolean };
+    cancel?: {
+      text: string;
+      action: () => void;
+      backgroundColor: string;
+      disabled?: boolean;
+      color?: string;
+    };
+    submit?: {
+      text: string;
+      action: () => void;
+      backgroundColor: string;
+      disabled?: boolean;
+      color?: string;
+    };
   };
 };
 
@@ -55,7 +67,16 @@ export const BaseModal = (props: Props) => {
                     ]}
                     onPress={props.footerAction.cancel.action}
                   >
-                    <Text style={styles.buttonCancelText}>{props.footerAction.cancel.text}</Text>
+                    <Text
+                      style={[
+                        styles.buttonCancelText,
+                        props.footerAction.cancel.color && {
+                          color: props.footerAction.cancel.color,
+                        },
+                      ]}
+                    >
+                      {props.footerAction.cancel.text}
+                    </Text>
                   </Pressable>
                 )}
                 {props.footerAction.submit && (
@@ -68,7 +89,16 @@ export const BaseModal = (props: Props) => {
                     ]}
                     onPress={props.footerAction.submit.action}
                   >
-                    <Text style={styles.buttonDeleteText}>{props.footerAction.submit.text}</Text>
+                    <Text
+                      style={[
+                        styles.buttonDeleteText,
+                        props.footerAction.submit.color && {
+                          color: props.footerAction.submit.color,
+                        },
+                      ]}
+                    >
+                      {props.footerAction.submit.text}
+                    </Text>
                   </Pressable>
                 )}
               </View>
