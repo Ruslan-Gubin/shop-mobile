@@ -1,3 +1,5 @@
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { getActiveAddress } from "../../../shared/helpers/getActiveAddress";
@@ -6,7 +8,6 @@ import { PinAddressSvg } from "../../../shared/svg/PinAddressSvg";
 import { checkoutAdapter } from "../../../store/checkout/adapter";
 import { checkoutStore } from "../../../store/checkout/store";
 import type { AddressItem } from "../../../store/checkout/types";
-import { AddressModal } from "./AddressModal";
 import { ModalSelectAddress } from "./ModalSelectAddress";
 import { MapBox } from "./map/MapBox";
 
@@ -16,13 +17,13 @@ type Props = {
 };
 
 export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const method_receipt = checkoutStore((store) => store.method_receipt);
   const activePickup = checkoutStore((store) => store.activePickup);
   const activeCourier = checkoutStore((store) => store.activeCourier);
   const courierAddress = checkoutStore((store) => store.courierAddress);
 
   const [selectModal, setSelectModal] = useState(false);
-  const [selectAddressModal, setSelectAddressModal] = useState(false);
 
   const activeAddress = getActiveAddress(
     pickupAddress,
@@ -42,7 +43,7 @@ export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
 
   const handleClickAddAddress = () => {
     setSelectModal(false);
-    setSelectAddressModal(true);
+    navigation.navigate("AddAddress");
   };
 
   const hasActive =
@@ -59,16 +60,6 @@ export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
         pickupAddress={pickupAddress}
         courierAddress={courierAddress}
         defaultCenter={defaultCenter}
-        activePickup={activePickup}
-        activeCourier={activeCourier}
-      />
-      <AddressModal
-        active={selectAddressModal}
-        onClose={() => setSelectAddressModal(false)}
-        defaultCenter={defaultCenter}
-        method_receipt={method_receipt}
-        pickupAddress={pickupAddress}
-        courierAddress={courierAddress}
         activePickup={activePickup}
         activeCourier={activeCourier}
       />

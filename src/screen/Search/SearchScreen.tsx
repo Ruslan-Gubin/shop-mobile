@@ -1,6 +1,6 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { fetchService } from "../../shared/fetch-api";
 import { getMessageError } from "../../shared/helpers/getMessageError";
@@ -29,7 +29,7 @@ export const SearchScreen = (props: Props) => {
   const history = searchStore((store) => store.history);
   const debounceFn = useDebounce();
 
-  const fetchInitData = () => {
+  const fetchInitData = useEffectEvent(() => {
     fetchService
       .get<SearchModel[]>({
         url: "search/popular",
@@ -40,7 +40,7 @@ export const SearchScreen = (props: Props) => {
           setPopularList(response.data.map((el) => el.text));
         }
       });
-  };
+  });
 
   useEffect(() => {
     fetchInitData();
