@@ -8,7 +8,7 @@ type Props = {
   id: number;
   available: number | null;
   accounting: boolean;
-  revalidateBasketAction?: () => Promise<void>;
+  variant?: "violet";
 };
 
 export const AddBasketLarge = (props: Props) => {
@@ -18,19 +18,44 @@ export const AddBasketLarge = (props: Props) => {
   const handleIncrement = (id: number) => basketAdapter.increment(id);
 
   const disabledAddCount = props.accounting && count >= (props.available || 0);
+  const disabledDecrement = props.variant !== "violet" && count <= 1;
+
+  const minusSvgFill =
+    props.variant === "violet" ? "white" : disabledDecrement ? "#c8c8d1" : "#a73afd";
+
+  const addSvgFill = !disabledAddCount
+    ? props.variant === "violet"
+      ? "white"
+      : "#a73afd"
+    : props.variant === "violet"
+      ? "gray"
+      : "#c8c8d1";
 
   return (
-    <View style={styles.addBasketContainer}>
+    <View
+      style={[
+        styles.addBasketContainer,
+        {
+          backgroundColor: props.variant === "violet" ? "#a73afd" : "#f1f1f5",
+          height: props.variant === "violet" ? 36 : 30,
+          borderRadius: props.variant === "violet" ? 12 : 8,
+        },
+      ]}
+    >
       <Pressable
-        disabled={count <= 1}
+        disabled={disabledDecrement}
         style={styles.button}
         onPress={() => handleDecrementProduct(props.id)}
       >
-        <MinusSvg fill={count <= 1 ? "#c8c8d1" : "#a73afd"} size={20} />
+        <MinusSvg fill={minusSvgFill} size={20} />
       </Pressable>
 
       <View style={styles.countContainer}>
-        <Text style={styles.countValue}>{count}</Text>
+        <Text
+          style={[styles.countValue, { color: props.variant === "violet" ? "white" : "#242424" }]}
+        >
+          {count}
+        </Text>
       </View>
 
       <Pressable
@@ -38,7 +63,7 @@ export const AddBasketLarge = (props: Props) => {
         style={styles.button}
         onPress={() => handleIncrement(props.id)}
       >
-        <AddSvg fill={disabledAddCount ? "#c8c8d1" : "#a73afd"} size={20} />
+        <AddSvg fill={addSvgFill} size={20} />
       </Pressable>
     </View>
   );
@@ -46,10 +71,7 @@ export const AddBasketLarge = (props: Props) => {
 
 const styles = StyleSheet.create({
   addBasketContainer: {
-    height: 30,
     paddingInline: 12,
-    backgroundColor: "#f1f1f5",
-    borderRadius: 8,
     flexDirection: "row",
     justifyContent: "space-around",
   },

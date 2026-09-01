@@ -1,5 +1,23 @@
 import type { PhotoModel } from "./photo";
 
+export type SpecificationModel = {
+  id: number;
+  name: string;
+  type: "text" | "color" | "number";
+  created_at: string;
+  updated_at: string | null;
+};
+
+export type ProductSpecificationModel = {
+  id: number;
+  product_id: number;
+  specification_id: number;
+  value: string;
+  created_at: string;
+  updated_at: string | null;
+  specification: SpecificationModel;
+};
+
 export interface ProductModel {
   id: number;
   name: string;

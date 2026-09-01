@@ -84,7 +84,6 @@ export const MapBox = ({
         animationDuration={400}
       />
       <MarkerList
-        key={`${active?.lat}_${active?.lng}`}
         active={active}
         mapZoom={mapZoom}
         onClickMarker={onClickMarker}

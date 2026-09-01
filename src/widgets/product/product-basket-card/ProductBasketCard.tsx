@@ -25,6 +25,7 @@ type Props = {
 };
 
 export const ProductBasketCard = (props: Props) => {
+  //TODO REMOVE
   const revalidateBasketAction = async () => {
     new Promise(() => {
       console.log("revalidate");
