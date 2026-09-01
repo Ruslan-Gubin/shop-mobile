@@ -42,14 +42,7 @@ export const MapBox = ({
     const zoom = e.properties?.zoom;
 
     if (typeof zoom === "number") {
-      const updateZoom =
-        zoom < 14 && mapZoom !== "sm"
-          ? "sm"
-          : zoom > 14 && zoom < 17 && mapZoom !== "md"
-            ? "md"
-            : zoom > 17 && mapZoom !== "lg"
-              ? "lg"
-              : mapZoom;
+      const updateZoom = zoom <= 14 ? "sm" : zoom >= 17 ? "lg" : "md";
 
       if (updateZoom !== mapZoom) {
         setMapZoom(updateZoom);
@@ -87,7 +80,7 @@ export const MapBox = ({
     >
       <Mapbox.Camera
         centerCoordinate={[center.lng, center.lat]}
-        zoomLevel={initZoom || 15}
+        zoomLevel={initZoom || 17}
         animationDuration={400}
       />
       <MarkerList

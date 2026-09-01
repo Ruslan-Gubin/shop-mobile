@@ -50,7 +50,7 @@ export const BasketFooter = (props: Props) => {
       }
     }
 
-    const defaultErrorMessage = "Не удалось проверить наличии товаров на складах";
+    const defaultErrorMessage = "Не удалось проверить наличие товаров на складах";
 
     fetchCheckingBalance(selectedProducts)
       .then((response) => {

@@ -79,7 +79,7 @@ export const StockWarningModal = (props: Props) => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       >
-        {props.items.reverse().map((item) => (
+        {props.items.map((item) => (
           <View key={item.product_id} style={styles.itemCard}>
             <View style={styles.itemHeader}>
               <Text>{item.name}</Text>

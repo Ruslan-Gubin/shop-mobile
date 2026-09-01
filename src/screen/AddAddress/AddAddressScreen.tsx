@@ -2,6 +2,7 @@ import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { CONFIG_APP } from "../../shared/config/config";
 import { fetchReverseAction, type GeocodeResult } from "../../shared/helpers/geocode";
 import { ArrowBackIcon } from "../../shared/svg/ArrowBackIcon";
 import { PinAddressSvg } from "../../shared/svg/PinAddressSvg";
@@ -14,21 +15,9 @@ import { AddressSearchModal } from "./components/AddressSearchModal";
 
 type Props = {
   navigation: NativeStackNavigationProp<ParamListBase, "AddAddress">;
-  route?: {
-    key: string;
-    name: string;
-    params?: {
-      addressName?: string;
-      addressPlace?: string;
-      lng?: number;
-      lat?: number;
-    };
-  };
 };
 
-const DEFAULT_CENTER = { lng: 37.80358599891716, lat: 48.013597598505555 };
-
-export const AddAddressScreen = ({ navigation }: Props) => {
+export const AddAddressScreen = (props: Props) => {
   const [address, setAddress] = useState<AddressItem | null>(null);
   const [searchModal, setSearchModal] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -73,12 +62,14 @@ export const AddAddressScreen = ({ navigation }: Props) => {
     setSearchModal(true);
   };
 
-  const handleSubmit = () => {
-    if (!address) return;
+  const isValidAddress = address?.lng && address.lat;
 
-    checkoutAdapter.addAddress(address);
-    checkoutAdapter.setActiveAddress(address.lng, address.lat);
-    navigation.goBack();
+  const handleSubmit = () => {
+    if (isValidAddress) {
+      checkoutAdapter.addAddress(address);
+      checkoutAdapter.setActiveAddress(address.lng, address.lat);
+      props?.navigation?.goBack();
+    }
   };
 
   const hasActiveAddress = courierAddress.length > 0 && activeCourier !== null;
@@ -86,8 +77,10 @@ export const AddAddressScreen = ({ navigation }: Props) => {
     ? { lng: address.lng, lat: address.lat }
     : hasActiveAddress
       ? { lng: activeCourier.lng, lat: activeCourier.lat }
-      : DEFAULT_CENTER;
-  const initZoom = address || hasActiveAddress ? 15 : 11;
+      : {
+          lng: CONFIG_APP.DEFAULT_MAP_CENTER_LNG,
+          lat: CONFIG_APP.DEFAULT_MAP_CENTER_LAT,
+        };
 
   return (
     <View style={styles.root}>
@@ -108,13 +101,13 @@ export const AddAddressScreen = ({ navigation }: Props) => {
           markers={address ? [address] : []}
           onClickMap={handleClickMap}
           onClickMarker={(lng, lat) => handleClickMap(lng, lat)}
-          initZoom={initZoom}
+          initZoom={address || hasActiveAddress ? 17 : 14}
         />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Назад"
           hitSlop={8}
-          onPress={() => navigation.goBack()}
+          onPress={() => props?.navigation?.goBack()}
           style={styles.backButton}
         >
           <ArrowBackIcon fill="#242424" size={28} />
@@ -122,7 +115,7 @@ export const AddAddressScreen = ({ navigation }: Props) => {
       </View>
 
       <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
-        {!address && (
+        {!isValidAddress && (
           <View style={styles.noAddressBlock}>
             <Pressable style={styles.searchButton} onPress={handleOpenSearch}>
               <PinAddressSvg size={20} fill="#8a8999" />
@@ -134,7 +127,7 @@ export const AddAddressScreen = ({ navigation }: Props) => {
           </View>
         )}
 
-        {address && (
+        {isValidAddress && (
           <View style={styles.addressBlock}>
             <Pressable
               style={styles.addressInfo}
@@ -152,8 +145,8 @@ export const AddAddressScreen = ({ navigation }: Props) => {
             <View style={styles.formInputs}>
               <View style={styles.formInputsLine}>
                 <View style={styles.formInputsItem}>
-                  <Text style={styles.inputLabel}>Квартира</Text>
                   <FieldInput
+                    label="Квартира"
                     value={address.flat}
                     onChangeText={(value) => handleChangeValues(value, "flat")}
                     placeholder="Номер"
@@ -162,8 +155,8 @@ export const AddAddressScreen = ({ navigation }: Props) => {
                   />
                 </View>
                 <View style={styles.formInputsItem}>
-                  <Text style={styles.inputLabel}>Подъезд</Text>
                   <FieldInput
+                    label="Подъезд"
                     value={address.entrance}
                     onChangeText={(value) => handleChangeValues(value, "entrance")}
                     placeholder="Номер"
@@ -174,8 +167,8 @@ export const AddAddressScreen = ({ navigation }: Props) => {
               </View>
               <View style={styles.formInputsLine}>
                 <View style={styles.formInputsItem}>
-                  <Text style={styles.inputLabel}>Домофон</Text>
                   <FieldInput
+                    label="Домофон"
                     value={address.intercom}
                     onChangeText={(value) => handleChangeValues(value, "intercom")}
                     placeholder="Номер"
@@ -184,8 +177,8 @@ export const AddAddressScreen = ({ navigation }: Props) => {
                   />
                 </View>
                 <View style={styles.formInputsItem}>
-                  <Text style={styles.inputLabel}>Этаж</Text>
                   <FieldInput
+                    label="Этаж"
                     value={address.floor}
                     onChangeText={(value) => handleChangeValues(value, "floor")}
                     placeholder="Номер"
@@ -196,7 +189,11 @@ export const AddAddressScreen = ({ navigation }: Props) => {
               </View>
             </View>
 
-            <Pressable style={styles.submitButton} onPress={handleSubmit}>
+            <Pressable
+              style={[styles.submitButton]}
+              disabled={!isValidAddress}
+              onPress={handleSubmit}
+            >
               <Text style={styles.submitButtonText}>Продолжить</Text>
             </Pressable>
           </View>
@@ -303,10 +300,6 @@ const styles = StyleSheet.create({
   formInputsItem: {
     flex: 1,
     rowGap: 4,
-  },
-  inputLabel: {
-    fontSize: 12,
-    color: "#8a8999",
   },
   submitButton: {
     height: 36,

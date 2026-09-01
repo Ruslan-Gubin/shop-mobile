@@ -2,6 +2,7 @@ import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useEffect, useEffectEvent, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { CONFIG_APP } from "../../shared/config/config";
 import { fetchService } from "../../shared/fetch-api";
 import { getMessageError } from "../../shared/helpers/getMessageError";
 import type { CartDiscountModel } from "../../shared/types/cart-discount";
@@ -23,9 +24,7 @@ type Props = {
   navigation: NativeStackNavigationProp<ParamListBase, "Checkout">;
 };
 
-const DEFAULT_CENTER = { lng: 37.80358599891716, lat: 48.013597598505555 };
-
-export const CheckoutScreen = ({ navigation }: Props) => {
+export const CheckoutScreen = (props: Props) => {
   const basket = basketStore((store) => store.items);
   const basketIds = Object.keys(basket).join(",");
 
@@ -33,7 +32,10 @@ export const CheckoutScreen = ({ navigation }: Props) => {
   const [cartDiscounts, setCartDiscounts] = useState<CartDiscountModel[]>([]);
   const [promotions, setPromotions] = useState<PromotionModel[]>([]);
   const [pickupAddress, setPickupAddress] = useState<AddressItem[]>([]);
-  const [defaultCenter, setDefaultCenter] = useState<{ lng: number; lat: number }>(DEFAULT_CENTER);
+  const [defaultCenter, setDefaultCenter] = useState<{ lng: number; lat: number }>({
+    lng: CONFIG_APP.DEFAULT_MAP_CENTER_LNG,
+    lat: CONFIG_APP.DEFAULT_MAP_CENTER_LAT,
+  });
 
   const [errors, setErrors] = useState<{
     basket: string;
@@ -41,6 +43,7 @@ export const CheckoutScreen = ({ navigation }: Props) => {
     promotions: string;
     warehouses: string;
   }>({ basket: "", discounts: "", promotions: "", warehouses: "" });
+  const [isAgreed, setIsAgreed] = useState(true);
 
   const updateError = (
     key: "basket" | "discounts" | "promotions" | "warehouses",
@@ -197,7 +200,7 @@ export const CheckoutScreen = ({ navigation }: Props) => {
 
   return (
     <View style={styles.container}>
-      <PageHeader title="Оформление заказа" onBack={() => navigation.goBack()} />
+      <PageHeader title="Оформление заказа" onBack={() => props?.navigation?.goBack()} />
 
       {hasError && (
         <View style={styles.errorsBlock}>
@@ -211,24 +214,32 @@ export const CheckoutScreen = ({ navigation }: Props) => {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <PaymentMethodCard />
         <DeliveryDateCard />
-        <MethodReceiptCard pickupAddress={pickupAddress} defaultCenter={defaultCenter} />
+        <MethodReceiptCard
+          navigation={props.navigation}
+          pickupAddress={pickupAddress}
+          defaultCenter={defaultCenter}
+        />
         <AdditionalInformation />
         <OrderSummary
+          navigation={props.navigation}
           basketProducts={basketProducts}
           cartDiscounts={cartDiscounts}
           promotions={promotions}
           pickupAddress={pickupAddress}
           defaultCenter={defaultCenter}
+          isAgreed={isAgreed}
+          onChangeAgreed={setIsAgreed}
         />
       </ScrollView>
 
       <CheckoutFooter
-        navigation={navigation}
+        navigation={props.navigation}
         basketProducts={basketProducts}
         cartDiscounts={cartDiscounts}
         promotions={promotions}
         pickupAddress={pickupAddress}
         defaultCenter={defaultCenter}
+        isAgreed={isAgreed}
       />
     </View>
   );

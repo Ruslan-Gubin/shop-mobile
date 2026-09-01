@@ -1,3 +1,5 @@
+import type { ParamListBase } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { calcBasketInfo } from "../../../shared/helpers/calcBasketInfo";
@@ -8,16 +10,20 @@ import { getSelectDeliveryDate } from "../../../shared/helpers/getSelectDelivery
 import type { CartDiscountModel } from "../../../shared/types/cart-discount";
 import type { ProductModel } from "../../../shared/types/products";
 import type { PromotionModel } from "../../../shared/types/promotion";
+import { Checkbox } from "../../../shared/ui/checkbox/Checkbox";
 import { basketStore } from "../../../store/basket/store";
 import { checkoutStore } from "../../../store/checkout/store";
 import type { AddressItem } from "../../../store/checkout/types";
 
 type Props = {
+  navigation: NativeStackNavigationProp<ParamListBase, "Checkout">;
   basketProducts: ProductModel[];
   cartDiscounts: CartDiscountModel[];
   promotions: PromotionModel[];
   pickupAddress: AddressItem[];
   defaultCenter: { lng: number; lat: number };
+  isAgreed: boolean;
+  onChangeAgreed: (value: boolean) => void;
 };
 
 export const OrderSummary = (props: Props) => {
@@ -136,6 +142,37 @@ export const OrderSummary = (props: Props) => {
           <Text style={styles.textInfo}>{deliveryTimeDisplay}</Text>
         </View>
       </View>
+
+      <View style={styles.agreementRow}>
+        <Checkbox checked={props.isAgreed} onPress={() => props.onChangeAgreed(!props.isAgreed)} />
+        <Text style={styles.agreementText}>
+          Соглашаюсь с{" "}
+          <Text
+            style={styles.agreementLink}
+            onPress={() =>
+              props.navigation.navigate("Agreement", {
+                title: "Правила пользования торговой площадкой",
+                content:
+                  "Правила пользования торговой площадкой. Содержание страницы появится позже.",
+              })
+            }
+          >
+            правилами пользования торговой площадкой
+          </Text>{" "}
+          и{" "}
+          <Text
+            style={styles.agreementLink}
+            onPress={() =>
+              props.navigation.navigate("Agreement", {
+                title: "Возврат товаров",
+                content: "Условия возврата товаров. Содержание страницы появится позже.",
+              })
+            }
+          >
+            возврата
+          </Text>
+        </Text>
+      </View>
     </View>
   );
 };
@@ -146,6 +183,23 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: "white",
     borderRadius: 16,
+  },
+  agreementRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#f1f1f5",
+  },
+  agreementText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 16,
+    color: "#868695",
+  },
+agreementLink: {
+    color: "#a73afd",
   },
   totalText: {
     fontSize: 15,
@@ -170,4 +224,3 @@ const styles = StyleSheet.create({
     color: "#242424",
   },
 });
-

@@ -1,4 +1,4 @@
-import { useNavigation } from "@react-navigation/native";
+import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -14,11 +14,11 @@ import { MapBox } from "./map/MapBox";
 type Props = {
   pickupAddress: AddressItem[];
   defaultCenter: { lng: number; lat: number };
+  navigation: NativeStackNavigationProp<ParamListBase, "Checkout">;
+  method_receipt: "pickup" | "courier";
 };
 
-export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
-  const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const method_receipt = checkoutStore((store) => store.method_receipt);
+export const CheckoutAddress = (props: Props) => {
   const activePickup = checkoutStore((store) => store.activePickup);
   const activeCourier = checkoutStore((store) => store.activeCourier);
   const courierAddress = checkoutStore((store) => store.courierAddress);
@@ -26,15 +26,15 @@ export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
   const [selectModal, setSelectModal] = useState(false);
 
   const activeAddress = getActiveAddress(
-    pickupAddress,
+    props.pickupAddress,
     courierAddress,
-    defaultCenter,
-    method_receipt,
+    props.defaultCenter,
+    props.method_receipt,
     activePickup,
     activeCourier,
   );
 
-  const filterAddress = method_receipt === "pickup" ? pickupAddress : courierAddress;
+  const filterAddress = props.method_receipt === "pickup" ? props.pickupAddress : courierAddress;
 
   const selectAddress = activeAddress
     ? (filterAddress.find((el) => el.lng === activeAddress.lng && el.lat === activeAddress.lat) ??
@@ -43,12 +43,12 @@ export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
 
   const handleClickAddAddress = () => {
     setSelectModal(false);
-    navigation.navigate("AddAddress");
+    props.navigation.navigate("AddAddress");
   };
 
   const hasActive =
-    (method_receipt === "courier" && activeCourier) ||
-    (method_receipt === "pickup" && activePickup);
+    (props.method_receipt === "courier" && activeCourier) ||
+    (props.method_receipt === "pickup" && activePickup);
 
   return (
     <View style={styles.root}>
@@ -56,10 +56,10 @@ export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
         active={selectModal}
         onClose={() => setSelectModal(false)}
         onAddAddress={handleClickAddAddress}
-        method_receipt={method_receipt}
-        pickupAddress={pickupAddress}
+        method_receipt={props.method_receipt}
+        pickupAddress={props.pickupAddress}
         courierAddress={courierAddress}
-        defaultCenter={defaultCenter}
+        defaultCenter={props.defaultCenter}
         activePickup={activePickup}
         activeCourier={activeCourier}
       />
@@ -73,7 +73,7 @@ export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
             </Text>
             <Text style={styles.activeMarkerAddressText}>{getFullAddressItem(selectAddress)}</Text>
             <Text style={styles.activeMarkerAddressText}>
-              Минимальная сумма заказа {method_receipt === "courier" ? 5000 : 0} ₽.
+              Минимальная сумма заказа {props.method_receipt === "courier" ? 5000 : 0} ₽.
             </Text>
             <Text style={styles.activeMarkerAddressText}>
               Способ оплаты: наличными или оплата картой по терминалу.
@@ -90,7 +90,7 @@ export const CheckoutAddress = ({ pickupAddress, defaultCenter }: Props) => {
 
       <View style={styles.mapContainer}>
         <MapBox
-          initCenter={defaultCenter}
+          initCenter={props.defaultCenter}
           active={activeAddress}
           markers={filterAddress}
           onClickMarker={(lng, lat) => {

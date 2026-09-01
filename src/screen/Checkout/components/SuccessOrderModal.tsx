@@ -9,6 +9,7 @@ type Props = {
   active: boolean;
   orderData: OrderModel | null;
   total: number;
+  addressName: string;
   navigation: NativeStackNavigationProp<ParamListBase, string>;
   onClose: () => void;
 };
@@ -24,6 +25,13 @@ export const SuccessOrderModal = (props: Props) => {
     props.navigation.navigate("HomeStack");
   };
 
+  const handleGoToOrder = () => {
+    props.onClose();
+    if (props.orderData?.id != null) {
+      props.navigation.navigate("OrderDetail", { id: props.orderData.id });
+    }
+  };
+
   return (
     <BaseModal
       visible={props.active}
@@ -32,19 +40,25 @@ export const SuccessOrderModal = (props: Props) => {
       subtitleText={`Номер заказа: ${orderNumber}`}
       footerAction={{
         cancel: {
-          text: "Продолжить покупки",
-          action: props.onClose,
+          text: "На главную",
+          action: handleGoHome,
           backgroundColor: "#f6f6f9",
         },
         submit: {
-          text: "На главную",
-          action: handleGoHome,
+          text: "Перейти к заказу",
+          action: handleGoToOrder,
           backgroundColor: "#a73afd",
         },
       }}
     >
       <Text style={styles.label}>Способ получения</Text>
       <Text style={styles.value}>{receiptLabel}</Text>
+      {props.addressName.length > 0 && (
+        <>
+          <Text style={styles.label}>Адрес</Text>
+          <Text style={styles.value}>{props.addressName}</Text>
+        </>
+      )}
       <Text style={styles.label}>Оплата</Text>
       <Text style={styles.value}>{paymentLabel}</Text>
       <Text style={styles.label}>Итого</Text>

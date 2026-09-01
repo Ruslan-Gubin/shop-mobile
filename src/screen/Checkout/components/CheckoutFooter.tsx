@@ -4,8 +4,10 @@ import { useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { fetchService } from "../../../shared/fetch-api";
 import { calcBasketInfo } from "../../../shared/helpers/calcBasketInfo";
+import { createOrderSchema } from "../../../shared/helpers/checkoutSchema";
 import { formatterRub } from "../../../shared/helpers/formatters";
 import { getDateFromAndDateTo } from "../../../shared/helpers/getDateFromAndDateTo";
+import { getFullAddressItem } from "../../../shared/helpers/getFullAddressItem";
 import { getMessageError } from "../../../shared/helpers/getMessageError";
 import { getOrderAddress } from "../../../shared/helpers/getOrderAddress";
 import type { CartDiscountModel } from "../../../shared/types/cart-discount";
@@ -27,6 +29,7 @@ type Props = {
   promotions: PromotionModel[];
   pickupAddress: AddressItem[];
   defaultCenter: { lng: number; lat: number };
+  isAgreed: boolean;
 };
 
 type CreateOrderPayload = {
@@ -81,7 +84,7 @@ export const CheckoutFooter = (props: Props) => {
     activeCourier,
   );
 
-  const disabledSubmit = orderInfo.total === 0 || address === null;
+  const disabledSubmit = orderInfo.total === 0 || address === null || !props.isAgreed;
 
   const createOrder = (selectedProducts: { product_id: number; quantity: number }[]) => {
     const { date_from, date_to } = getDateFromAndDateTo(delivery_date, delivery_time, 10, 19);
@@ -98,6 +101,38 @@ export const CheckoutFooter = (props: Props) => {
       address,
       products: selectedProducts,
     };
+
+    const validation = createOrderSchema.safeParse(payload);
+
+    if (!validation.success) {
+      let firstError = "";
+
+      validation.error.issues.forEach((issue) => {
+        const field = issue.path[0] as string;
+
+        if (field === "phone") {
+          checkoutAdapter.activeErrorAdditionalInfoInputs(issue.message, "phone_error");
+        }
+
+        if (field === "recipient_name") {
+          checkoutAdapter.activeErrorAdditionalInfoInputs(issue.message, "recipient_name_error");
+        }
+
+        if (field === "comment") {
+          checkoutAdapter.activeErrorAdditionalInfoInputs(issue.message, "comment_error");
+        }
+
+        if (!firstError) {
+          firstError = issue.message;
+        }
+      });
+
+      Alert.alert("Ошибка", firstError || "Проверьте корректность заполненных полей", [
+        { text: "ОК", style: "default" },
+      ]);
+
+      return;
+    }
 
     fetchService
       .post<OrderModel>({ url: "orders/create", payload })
@@ -161,7 +196,7 @@ export const CheckoutFooter = (props: Props) => {
       }
     }
 
-    const defaultErrorMessage = "Не удалось проверить наличии товаров на складах";
+    const defaultErrorMessage = "Не удалось проверить наличие товаров на складах";
 
     fetchService
       .post<{ product_id: number; available: number }[]>({
@@ -226,6 +261,7 @@ export const CheckoutFooter = (props: Props) => {
         active={successOrder.isOpen}
         orderData={successOrder.orderData}
         total={total}
+        addressName={address ? getFullAddressItem(address) : ""}
         onClose={() => setSuccessOrder({ isOpen: false, orderData: null })}
       />
       <StockWarningModal

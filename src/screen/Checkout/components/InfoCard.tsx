@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
 import type { ReactNode } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 type Props = {
   title: string;
@@ -28,3 +28,4 @@ const styles = StyleSheet.create({
     color: "#242424",
   },
 });
+

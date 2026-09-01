@@ -35,7 +35,10 @@ export class CheckoutAdapter {
   public addAddress(address: AddressItem) {
     const courierAddress = this.store.getState().courierAddress;
 
-    this.store.setState({ courierAddress: [address, ...courierAddress] });
+    if (!courierAddress.some((el) => el.lat === address.lat && el.lng === address.lng)) {
+      console.log("add");
+      this.store.setState({ courierAddress: [address, ...courierAddress] });
+    }
   }
 
   public deleteAddress(lng: number, lat: number, name: string) {

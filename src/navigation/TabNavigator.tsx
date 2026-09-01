@@ -86,8 +86,8 @@ export const TabNavigator = () => {
         }}
       />
       <Tab.Screen
-        key="Cart"
-        name="Cart"
+        key="CartStack"
+        name="CartStack"
         component={BasketStack}
         options={{
           tabBarIcon: ({ focused }) => (

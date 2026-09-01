@@ -27,24 +27,27 @@ export const AdditionalInformation = () => {
       <View style={styles.root}>
         <FieldInput
           error={recipient_name_error}
+          label="Имя получателя"
           onChangeText={(value) => handleChangeValues(value, "recipient_name")}
-          placeholder="Имя получателя"
+          placeholder="Введите имя"
           maxLength={50}
           value={recipient_name}
         />
         <FieldInput
           error={phone_error}
+          label="Телефон получателя"
           phoneCodes="+7"
           onChangeText={handleChangePhone}
-          placeholder="Телефон получателя"
+          placeholder="Введите телефон"
           keyboardType="phone-pad"
           maxLength={13}
           value={phone}
         />
         <FieldTextArea
           error={comment_error}
+          label="Комментарий"
           onChangeText={(value) => handleChangeValues(value, "comment")}
-          placeholder="Комментарий"
+          placeholder="Введите комментарий"
           maxLength={1000}
           value={comment}
         />

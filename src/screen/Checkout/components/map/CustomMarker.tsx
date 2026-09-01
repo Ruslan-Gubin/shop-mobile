@@ -104,14 +104,14 @@ const styles = StyleSheet.create({
     backgroundColor: "red",
   },
   pointMdSize: {
-    position: "static",
+    position: "relative",
     height: 40,
     width: 40,
   },
   pointLgSize: {
     position: "static",
-    height: 60,
-    width: 60,
+    height: 40,
+    width: 40,
   },
   addressText: {
     fontWeight: "500",
