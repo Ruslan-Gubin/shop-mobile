@@ -5,6 +5,10 @@ import { favoritesStore } from "../../../store/favorites/store";
 
 type Props = {
   id: number;
+  svgSize?: number;
+  size?: number;
+  top?: number;
+  right?: number;
 };
 
 export const ProductFavorites = (props: Props) => {
@@ -13,9 +17,23 @@ export const ProductFavorites = (props: Props) => {
   const handleToggleFavorite = (id: number) => favoritesAdapter.toggle(id);
 
   return (
-    <View style={styles.favoritesContainer}>
-      <TouchableOpacity style={styles.button} onPress={() => handleToggleFavorite(props.id)}>
-        <HeartSvg size={24} active={typeof active === "number" && active > 0} />
+    <View
+      style={[
+        styles.favoritesContainer,
+        {
+          width: props.size || 30,
+          height: props.size || 30,
+          top: typeof props.top === "number" ? props.top : 8,
+          right: typeof props.right === "number" ? props.right : 8,
+        },
+      ]}
+    >
+      <TouchableOpacity
+        hitSlop={8}
+        style={styles.button}
+        onPress={() => handleToggleFavorite(props.id)}
+      >
+        <HeartSvg size={props.svgSize || 24} active={typeof active === "number" && active > 0} />
       </TouchableOpacity>
     </View>
   );
@@ -24,10 +42,6 @@ export const ProductFavorites = (props: Props) => {
 const styles = StyleSheet.create({
   favoritesContainer: {
     position: "absolute",
-    top: 8,
-    right: 8,
-    width: 30,
-    height: 30,
     zIndex: 1,
   },
   button: {

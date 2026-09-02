@@ -175,7 +175,12 @@ export const ProductInfoScreen = (props: Props) => {
 
   return (
     <View style={styles.container}>
-      <PageHeader title="Товар" onBack={() => props.navigation?.goBack()} />
+      <PageHeader
+        title={product?.name || ""}
+        onBack={() => props.navigation?.goBack()}
+        isShowFavorites
+        id={id}
+      />
 
       {errors.product && <ErrorAlert message={errors.product} />}
 
@@ -190,7 +195,6 @@ export const ProductInfoScreen = (props: Props) => {
               <ProductPhotos photos={product.photos} />
               <ProductInfoBlock product={product} specifications={specifications} />
             </View>
-            {/* Блок 3: Панель покупки (Задача 3) */}
             <ActivityTabs
               id={product.id}
               reviews={reviews}
