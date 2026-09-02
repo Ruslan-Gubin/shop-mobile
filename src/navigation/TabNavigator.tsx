@@ -27,6 +27,7 @@ const HomeStack = () => {
       <RootStack.Screen key="Home" name="Home" component={HomeScreen} />
       <RootStack.Screen key="Search" name="Search" component={SearchScreen} />
       <RootStack.Screen key="Catalog" name="Catalog" component={CatalogScreen} />
+      <RootStack.Screen key="Recent" name="Recent" component={RecentScreen} />
       <RootStack.Screen key="ProductInfo" name="ProductInfo" component={ProductInfoScreen} />
       <RootStack.Screen key="ReviewsScreen" name="ReviewsScreen" component={ReviewsScreen} />
       <RootStack.Screen key="QuestionsScreen" name="QuestionsScreen" component={QuestionsScreen} />
@@ -38,6 +39,8 @@ const CatalogStack = () => {
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
       <RootStack.Screen key="Catalog" name="Catalog" component={CatalogScreen} />
+      <RootStack.Screen key="Search" name="Search" component={SearchScreen} />
+      <RootStack.Screen key="Recent" name="Recent" component={RecentScreen} />
       <RootStack.Screen key="ProductInfo" name="ProductInfo" component={ProductInfoScreen} />
       <RootStack.Screen key="ReviewsScreen" name="ReviewsScreen" component={ReviewsScreen} />
       <RootStack.Screen key="QuestionsScreen" name="QuestionsScreen" component={QuestionsScreen} />
