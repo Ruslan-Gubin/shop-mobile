@@ -8,13 +8,20 @@ type Props = {
   item: ReviewModel;
   width?: number;
   numberOfLines?: number;
+  backgroundColor?: string;
 };
 
 export const ReviewCard = (props: Props) => {
   const review = props.item;
 
   return (
-    <View style={[styles.card, props.width ? { width: props.width } : null]}>
+    <View
+      style={[
+        styles.card,
+        props.width ? { width: props.width } : null,
+        { backgroundColor: props.backgroundColor || "#f1f1f5" },
+      ]}
+    >
       <View style={styles.cardHeader}>
         <View style={styles.cardHeaderLeft}>
           <Text style={styles.cardAuthor}>Пользователь</Text>
@@ -59,11 +66,9 @@ export const ReviewCard = (props: Props) => {
 const styles = StyleSheet.create({
   card: {
     width: "100%",
-    backgroundColor: "#f1f1f5",
     borderRadius: 12,
     padding: 12,
     rowGap: 8,
-    maxHeight: 210,
   },
   cardHeader: {
     flexDirection: "row",

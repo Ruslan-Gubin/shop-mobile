@@ -4,8 +4,8 @@ import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-n
 import { declOfNum } from "../../../shared/helpers/declOfNum";
 import { QuestionSvg } from "../../../shared/svg/QuestionSvg";
 import { ReviewSvg } from "../../../shared/svg/ReviewSvg";
+import { QuestionCard } from "../../../widgets/question/QuestionCard";
 import type { QuestionCollection, ReviewCollection } from "../types";
-import { QuestionCard } from "./QuestionCard";
 import { ReviewCard } from "./ReviewCard";
 
 type Props = {

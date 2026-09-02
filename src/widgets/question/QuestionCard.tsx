@@ -1,18 +1,24 @@
 import { StyleSheet, Text, View } from "react-native";
-import { formatDateLong } from "../../../shared/helpers/formatters";
-import type { QuestionModel } from "../../../shared/types/question";
+import { formatDateLong } from "../../shared/helpers/formatters";
+import type { QuestionModel } from "../../shared/types/question";
 
 type Props = {
   item: QuestionModel;
   width?: number;
   numberOfLines?: number;
+  backgroundColor?: string;
 };
 
 export const QuestionCard = (props: Props) => {
   const questionItem = props.item;
 
   return (
-    <View style={[styles.card, props.width ? { width: props.width } : null]}>
+    <View
+      style={[
+        styles.card,
+        { width: props.width || undefined, backgroundColor: props.backgroundColor || "#f1f1f5" },
+      ]}
+    >
       <View style={styles.cardHeader}>
         <View style={styles.cardHeaderLeft}>
           <Text style={styles.cardAuthor}>Пользователь</Text>
@@ -38,7 +44,6 @@ export const QuestionCard = (props: Props) => {
 const styles = StyleSheet.create({
   card: {
     width: "100%",
-    backgroundColor: "#f1f1f5",
     borderRadius: 12,
     padding: 12,
     rowGap: 8,

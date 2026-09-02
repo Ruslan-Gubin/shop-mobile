@@ -3,11 +3,13 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { getProductDimensions } from "../../../shared/helpers/getProductDimensions";
 import { getSpecificationsProductInfo } from "../../../shared/helpers/getSpecificationsProductInfo";
 import type { ProductModel, ProductSpecificationModel } from "../../../shared/types/products";
+import { ProductPrice } from "../../../widgets/product/product-price/ProductPrice";
 import { RatingBadge } from "../../../widgets/product/rating-badge/RatingBadge";
 
 type Props = {
   product: ProductModel;
   specifications: ProductSpecificationModel[];
+  priceList: { price: number; minQuantity: number }[];
 };
 
 const OptionsList = ({
@@ -50,6 +52,7 @@ export const ProductInfoBlock = (props: Props) => {
     <View style={styles.container}>
       <View style={styles.header}>
         {Boolean(brandName) && <Text style={styles.brand}>{brandName}</Text>}
+        <ProductPrice priceList={props.priceList} product_id={props.product.id} />
         {Boolean(product.name) && <Text style={styles.title}>{product.name}</Text>}
 
         {product.rating > 0 && product.review_count > 0 && (

@@ -30,7 +30,7 @@ export const ProductInfoScreen = (props: Props) => {
   const id = props.route?.params?.id;
 
   const [product, setProduct] = useState<ProductModel | null>(null);
-  const [_prices, setPrices] = useState<PriceItem[]>([]);
+  const [prices, setPrices] = useState<PriceItem[]>([]);
   const [specifications, setSpecifications] = useState<ProductSpecificationModel[]>([]);
   const [stocks, setStocks] = useState<StockModel | null>(null);
   const [reviews, setReviews] = useState<ReviewCollection>({
@@ -48,10 +48,10 @@ export const ProductInfoScreen = (props: Props) => {
   const [canReview, setCanReview] = useState<boolean>(false);
   const [errors, setErrors] = useState<{ product: string }>({ product: "" });
 
-  const fetchProductEvent = useEffectEvent(async (productId: number) => {
+  const fetchProductEvent = useEffectEvent((productId: number) => {
     const defaultErrorMessage = "Не удалось загрузить информацию о товаре";
 
-    return fetchService
+    fetchService
       .get<ProductModel>({ url: `product/increment-view/${productId}` })
       .then((response) => {
         if (response.status === "success" && response.data) {
@@ -67,8 +67,8 @@ export const ProductInfoScreen = (props: Props) => {
       });
   });
 
-  const fetchCanReviewEvent = useEffectEvent(async (productId: number) => {
-    return fetchService
+  const fetchCanReviewEvent = useEffectEvent((productId: number) => {
+    fetchService
       .get<boolean>({ url: `product-review/can-review/${productId}` })
       .then((response) => {
         if (response.status === "success" && response.data) {
@@ -77,8 +77,8 @@ export const ProductInfoScreen = (props: Props) => {
       });
   });
 
-  const fetchPricesEvent = useEffectEvent(async (productId: number) => {
-    return fetchService
+  const fetchPricesEvent = useEffectEvent((productId: number) => {
+    fetchService
       .get<PriceItem[]>({ url: `product-price/for-user/${productId}` })
       .then((response) => {
         if (response.status === "success" && Array.isArray(response.data)) {
@@ -87,8 +87,8 @@ export const ProductInfoScreen = (props: Props) => {
       });
   });
 
-  const fetchSpecificationsEvent = useEffectEvent(async (productId: number) => {
-    return fetchService
+  const fetchSpecificationsEvent = useEffectEvent((productId: number) => {
+    fetchService
       .get<ProductSpecificationModel[]>({
         url: `product-specifications/product/${productId}`,
       })
@@ -99,8 +99,8 @@ export const ProductInfoScreen = (props: Props) => {
       });
   });
 
-  const fetchStocksEvent = useEffectEvent(async (productId: number) => {
-    return fetchService
+  const fetchStocksEvent = useEffectEvent((productId: number) => {
+    fetchService
       .get<StockModel>({ url: `product-stock/product-available/${productId}` })
       .then((response) => {
         if (response.status === "success" && response.data) {
@@ -109,8 +109,8 @@ export const ProductInfoScreen = (props: Props) => {
       });
   });
 
-  const fetchReviewsEvent = useEffectEvent(async (productId: number) => {
-    return fetchService
+  const fetchReviewsEvent = useEffectEvent((productId: number) => {
+    fetchService
       .get<ReviewCollection>({
         url: `product-review/product/${productId}`,
         params: { page: "1", limit: "30" },
@@ -122,8 +122,8 @@ export const ProductInfoScreen = (props: Props) => {
       });
   });
 
-  const fetchQuestionsEvent = useEffectEvent(async (productId: number) => {
-    return fetchService
+  const fetchQuestionsEvent = useEffectEvent((productId: number) => {
+    fetchService
       .get<QuestionCollection>({
         url: `product-question/product/${productId}`,
         params: { page: "1", limit: "30" },
@@ -135,18 +135,16 @@ export const ProductInfoScreen = (props: Props) => {
       });
   });
 
-  const fetchSimilarEvent = useEffectEvent(async (productId: number) => {
-    return fetchService
-      .get<ProductModel[]>({ url: `product/similar/${productId}` })
-      .then((response) => {
-        if (response.status === "success" && Array.isArray(response.data)) {
-          setSimilar(response.data);
-        }
-      });
+  const fetchSimilarEvent = useEffectEvent((productId: number) => {
+    fetchService.get<ProductModel[]>({ url: `product/similar/${productId}` }).then((response) => {
+      if (response.status === "success" && Array.isArray(response.data)) {
+        setSimilar(response.data);
+      }
+    });
   });
 
-  const fetchBuyTogetherEvent = useEffectEvent(async (productId: number) => {
-    return fetchService
+  const fetchBuyTogetherEvent = useEffectEvent((productId: number) => {
+    fetchService
       .get<ProductModel[]>({
         url: "product/buy-together",
         params: { ids: String(productId) },
@@ -197,7 +195,11 @@ export const ProductInfoScreen = (props: Props) => {
             <>
               <View style={styles.productCard}>
                 <ProductPhotos photos={product.photos} />
-                <ProductInfoBlock product={product} specifications={specifications} />
+                <ProductInfoBlock
+                  priceList={prices}
+                  product={product}
+                  specifications={specifications}
+                />
               </View>
               <ActivityTabs
                 id={product.id}
