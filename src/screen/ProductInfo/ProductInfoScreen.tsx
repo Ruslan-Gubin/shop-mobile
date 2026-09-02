@@ -1,13 +1,16 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useEffect, useEffectEvent, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
 import { fetchService } from "../../shared/fetch-api";
 import { getMessageError } from "../../shared/helpers/getMessageError";
 import type { ProductModel, ProductSpecificationModel } from "../../shared/types/products";
 import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
 import { PageHeader } from "../../shared/ui/header/PageHeader";
 import { recentAdapter } from "../../store/recent/adapter";
+import { HorizontalProductList } from "../../widgets/product/horizontal-product-list/HorizontalProductList";
+import { ProductRecent } from "../../widgets/product/product-recent/ProductRecent";
+import { ProductRecommended } from "../../widgets/product/product-recommended/ProductRecommended";
 import { ActivityTabs } from "./components/ActivityTabs";
 import { ProductInfoBlock } from "./components/ProductInfoBlock";
 import { ProductInfoFooter } from "./components/ProductInfoFooter";
@@ -40,8 +43,8 @@ export const ProductInfoScreen = (props: Props) => {
     totalCount: 0,
     paginationPage: 1,
   });
-  const [_similar, setSimilar] = useState<ProductModel[]>([]);
-  const [_buyTogether, setBuyTogether] = useState<ProductModel[]>([]);
+  const [similar, setSimilar] = useState<ProductModel[]>([]);
+  const [buyTogether, setBuyTogether] = useState<ProductModel[]>([]);
   const [canReview, setCanReview] = useState<boolean>(false);
   const [errors, setErrors] = useState<{ product: string }>({ product: "" });
 
@@ -155,21 +158,17 @@ export const ProductInfoScreen = (props: Props) => {
       });
   });
 
-  const fetchInfoEvent = useEffectEvent(async (productId: number) => {
-    await fetchProductEvent(productId);
-    await fetchCanReviewEvent(productId);
-    await fetchPricesEvent(productId);
-    await fetchSpecificationsEvent(productId);
-    await fetchStocksEvent(productId);
-    await fetchReviewsEvent(productId);
-    await fetchQuestionsEvent(productId);
-    await fetchSimilarEvent(productId);
-    await fetchBuyTogetherEvent(productId);
-  });
-
   useEffect(() => {
     if (typeof id === "number") {
-      fetchInfoEvent(id);
+      fetchProductEvent(id);
+      fetchCanReviewEvent(id);
+      fetchPricesEvent(id);
+      fetchSpecificationsEvent(id);
+      fetchStocksEvent(id);
+      fetchReviewsEvent(id);
+      fetchQuestionsEvent(id);
+      fetchSimilarEvent(id);
+      fetchBuyTogetherEvent(id);
     }
   }, [id]);
 
@@ -184,31 +183,66 @@ export const ProductInfoScreen = (props: Props) => {
 
       {errors.product && <ErrorAlert message={errors.product} />}
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {!product ? (
-          <View style={styles.loader}>
-            <ActivityIndicator size="large" color="#a73afd" />
-          </View>
-        ) : (
-          <>
-            <View style={styles.productCard}>
-              <ProductPhotos photos={product.photos} />
-              <ProductInfoBlock product={product} specifications={specifications} />
+      <FlatList
+        data={[]}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        ListHeaderComponentStyle={styles.listHeaderComponentStyle}
+        ListHeaderComponent={
+          !product ? (
+            <View style={styles.loader}>
+              <ActivityIndicator size="large" color="#a73afd" />
             </View>
-            <ActivityTabs
-              id={product.id}
-              reviews={reviews}
-              questions={questions}
-              canReview={canReview}
-              navigation={props.navigation}
-            />
-            {/* Блок 5: Список отзывов (Задача 5) */}
-            {/* Блок 6: Похожие + С этим покупают (Задача 6) */}
-            {/* Блок 7: Рекомендуем (Задача 7) */}
-            {/* Блок 8: Вы недавно смотрели (Задача 8) */}
-          </>
-        )}
-      </ScrollView>
+          ) : (
+            <>
+              <View style={styles.productCard}>
+                <ProductPhotos photos={product.photos} />
+                <ProductInfoBlock product={product} specifications={specifications} />
+              </View>
+              <ActivityTabs
+                id={product.id}
+                reviews={reviews}
+                questions={questions}
+                canReview={canReview}
+                navigation={props.navigation}
+              />
+            </>
+          )
+        }
+        ListFooterComponent={
+          product ? (
+            <>
+              {similar.length > 0 && (
+                <View style={styles.blockContainer}>
+                  <HorizontalProductList
+                    title="Похожие товары"
+                    data={similar}
+                    navigation={props.navigation}
+                  />
+                </View>
+              )}
+              {buyTogether.length > 0 && (
+                <View style={styles.blockContainer}>
+                  <HorizontalProductList
+                    title="С этим покупают"
+                    data={buyTogether}
+                    navigation={props.navigation}
+                  />
+                </View>
+              )}
+              <View style={styles.blockContainer}>
+                <ProductRecommended title="Рекомендуем" navigation={props.navigation} />
+              </View>
+              {id && (
+                <View style={styles.footerBlockSpacing}>
+                  <ProductRecent excludeId={id} navigation={props.navigation} />
+                </View>
+              )}
+            </>
+          ) : undefined
+        }
+        ListFooterComponentStyle={styles.listFooterComponentStyle}
+      />
       {id && stocks && (
         <ProductInfoFooter
           navigation={props.navigation}
@@ -227,7 +261,18 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 8,
+  },
+  listHeaderComponentStyle: {
     rowGap: 8,
+  },
+  listFooterComponentStyle: {
+    paddingTop: 8,
+    rowGap: 8,
+  },
+  footerBlockSpacing: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 12,
   },
   productCard: {
     backgroundColor: "white",
@@ -240,5 +285,10 @@ const styles = StyleSheet.create({
     minHeight: 300,
     alignItems: "center",
     justifyContent: "center",
+  },
+  blockContainer: {
+    padding: 12,
+    backgroundColor: "white",
+    borderRadius: 12,
   },
 });

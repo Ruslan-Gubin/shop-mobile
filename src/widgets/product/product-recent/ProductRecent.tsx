@@ -12,6 +12,7 @@ import { HorizontalProductList } from "../horizontal-product-list/HorizontalProd
 type Props = {
   isHasNavigateSeeAll?: boolean;
   navigation?: NativeStackNavigationProp<ParamListBase, string>;
+  excludeId?: number;
 };
 
 export const ProductRecent = (props: Props) => {
@@ -20,9 +21,11 @@ export const ProductRecent = (props: Props) => {
   const defaultErrorMessage = "Не удалось получить список просмотренных товаров";
 
   const recent = recentStore((store) => store.items);
-  const recentIds = Object.values(recent)
-    .map((r) => r)
-    .join(",");
+  const recentArray = Object.values(recent);
+  const sortedArray = props.excludeId
+    ? recentArray.filter((el) => el !== props.excludeId)
+    : recentArray;
+  const recentIds = sortedArray.join(",");
 
   const fetchRecentEvent = useEffectEvent((recentIds: string) => {
     if (recentIds.length > 0) {
