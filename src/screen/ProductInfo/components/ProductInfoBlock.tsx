@@ -51,30 +51,31 @@ export const ProductInfoBlock = (props: Props) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        {Boolean(brandName) && <Text style={styles.brand}>{brandName}</Text>}
-        <ProductPrice priceList={props.priceList} product_id={props.product.id} />
-        {Boolean(product.name) && <Text style={styles.title}>{product.name}</Text>}
+        {brandName.length > 0 && <Text style={styles.brand}>{brandName}</Text>}
+        {Array.isArray(props.priceList) && props.priceList.length > 0 && (
+          <ProductPrice priceList={props.priceList} product_id={props.product.id} />
+        )}
+        {product.name.length > 0 && <Text style={styles.title}>{product.name}</Text>}
 
         {product.rating > 0 && product.review_count > 0 && (
           <RatingBadge rating={product.rating} reviewCount={product.review_count} />
         )}
-      </View>
 
-      {product.description.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Описание</Text>
-          <Text style={styles.description} numberOfLines={isOpenDescription ? undefined : 7}>
-            {product.description}
-          </Text>
-          {product.description.length >= DESCRIPTION_LIMIT && (
-            <Pressable onPress={() => setIsOpenDescription((prev) => !prev)}>
-              <Text style={styles.showMore}>
-                {isOpenDescription ? "Свернуть" : "Показать полное описание"}
-              </Text>
-            </Pressable>
-          )}
-        </View>
-      )}
+        {product.description.length > 0 && (
+          <>
+            <Text style={styles.description} numberOfLines={isOpenDescription ? undefined : 7}>
+              {product.description}
+            </Text>
+            {product.description.length >= DESCRIPTION_LIMIT && (
+              <Pressable onPress={() => setIsOpenDescription((prev) => !prev)}>
+                <Text style={styles.showMore}>
+                  {isOpenDescription ? "Свернуть" : "Показать полное описание"}
+                </Text>
+              </Pressable>
+            )}
+          </>
+        )}
+      </View>
 
       <OptionsList title="Характеристики" options={specificationItems} />
       <OptionsList title="Габариты" options={dimensions} />
@@ -86,10 +87,10 @@ const styles = StyleSheet.create({
   container: {
     paddingInline: 12,
     marginTop: 16,
-    rowGap: 16,
+    rowGap: 12,
   },
   header: {
-    rowGap: 8,
+    rowGap: 6,
   },
   brand: {
     color: "#a73afd",
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "600",
   },
   section: {

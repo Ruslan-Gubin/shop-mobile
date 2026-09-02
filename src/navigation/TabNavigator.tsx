@@ -34,6 +34,17 @@ const HomeStack = () => {
   );
 };
 
+const CatalogStack = () => {
+  return (
+    <RootStack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
+      <RootStack.Screen key="Catalog" name="Catalog" component={CatalogScreen} />
+      <RootStack.Screen key="ProductInfo" name="ProductInfo" component={ProductInfoScreen} />
+      <RootStack.Screen key="ReviewsScreen" name="ReviewsScreen" component={ReviewsScreen} />
+      <RootStack.Screen key="QuestionsScreen" name="QuestionsScreen" component={QuestionsScreen} />
+    </RootStack.Navigator>
+  );
+};
+
 const BasketStack = () => {
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
@@ -82,9 +93,9 @@ export const TabNavigator = () => {
         }}
       />
       <Tab.Screen
-        key="Menu"
-        name="Menu"
-        component={ProfileScreen}
+        key="CatalogStack"
+        name="CatalogStack"
+        component={CatalogStack}
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.menuItem}>
