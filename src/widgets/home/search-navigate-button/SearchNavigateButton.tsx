@@ -25,8 +25,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 12,
     paddingTop: 6,
-    zIndex: 2,
-    position: "absolute",
     width: "100%",
   },
   searchButton: {

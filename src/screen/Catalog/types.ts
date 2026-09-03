@@ -1,5 +1,4 @@
-import type { CategoryModel } from "./category";
-import type { ProductModel } from "./products";
+import type { ProductModel } from "../../shared/types/products";
 
 export type CatalogFiltersResponse = {
   price: { min: number; max: number };
@@ -12,12 +11,6 @@ export type CatalogResponse = {
   products: ProductModel[];
   totalCount: number;
   paginationPage: string;
-};
-
-export type CategoryPathResponse = {
-  categories: CategoryModel[];
-  childrenCategories: CategoryModel[];
-  transitionCategories: CategoryModel[];
 };
 
 export type CatalogParams = {

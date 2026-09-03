@@ -5,37 +5,12 @@ import { getSpecificationsProductInfo } from "../../../shared/helpers/getSpecifi
 import type { ProductModel, ProductSpecificationModel } from "../../../shared/types/products";
 import { ProductPrice } from "../../../widgets/product/product-price/ProductPrice";
 import { RatingBadge } from "../../../widgets/product/rating-badge/RatingBadge";
+import { OptionsList } from "./OptionsList";
 
 type Props = {
   product: ProductModel;
   specifications: ProductSpecificationModel[];
   priceList: { price: number; minQuantity: number }[];
-};
-
-const OptionsList = ({
-  title,
-  options,
-}: {
-  title: string;
-  options: { label: string; value: string }[];
-}) => {
-  if (options.length === 0) {
-    return null;
-  }
-
-  return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.optionsList}>
-        {options.map((item) => (
-          <View key={item.label} style={styles.optionsItem}>
-            <Text style={styles.optionsLabel}>{item.label}</Text>
-            <Text style={styles.optionsValue}>{item.value}</Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
 };
 
 export const ProductInfoBlock = (props: Props) => {
@@ -77,8 +52,10 @@ export const ProductInfoBlock = (props: Props) => {
         )}
       </View>
 
-      <OptionsList title="Характеристики" options={specificationItems} />
-      <OptionsList title="Габариты" options={dimensions} />
+      {specificationItems.length > 0 && (
+        <OptionsList title="Характеристики" options={specificationItems} />
+      )}
+      {dimensions.length > 0 && <OptionsList title="Габариты" options={dimensions} />}
     </View>
   );
 };
@@ -101,36 +78,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  section: {
-    rowGap: 8,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
   description: {
     lineHeight: 20,
     color: "#3f3e4e",
   },
   showMore: {
     color: "#9a1cc6",
-    fontSize: 13,
-  },
-  optionsList: {
-    rowGap: 8,
-  },
-  optionsItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    columnGap: 12,
-  },
-  optionsLabel: {
-    flex: 1,
-    color: "#8a8999",
-    fontSize: 13,
-  },
-  optionsValue: {
-    flex: 1,
     fontSize: 13,
   },
 });

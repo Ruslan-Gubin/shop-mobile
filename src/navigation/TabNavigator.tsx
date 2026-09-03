@@ -6,6 +6,7 @@ import { CatalogScreen } from "../screen/Catalog/CatalogScreen";
 import { CheckoutScreen } from "../screen/Checkout/CheckoutScreen";
 import { FavoritesScreen } from "../screen/Favorites/Favorites";
 import { HomeScreen } from "../screen/Home/HomeScreen";
+import { MenuScreen } from "../screen/Menu/MenuScreen";
 import { ProductInfoScreen } from "../screen/ProductInfo/ProductInfoScreen";
 import { ProfileScreen } from "../screen/Profile/ProfileScreen";
 import { QuestionsScreen } from "../screen/Questions/QuestionsScreen";
@@ -35,9 +36,13 @@ const HomeStack = () => {
   );
 };
 
-const CatalogStack = () => {
+const MenuStack = () => {
   return (
-    <RootStack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
+    <RootStack.Navigator
+      screenOptions={{ headerShown: false, animation: "fade" }}
+      initialRouteName="Menu"
+    >
+      <RootStack.Screen key="Menu" name="Menu" component={MenuScreen} />
       <RootStack.Screen key="Catalog" name="Catalog" component={CatalogScreen} />
       <RootStack.Screen key="Search" name="Search" component={SearchScreen} />
       <RootStack.Screen key="Recent" name="Recent" component={RecentScreen} />
@@ -96,9 +101,9 @@ export const TabNavigator = () => {
         }}
       />
       <Tab.Screen
-        key="CatalogStack"
-        name="CatalogStack"
-        component={CatalogStack}
+        key="MenuStack"
+        name="MenuStack"
+        component={MenuStack}
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.menuItem}>

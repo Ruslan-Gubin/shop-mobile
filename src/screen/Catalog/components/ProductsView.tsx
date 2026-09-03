@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, StyleSheet, Text, View } from "react-native";
 import { getWidthCard } from "../../../shared/helpers/getWidthCard";
 import { useInfiniteScroll } from "../../../shared/hooks/useInfiniteScroll";
-import type { CatalogParams } from "../../../shared/types/catalog";
 import type { ProductModel } from "../../../shared/types/products";
 import { NotContent } from "../../../widgets/not-content/NotContent";
 import { ProductCard } from "../../../widgets/product/product-card/ProductCard";
 import { ProductRecent } from "../../../widgets/product/product-recent/ProductRecent";
 import { fetchCatalogProducts } from "../api";
+import type { CatalogParams } from "../types";
 import type { CatalogFilterState } from "./filter/FilterBar";
 
 type Props = {
@@ -172,4 +172,3 @@ const styles = StyleSheet.create({
     rowGap: 16,
   },
 });
-

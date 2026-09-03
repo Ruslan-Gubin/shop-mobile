@@ -1,100 +1,64 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useEffect, useEffectEvent, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
-import { declOfNum } from "../../shared/helpers/declOfNum";
-import type { CategoryModel } from "../../shared/types/category";
-import type { CatalogFiltersResponse } from "../../shared/types/catalog";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { fetchService } from "../../shared/fetch-api";
 import type { SearchModel } from "../../shared/types/search";
-import { PageHeader } from "../../shared/ui/header/PageHeader";
 import { SearchNavigateButton } from "../../widgets/home/search-navigate-button/SearchNavigateButton";
-import { ProductRecent } from "../../widgets/product/product-recent/ProductRecent";
-import { fetchCategories, fetchCategoryPath, fetchCatalogFilters, fetchSimilarSearch } from "./api";
-import { CategoryList } from "./components/CategoryList";
-import { ProductsView } from "./components/ProductsView";
-import { SimilarSearch } from "./components/SimilarSearch";
+import { fetchCatalogFilters } from "./api";
 import {
   buildFilterParams,
+  type CatalogFilterState,
   FilterBar,
   INIT_FILTERS,
-  type CatalogFilterState,
 } from "./components/filter/FilterBar";
+import { ProductsView } from "./components/ProductsView";
+import { SimilarSearch } from "./components/SimilarSearch";
+import type { CatalogFiltersResponse } from "./types";
 
 type Props = {
   navigation?: NativeStackNavigationProp<ParamListBase, "Catalog">;
   route?: {
     key: string;
     name: string;
-    params?: { search?: string };
+    params: { search?: string; category: number };
   };
 };
 
 export const CatalogScreen = (props: Props) => {
   const search = props.route?.params?.search || "";
+  const hasSearch = search.length > 0;
+  const categoryId = props.route?.params?.category || 0;
+  const hasCategory = categoryId > 0;
 
-  const [selectedCategory, setSelectedCategory] = useState<CategoryModel | null>(null);
-  const [mainCategories, setMainCategories] = useState<CategoryModel[]>([]);
-  const [childrenCategories, setChildrenCategories] = useState<CategoryModel[]>([]);
-  const [categoryName, setCategoryName] = useState<string>("");
   const [similarSearch, setSimilarSearch] = useState<SearchModel[]>([]);
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
+
   const [filterState, setFilterState] = useState<CatalogFilterState>(INIT_FILTERS);
   const [filtersData, setFiltersData] = useState<CatalogFiltersResponse | null>(null);
-
-  const hasSearch = search.length > 0;
-
-  const fetchMainCategoriesEvent = useEffectEvent(() => {
-    setLoading(true);
-    fetchCategories()
-      .then((response) => {
-        if (response.status === "success" && Array.isArray(response.data)) {
-          setMainCategories(response.data.filter((el) => el.parent_id === null));
-        }
-      })
-      .finally(() => setLoading(false));
-  });
-
-  useEffect(() => {
-    if (!hasSearch && !selectedCategory) {
-      fetchMainCategoriesEvent();
-    }
-  }, [hasSearch, selectedCategory]);
-
-  const fetchCategoryPathEvent = useEffectEvent((category: CategoryModel) => {
-    setLoading(true);
-    setChildrenCategories([]);
-    fetchCategoryPath(category.id)
-      .then((response) => {
-        if (response.status === "success" && response.data) {
-          setChildrenCategories(response.data.childrenCategories || []);
-          setCategoryName(category.name);
-        }
-      })
-      .finally(() => setLoading(false));
-  });
-
-  useEffect(() => {
-    if (hasSearch || !selectedCategory) return;
-    fetchCategoryPathEvent(selectedCategory);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasSearch, selectedCategory?.id]);
+  console.log("filtersData:", filtersData);
 
   const fetchSimilarSearchEvent = useEffectEvent((text: string) => {
-    fetchSimilarSearch(text).then((response) => {
-      if (response.status === "success" && Array.isArray(response.data)) {
-        setSimilarSearch(response.data);
-      }
-    });
+    fetchService
+      .get<SearchModel[]>({
+        url: "search",
+        params: { text, limit: "7" },
+      })
+      .then((response) => {
+        if (response.status === "success" && Array.isArray(response.data)) {
+          setSimilarSearch(response.data);
+        }
+      });
   });
 
-  useEffect(() => {
-    if (hasSearch) {
-      fetchSimilarSearchEvent(search);
-    } else {
-      setSimilarSearch([]);
-    }
-  }, [hasSearch, search]);
+  // useEffect(() => {
+  //   if (hasSearch) {
+  //     fetchSimilarSearchEvent(search);
+  //   } else {
+  //     setSimilarSearch([]);
+  //   }
+  // }, [hasSearch, search]);
 
   const fetchFiltersEvent = useEffectEvent((categoryId: number | undefined, text: string) => {
     setFilterState(INIT_FILTERS);
@@ -106,25 +70,15 @@ export const CatalogScreen = (props: Props) => {
     });
   });
 
-  useEffect(() => {
-    const categoryId =
-      !hasSearch && selectedCategory && childrenCategories.length === 0
-        ? selectedCategory.id
-        : undefined;
-    fetchFiltersEvent(categoryId, hasSearch ? search : undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasSearch, search, selectedCategory?.id]);
+  // useEffect(() => {
+  //   const categoryId =
+  //     !hasSearch && selectedCategory && childrenCategories.length === 0
+  //       ? selectedCategory.id
+  //       : undefined;
+  //   fetchFiltersEvent(categoryId, hasSearch ? search : undefined);
+  // }, [hasSearch, search, categoryId]);
 
-  const handleSelectCategory = (category: CategoryModel) => {
-    setSelectedCategory(category);
-  };
-
-  const handleBackToMenu = () => {
-    setSelectedCategory(null);
-  };
-
-  const handleSortChange = (value: string) =>
-    setFilterState((prev) => ({ ...prev, sort: value }));
+  const handleSortChange = (value: string) => setFilterState((prev) => ({ ...prev, sort: value }));
 
   const handlePriceChange = (value: { from: string; to: string }) =>
     setFilterState((prev) => ({ ...prev, priceFrom: value.from, priceTo: value.to }));
@@ -164,118 +118,48 @@ export const CatalogScreen = (props: Props) => {
       return { ...prev, productTypes: current };
     });
 
-  const handleProductTypeReset = () =>
-    setFilterState((prev) => ({ ...prev, productTypes: [] }));
-
-  const isLeafCategory = !hasSearch && !!selectedCategory && childrenCategories.length === 0;
-
-  const filterBar = (
-    <FilterBar
-      filters={filtersData}
-      state={filterState}
-      onSortChange={handleSortChange}
-      onPriceChange={handlePriceChange}
-      onPriceReset={handlePriceReset}
-      onSpecificationToggle={handleSpecificationToggle}
-      onSpecificationReset={handleSpecificationReset}
-      onCountryToggle={handleCountryToggle}
-      onCountryReset={handleCountryReset}
-      onProductTypeToggle={handleProductTypeToggle}
-      onProductTypeReset={handleProductTypeReset}
-    />
-  );
+  const handleProductTypeReset = () => setFilterState((prev) => ({ ...prev, productTypes: [] }));
 
   return (
     <View style={styles.root}>
-      {hasSearch ? (
-        <>
-          <SearchNavigateButton onPress={() => props.navigation?.push("Search")} />
-          <View style={styles.searchHeader}>
-            <View style={styles.searchLine}>
-              {search ? (
-                <Text numberOfLines={1} style={styles.searchTitle}>
-                  {search}
-                </Text>
-              ) : null}
-              {count > 0 ? (
-                <Text numberOfLines={1} style={styles.searchCount}>
-                  {`Найдено ${count} ${declOfNum(count, ["товар", "товара", "товаров"])}`}
-                </Text>
-              ) : null}
-            </View>
-            <SimilarSearch
-              similarSearch={similarSearch}
-              onSelect={(text) => props.navigation?.push("Catalog", { search: text })}
-            />
-          </View>
-          {filterBar}
-          <ProductsView
-            key={`search_${search}`}
-            search={search}
-            filterState={filterState}
-            navigation={props.navigation}
-            onCountChange={setCount}
-          />
-        </>
-      ) : selectedCategory ? (
-        <>
-          <PageHeader title={categoryName || selectedCategory.name} onBack={handleBackToMenu} />
-          {loading ? (
-            <View style={styles.loading}>
-              <ActivityIndicator size="small" color="#a73afd" />
-            </View>
-          ) : isLeafCategory ? (
-            <>
-              {filterBar}
-              <ProductsView
-                key={`cat_${selectedCategory.id}`}
-                categoryId={selectedCategory.id}
-                filterState={filterState}
-                navigation={props.navigation}
-              />
-            </>
-          ) : (
-            <FlatList
-              data={[]}
-              style={styles.categoriesScroll}
-              ListHeaderComponentStyle={styles.listHeaderComponentStyle}
-              ListHeaderComponent={
-                <CategoryList categories={childrenCategories} onSelect={handleSelectCategory} />
-              }
-              contentContainerStyle={styles.menuContent}
-              showsVerticalScrollIndicator={false}
-              ListFooterComponentStyle={styles.listFooterComponentStyle}
-              ListFooterComponent={
-                <ProductRecent navigation={props.navigation} isHasNavigateSeeAll />
-              }
-            />
-          )}
-        </>
-      ) : (
-        <>
-          <SearchNavigateButton onPress={() => props.navigation?.push("Search")} />
-          {loading ? (
-            <View style={styles.loading}>
-              <ActivityIndicator size="small" color="#a73afd" />
-            </View>
-          ) : (
-            <FlatList
-              data={[]}
-              style={styles.menuList}
-              ListHeaderComponentStyle={styles.listHeaderComponentStyle}
-              ListHeaderComponent={
-                <CategoryList categories={mainCategories} onSelect={handleSelectCategory} />
-              }
-              contentContainerStyle={styles.contentWithSearchButton}
-              showsVerticalScrollIndicator={false}
-              ListFooterComponentStyle={styles.listFooterComponentStyle}
-              ListFooterComponent={
-                <ProductRecent navigation={props.navigation} isHasNavigateSeeAll />
-              }
-            />
-          )}
-        </>
+      {hasSearch && <SearchNavigateButton onPress={() => props.navigation?.push("Search")} />}
+
+      {loading && (
+        <View style={styles.loading}>
+          <ActivityIndicator size="small" color="#a73afd" />
+        </View>
       )}
+
+      {hasSearch && similarSearch.length > 0 && (
+        <SimilarSearch
+          similarSearch={similarSearch}
+          onSelect={(text) => props.navigation?.push("Catalog", { search: text })}
+          count={count}
+          search={search}
+        />
+      )}
+
+      <FilterBar
+        filters={filtersData}
+        state={filterState}
+        onSortChange={handleSortChange}
+        onPriceChange={handlePriceChange}
+        onPriceReset={handlePriceReset}
+        onSpecificationToggle={handleSpecificationToggle}
+        onSpecificationReset={handleSpecificationReset}
+        onCountryToggle={handleCountryToggle}
+        onCountryReset={handleCountryReset}
+        onProductTypeToggle={handleProductTypeToggle}
+        onProductTypeReset={handleProductTypeReset}
+      />
+
+      <ProductsView
+        key={`search_${search}`}
+        search={search}
+        filterState={filterState}
+        navigation={props.navigation}
+        onCountChange={setCount}
+      />
     </View>
   );
 };
@@ -293,12 +177,6 @@ const styles = StyleSheet.create({
   },
   menuList: {
     flex: 1,
-  },
-  categoriesScroll: {
-    flex: 1,
-  },
-  listHeaderComponentStyle: {
-    rowGap: 16,
   },
   contentWithSearchButton: {
     paddingTop: 56,
@@ -323,11 +201,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#868695",
     flexShrink: 1,
-  },
-  menuContent: {
-    paddingBottom: 16,
-  },
-  listFooterComponentStyle: {
-    paddingTop: 16,
   },
 });

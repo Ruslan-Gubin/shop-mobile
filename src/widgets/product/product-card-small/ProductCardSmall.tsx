@@ -42,11 +42,10 @@ export const ProductCardSmall = (props: Props) => {
       <View style={styles.imageContainer}>
         <ProductCardImage photos={props.photos} handleNavigate={handleNavigate} id={props.id} />
         <ProductFavorites id={props.id} />
-        <AddBasket
-          available={props.available}
-          id={props.id}
-          revalidateBasketAction={revalidateBasketAction}
-        />
+        {(!props.accounting ||
+          (typeof props.available === "number" && props.accounting && props.available > 0)) && (
+          <AddBasket id={props.id} revalidateBasketAction={revalidateBasketAction} />
+        )}
       </View>
 
       <Pressable onPress={() => handleNavigate(props.id)} style={styles.productInfoContainer}>
