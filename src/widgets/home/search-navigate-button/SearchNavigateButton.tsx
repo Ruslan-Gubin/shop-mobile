@@ -21,11 +21,9 @@ const styles = StyleSheet.create({
     borderEndEndRadius: 20,
     borderEndStartRadius: 20,
     backgroundColor: "white",
-    boxShadow: "-1px -5px 10px -2px gray",
     alignItems: "center",
     padding: 12,
     paddingTop: 6,
-    width: "100%",
   },
   searchButton: {
     backgroundColor: "rgba(183, 52, 228, 0.14)",

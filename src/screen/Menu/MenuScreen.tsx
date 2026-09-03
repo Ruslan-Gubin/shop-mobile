@@ -38,7 +38,10 @@ export const MenuScreen = (props: Props) => {
     if (category.children.length > 0) {
       setSelectedCategory(category);
     } else {
-      props?.navigation?.push("Catalog", { category: category.id });
+      props?.navigation?.push("Catalog", {
+        category_id: category.id,
+        category_name: category.name || "",
+      });
     }
   };
 

@@ -26,7 +26,7 @@ export const HomeScreen = (props: Props) => {
   const limit = 30;
   const width = getWidthCard(Dimensions.get("window").width, 0, 4, 2);
 
-  const { data, isHasMore, loadMore, loading, reload } = useInfiniteScroll({
+  const { data, isHasMore, loadMore, loading, reloadAfterError } = useInfiniteScroll({
     limit,
     fetchData: (page: number) =>
       fetchService
@@ -53,7 +53,7 @@ export const HomeScreen = (props: Props) => {
               text: "Повторить",
               isPreferred: true,
               onPress: () => {
-                reload();
+                reloadAfterError();
                 setIsError(false);
               },
             },
@@ -107,7 +107,6 @@ export const HomeScreen = (props: Props) => {
 const styles = StyleSheet.create({
   root: {
     backgroundColor: "white",
-    paddingTop: 60,
   },
   listContent: {
     paddingTop: 20,

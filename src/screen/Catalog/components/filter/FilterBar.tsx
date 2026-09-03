@@ -1,44 +1,8 @@
 import { ScrollView, StyleSheet, View } from "react-native";
-import type { CatalogFiltersResponse } from "../../../../shared/types/catalog";
+import type { CatalogFilterState, CatalogFiltersResponse } from "../../types";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 import { PriceFilter } from "./PriceFilter";
 import { SortFilter } from "./SortFilter";
-
-export const INIT_FILTERS: CatalogFilterState = {
-  sort: "popular",
-  priceFrom: "",
-  priceTo: "",
-  specifications: [],
-  country: [],
-  productTypes: [],
-};
-
-export const buildFilterParams = (
-  categoryId: number | undefined,
-  search: string | undefined,
-  state: CatalogFilterState,
-) => {
-  const params: {
-    category_id?: string;
-    search?: string;
-    price_from?: string;
-    price_to?: string;
-  } = {};
-  if (categoryId) params.category_id = String(categoryId);
-  if (search) params.search = search;
-  if (state.priceFrom) params.price_from = state.priceFrom;
-  if (state.priceTo) params.price_to = state.priceTo;
-  return params;
-};
-
-export type CatalogFilterState = {
-  sort: string;
-  priceFrom: string;
-  priceTo: string;
-  specifications: string[];
-  country: string[];
-  productTypes: string[];
-};
 
 type Props = {
   filters: CatalogFiltersResponse | null;
@@ -66,8 +30,7 @@ export const FilterBar = (props: Props) => {
   const minPrice = props.filters?.price?.min || 1;
   const maxPrice = props.filters?.price?.max || 100000;
 
-  const priceActive =
-    props.state.priceFrom !== "" || props.state.priceTo !== "";
+  const priceActive = props.state.priceFrom !== "" || props.state.priceTo !== "";
 
   return (
     <View style={styles.wrapper}>
@@ -76,7 +39,11 @@ export const FilterBar = (props: Props) => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        <SortFilter value={props.state.sort || "popular"} onChange={props.onSortChange} options={SORT_OPTIONS} />
+        <SortFilter
+          value={props.state.sort || "popular"}
+          onChange={props.onSortChange}
+          options={SORT_OPTIONS}
+        />
 
         <PriceFilter
           minPrice={minPrice}

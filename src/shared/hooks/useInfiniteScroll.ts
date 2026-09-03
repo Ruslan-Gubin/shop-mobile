@@ -74,13 +74,21 @@ export const useInfiniteScroll = <T extends { id: number }>(props: Props<T>) => 
     }
   };
 
-  const resetData = () => {
-    setData([]);
-    setPage(0);
-    setTotal(0);
+  const reload = () => {
+    transition(() => {
+      props.fetchData(1).then((response) => {
+        if (response.data.length > 0) {
+          setData(response.data);
+          if (response.total > 0 && response.total !== total) {
+            setTotal(response.total);
+          }
+          setPage(1);
+        }
+      });
+    });
   };
 
-  const reload = () => {
+  const reloadAfterError = () => {
     if (data.length === 0) {
       updateInitDataEvent();
     } else {
@@ -88,5 +96,5 @@ export const useInfiniteScroll = <T extends { id: number }>(props: Props<T>) => 
     }
   };
 
-  return { data, isHasMore, loadMore, resetData, loading, reload };
+  return { data, isHasMore, loadMore, loading, reload, total, reloadAfterError };
 };

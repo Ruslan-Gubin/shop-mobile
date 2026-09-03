@@ -27,7 +27,6 @@ type Props = {
 
 export const ReviewsScreen = (props: Props) => {
   const id = props.route?.params?.id;
-
   const [product, setProduct] = useState<ProductModel | null>(null);
   const [stocks, setStocks] = useState<StockModel | null>(null);
   const [prices, setPrices] = useState<PriceItem[]>([]);
@@ -35,7 +34,6 @@ export const ReviewsScreen = (props: Props) => {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [canReview, setCanReview] = useState<boolean>(false);
   const [myReview, setMyReview] = useState<ReviewModel | null>(null);
-  const [reloadKey, setReloadKey] = useState<number>(0);
 
   const fetchProductEvent = useEffectEvent((id: number) => {
     fetchService
@@ -63,13 +61,11 @@ export const ReviewsScreen = (props: Props) => {
   });
 
   const fetchPricesEvent = useEffectEvent((id: number) => {
-    fetchService
-      .get<PriceItem[]>({ url: `product-price/for-user/${id}` })
-      .then((response) => {
-        if (response.status === "success" && Array.isArray(response.data)) {
-          setPrices(response.data);
-        }
-      });
+    fetchService.get<PriceItem[]>({ url: `product-price/for-user/${id}` }).then((response) => {
+      if (response.status === "success" && Array.isArray(response.data)) {
+        setPrices(response.data);
+      }
+    });
   });
 
   const fetchCanReviewEvent = useEffectEvent((id: number) => {
@@ -127,18 +123,7 @@ export const ReviewsScreen = (props: Props) => {
         }),
   });
 
-  useEffect(() => {
-    if (reloadKey > 0 && typeof id === "number") {
-      fetchCanReviewEvent(id);
-      fetchMyReviewEvent(id);
-      reload();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reloadKey]);
-
-  const handleChanged = () => {
-    setReloadKey((prev) => prev + 1);
-  };
+  const handleChanged = () => reload();
 
   return (
     <View style={styles.root}>
