@@ -55,7 +55,11 @@ export const MenuScreen = (props: Props) => {
   return (
     <View style={styles.root}>
       {!selectedCategory && (
-        <SearchNavigateButton onPress={() => props.navigation?.push("Search")} />
+        <SearchNavigateButton
+          title="Поиск"
+          variant="violet"
+          onPress={() => props.navigation?.push("Search")}
+        />
       )}
 
       {selectedCategory?.name && selectedCategory.children.length > 0 && (

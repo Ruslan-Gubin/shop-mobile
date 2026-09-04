@@ -67,7 +67,11 @@ export const HomeScreen = (props: Props) => {
   return (
     <View style={styles.root}>
       <Login visible={open} onClose={() => setOpen(false)} />
-      <SearchNavigateButton onPress={() => props?.navigation?.push("Search")} />
+      <SearchNavigateButton
+        title="Поиск"
+        variant="violet"
+        onPress={() => props?.navigation?.push("Search")}
+      />
       <FlatList
         data={data}
         contentContainerStyle={styles.listContent}

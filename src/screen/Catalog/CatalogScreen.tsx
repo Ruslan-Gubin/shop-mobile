@@ -123,7 +123,13 @@ export const CatalogScreen = (props: Props) => {
 
   return (
     <View style={styles.root}>
-      {hasSearch && <SearchNavigateButton onPress={() => props.navigation?.push("Search")} />}
+      {hasSearch && (
+        <SearchNavigateButton
+          variant="gray"
+          title={search}
+          onPress={() => props.navigation?.push("Search")}
+        />
+      )}
 
       {!hasSearch && hasCategory && category_name.length > 0 && (
         <PageHeader title={category_name} onBack={() => props?.navigation?.goBack()} />
@@ -135,14 +141,12 @@ export const CatalogScreen = (props: Props) => {
         </View>
       )}
 
-      {hasSearch && similarSearch.length > 0 && (
-        <SimilarSearch
-          similarSearch={similarSearch}
-          onSelect={(text) => props.navigation?.push("Catalog", { search: text })}
-          count={count}
-          search={search}
-        />
-      )}
+      <SimilarSearch
+        similarSearch={similarSearch}
+        onSelect={(text) => props.navigation?.push("Catalog", { search: text })}
+        count={count}
+        search={search}
+      />
 
       {filtersData !== null && (
         <FilterBar

@@ -12,44 +12,48 @@ type Props = {
 
 export const SimilarSearch = (props: Props) => {
   return (
-    <View style={styles.searchHeader}>
-      <View style={styles.searchLine}>
-        {props.search ? (
+    <View
+      style={[
+        styles.searchHeader,
+        { paddingBottom: props.search ? 0 : 2, paddingTop: props.search ? 0 : 8 },
+      ]}
+    >
+      {props.count > 0 && (
+        <View style={styles.searchLine}>
           <Text numberOfLines={1} style={styles.searchTitle}>
-            {props.search}
+            {props.search && props.search.trim().length > 0 ? props.search : "Найдено"}
           </Text>
-        ) : null}
-        {props.count > 0 ? (
           <Text numberOfLines={1} style={styles.searchCount}>
-            {`Найдено ${props.count} ${declOfNum(props.count, ["товар", "товара", "товаров"])}`}
+            {`${props.count} ${declOfNum(props.count, ["товар", "товара", "товаров"])}`}
           </Text>
-        ) : null}
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        snapToInterval={132}
-        contentContainerStyle={styles.list}
-      >
-        {props.similarSearch.map((item) => (
-          <Pressable key={item.id} style={styles.item} onPress={() => props.onSelect(item.text)}>
-            <SearchSvg size={14} fill="rgb(169, 168, 176)" />
-            <Text style={styles.itemText} numberOfLines={1}>
-              {item.text}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+        </View>
+      )}
+      {props.search && props.similarSearch.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          snapToInterval={132}
+          contentContainerStyle={styles.list}
+        >
+          {props.similarSearch.map((item) => (
+            <Pressable key={item.id} style={styles.item} onPress={() => props.onSelect(item.text)}>
+              <SearchSvg size={14} fill="rgb(169, 168, 176)" />
+              <Text style={styles.itemText} numberOfLines={1}>
+                {item.text}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   searchHeader: {
-    paddingTop: 56,
-    rowGap: 8,
+    rowGap: 4,
   },
   searchLine: {
     flexDirection: "row",
@@ -88,4 +92,3 @@ const styles = StyleSheet.create({
     color: "#242424",
   },
 });
-

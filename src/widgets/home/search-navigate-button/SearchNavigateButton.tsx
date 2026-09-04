@@ -3,6 +3,8 @@ import { SearchSvg } from "../../../shared/svg/SearchSvg";
 
 type Props = {
   onPress: () => void;
+  title: string;
+  variant: "gray" | "violet";
 };
 
 export const SearchNavigateButton = (props: Props) => {
@@ -10,7 +12,7 @@ export const SearchNavigateButton = (props: Props) => {
     <View style={styles.searchContainer}>
       <TouchableOpacity style={styles.searchButton} onPress={props.onPress}>
         <SearchSvg size={18} fill="#9a1cc6" />
-        <Text style={styles.searchText}>Поиск</Text>
+        <Text style={styles.searchText}>{props.title}</Text>
       </TouchableOpacity>
     </View>
   );
