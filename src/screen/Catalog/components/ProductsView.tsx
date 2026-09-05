@@ -10,15 +10,14 @@ import { NotContent } from "../../../widgets/not-content/NotContent";
 import { ProductCard } from "../../../widgets/product/product-card/ProductCard";
 import { ProductRecent } from "../../../widgets/product/product-recent/ProductRecent";
 import { buildCatalogParams } from "../helpers/buildCatalogParams";
-import type { CatalogFilterState } from "../types";
+import type { CatalogFilter } from "../types";
 
 type Props = {
   category_id: number;
   search: string;
-  title?: string;
   navigation?: NativeStackNavigationProp<ParamListBase, string>;
   onCountChange?: (count: number) => void;
-  filter: CatalogFilterState;
+  filters: CatalogFilter;
 };
 
 export const ProductsView = (props: Props) => {
@@ -40,7 +39,7 @@ export const ProductsView = (props: Props) => {
             String(LIMIT),
             props.category_id,
             props.search,
-            props.filter,
+            props.filters,
           ),
         })
         .then((response) => {
@@ -55,7 +54,7 @@ export const ProductsView = (props: Props) => {
 
   useEffect(() => {
     reload();
-  }, [props.filter]);
+  }, [props.filters]);
 
   return (
     <View style={styles.root}>

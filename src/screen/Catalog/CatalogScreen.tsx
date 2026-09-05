@@ -10,7 +10,7 @@ import { FilterBar } from "./components/filter/FilterBar";
 import { ProductsView } from "./components/ProductsView";
 import { SimilarSearch } from "./components/SimilarSearch";
 import { buildFilterParams } from "./helpers/buildFilterParams";
-import type { CatalogFilterState, CatalogFiltersResponse } from "./types";
+import type { CatalogFilter, CatalogFiltersResponse } from "./types";
 
 type Props = {
   navigation?: NativeStackNavigationProp<ParamListBase, "Catalog">;
@@ -25,22 +25,28 @@ export const CatalogScreen = (props: Props) => {
   const search = props.route?.params?.search || "";
   const hasSearch = search.length > 0;
   const category_id = props.route?.params?.category_id || 0;
-  const category_name = props.route?.params?.category_name || "";
   const hasCategory = category_id > 0;
+  const category_name = props.route?.params?.category_name || "";
 
   const [similarSearch, setSimilarSearch] = useState<SearchModel[]>([]);
   const [count, setCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const [filterState, setFilterState] = useState<CatalogFilterState>({
+  const [filters, setFilters] = useState<CatalogFilter>({
     sort: "popular",
-    priceFrom: "",
-    priceTo: "",
+    price_from: "",
+    price_to: "",
     specifications: [],
-    country: "",
-    productTypes: "",
+    country: [],
+    product_types: [],
   });
-  const [filtersData, setFiltersData] = useState<CatalogFiltersResponse | null>(null);
+
+  const [filtersData, setFiltersData] = useState<CatalogFiltersResponse>({
+    countries: [],
+    price: { min: 0, max: 0 },
+    product_types: [],
+    specifications: [],
+  });
 
   const fetchSimilarSearchEvent = useEffectEvent(() => {
     if (search.trim().length > 0) {
@@ -58,68 +64,36 @@ export const CatalogScreen = (props: Props) => {
   });
 
   const fetchFiltersEvent = useEffectEvent(() => {
-    const params = buildFilterParams(
-      category_id,
-      search,
-      filterState.priceFrom,
-      filterState.priceTo,
-    );
+    const params = buildFilterParams(category_id, search, "", "");
 
     fetchService
       .get<CatalogFiltersResponse>({ url: "product/filters", params })
       .then((response) => {
         if (response.status === "success" && response.data) {
           setFiltersData(response.data);
+
+          if (
+            Object.hasOwn(response.data, "price") &&
+            !Number.isNaN(response.data.price.min) &&
+            typeof response.data.price.min === "number" &&
+            !Number.isNaN(response.data.price.max) &&
+            typeof response.data.price.max === "number" &&
+            response.data.price.min !== response.data.price.max
+          ) {
+            const price_from = String(response.data.price.min) || "";
+            const price_to = String(response.data.price.max) || "";
+
+            setFilters((prev) => ({ ...prev, price_from, price_to }));
+          }
         }
-      });
+      })
+      .finally(() => setLoading(false));
   });
 
   useEffect(() => {
     fetchFiltersEvent();
     fetchSimilarSearchEvent();
   }, []);
-
-  const handleSortChange = (value: string) => setFilterState((prev) => ({ ...prev, sort: value }));
-
-  const handlePriceChange = (value: { from: string; to: string }) =>
-    setFilterState((prev) => ({ ...prev, priceFrom: value.from, priceTo: value.to }));
-
-  const handlePriceReset = () =>
-    setFilterState((prev) => ({ ...prev, priceFrom: "", priceTo: "" }));
-
-  const handleSpecificationToggle = (key: string) =>
-    setFilterState((prev) => {
-      const current = prev.specifications.includes(key)
-        ? prev.specifications.filter((el) => el !== key)
-        : [...prev.specifications, key];
-      return { ...prev, specifications: current };
-    });
-
-  const handleSpecificationReset = (values: string[]) =>
-    setFilterState((prev) => ({
-      ...prev,
-      specifications: prev.specifications.filter((el) => !values.includes(el)),
-    }));
-
-  const handleCountryToggle = (value: string) =>
-    setFilterState((prev) => {
-      const current = prev.country.includes(value)
-        ? prev.country.filter((el) => el !== value)
-        : [...prev.country, value];
-      return { ...prev, country: current };
-    });
-
-  const handleCountryReset = () => setFilterState((prev) => ({ ...prev, country: [] }));
-
-  const handleProductTypeToggle = (value: string) =>
-    setFilterState((prev) => {
-      const current = prev.productTypes.includes(value)
-        ? prev.productTypes.filter((el) => el !== value)
-        : [...prev.productTypes, value];
-      return { ...prev, productTypes: current };
-    });
-
-  const handleProductTypeReset = () => setFilterState((prev) => ({ ...prev, productTypes: [] }));
 
   return (
     <View style={styles.root}>
@@ -148,30 +122,19 @@ export const CatalogScreen = (props: Props) => {
         search={search}
       />
 
-      {filtersData !== null && (
-        <FilterBar
-          filters={filtersData}
-          state={filterState}
-          onSortChange={handleSortChange}
-          onPriceChange={handlePriceChange}
-          onPriceReset={handlePriceReset}
-          onSpecificationToggle={handleSpecificationToggle}
-          onSpecificationReset={handleSpecificationReset}
-          onCountryToggle={handleCountryToggle}
-          onCountryReset={handleCountryReset}
-          onProductTypeToggle={handleProductTypeToggle}
-          onProductTypeReset={handleProductTypeReset}
-        />
+      {!loading && (
+        <FilterBar filters={filters} setFilters={setFilters} filtersData={filtersData} />
       )}
 
-      <ProductsView
-        search={search}
-        filter={filterState}
-        navigation={props.navigation}
-        onCountChange={setCount}
-        category_id={category_id}
-        title="11 товаров"
-      />
+      {!loading && (
+        <ProductsView
+          search={search}
+          filters={filters}
+          navigation={props.navigation}
+          onCountChange={setCount}
+          category_id={category_id}
+        />
+      )}
     </View>
   );
 };

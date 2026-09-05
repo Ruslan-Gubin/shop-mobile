@@ -1,11 +1,11 @@
-import type { CatalogFilterState } from "../types";
+import type { CatalogFilter } from "../types";
 
 export const buildCatalogParams = (
   page: string,
   limit: string,
   category_id: number,
   search: string,
-  filter: CatalogFilterState,
+  filter: CatalogFilter,
 ) => {
   const params: {
     limit: string;
@@ -33,20 +33,20 @@ export const buildCatalogParams = (
   }
 
   if (
-    filter.priceFrom &&
-    typeof filter.priceFrom === "string" &&
-    filter.priceFrom.length > 0 &&
-    !Number.isNaN(Number(filter.priceFrom))
+    filter.price_from &&
+    typeof filter.price_from === "string" &&
+    filter.price_from.length > 0 &&
+    !Number.isNaN(Number(filter.price_from))
   ) {
-    params.price_from = filter.priceFrom;
+    params.price_from = filter.price_from;
   }
 
   if (
-    typeof filter.priceTo === "string" &&
-    filter.priceTo.length > 0 &&
-    !Number.isNaN(Number(filter.priceTo))
+    typeof filter.price_to === "string" &&
+    filter.price_to.length > 0 &&
+    !Number.isNaN(Number(filter.price_to))
   ) {
-    params.price_to = filter.priceTo;
+    params.price_to = filter.price_to;
   }
 
   if (filter.specifications.length > 0) {
@@ -54,11 +54,11 @@ export const buildCatalogParams = (
   }
 
   if (filter.country.length > 0) {
-    params.country = filter.country;
+    params.country = filter.country.join(",");
   }
 
-  if (filter.productTypes.length > 0) {
-    params.product_types = filter.productTypes;
+  if (filter.product_types.length > 0) {
+    params.product_types = filter.product_types.join(",");
   }
 
   return params;
