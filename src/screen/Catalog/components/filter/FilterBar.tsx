@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, View } from "react-native";
 import type { CatalogFilter, CatalogFiltersResponse } from "../../types";
-import { DropdownFilterSelect } from "./dropdown";
+import { DropdownFilterCountry, DropdownFilterMultiSelect, DropdownFilterSelect } from "./dropdown";
 
 type Props = {
   filters: CatalogFilter;
@@ -9,10 +9,6 @@ type Props = {
 };
 
 export const FilterBar = (props: Props) => {
-  // const minPrice = props.filters?.price?.min || 1;
-  // const maxPrice = props.filters?.price?.max || 100000;
-  //
-  // const priceActive = props.state.priceFrom !== "" || props.state.priceTo !== "";
   const SORT_OPTIONS = [
     { value: "popular", label: "По популярности" },
     { value: "rate", label: "По рейтингу" },
@@ -22,6 +18,39 @@ export const FilterBar = (props: Props) => {
   ];
 
   const handleChangeSort = (sort: string) => props.setFilters((prev) => ({ ...prev, sort }));
+
+  const handleChangeCountry = (country: string[]) =>
+    props.setFilters((prev) => ({ ...prev, country }));
+
+  const handleResetCountry = () => {
+    props.setFilters((prev) => ({ ...prev, country: [] }));
+  };
+
+  const handleChangeProductTypes = (product_types: string[]) =>
+    props.setFilters((prev) => ({ ...prev, product_types }));
+
+  const handleResetProductTypes = () => {
+    props.setFilters((prev) => ({ ...prev, product_types: [] }));
+  };
+
+  const handleSelectSpecification = (id: number, values: string[]) => {
+    props.setFilters((prev) => {
+      const prevSpecifications = prev.specifications.find((el) => el.id === id);
+
+      if (!prevSpecifications) {
+        prev.specifications.push({ id, values });
+      } else {
+        prevSpecifications.values = values;
+      }
+
+      return { ...prev };
+    });
+  };
+
+  // const minPrice = props.filters?.price?.min || 1;
+  // const maxPrice = props.filters?.price?.max || 100000;
+  //
+  // const priceActive = props.state.priceFrom !== "" || props.state.priceTo !== "";
 
   return (
     <View style={styles.wrapper}>
@@ -47,45 +76,38 @@ export const FilterBar = (props: Props) => {
         {/*   active={priceActive} */}
         {/* /> */}
 
-        {/* {props.filters?.specifications.map((specification) => { */}
-        {/*   const selected = props.state.specifications.filter((el) => */}
-        {/*     el.startsWith(`${specification.id}:`), */}
-        {/*   ); */}
-        {/*   return ( */}
-        {/*     <DropdownFilterMultiSelect */}
-        {/*       key={specification.id} */}
-        {/*       title={specification.name} */}
-        {/*       values={specification.values} */}
-        {/*       selected={selected} */}
-        {/*       onChange={(key) => props.onSpecificationToggle(`${specification.id}:${key}`)} */}
-        {/*       onReset={() => */}
-        {/*         props.onSpecificationReset( */}
-        {/*           specification.values.map((value) => `${specification.id}:${value}`), */}
-        {/*         ) */}
-        {/*       } */}
-        {/*     /> */}
-        {/*   ); */}
-        {/* })} */}
+        {props.filtersData.specifications.map((specification) => (
+          <DropdownFilterMultiSelect
+            key={specification.id}
+            title={specification.name}
+            values={specification.values}
+            selected={
+              props.filters.specifications.find((el) => el.id === specification.id)?.values || []
+            }
+            onChange={(selected) => handleSelectSpecification(specification.id, selected)}
+            onReset={() => handleSelectSpecification(specification.id, [])}
+          />
+        ))}
 
-        {/* {props.filters?.countries && props.filters.countries.length > 0 && ( */}
-        {/*   <DropdownFilterCountry */}
-        {/*     title="Производитель" */}
-        {/*     options={props.filters.countries} */}
-        {/*     selected={props.state.country} */}
-        {/*     onChange={props.onCountryToggle} */}
-        {/*     onReset={props.onCountryReset} */}
-        {/*   /> */}
-        {/* )} */}
+        {props.filtersData.countries && props.filtersData.countries.length > 1 && (
+          <DropdownFilterCountry
+            title="Производитель"
+            options={props.filtersData.countries}
+            selected={props.filters.country}
+            onChange={handleChangeCountry}
+            onReset={handleResetCountry}
+          />
+        )}
 
-        {/* {props.filters?.product_types && props.filters.product_types.length > 0 && ( */}
-        {/*   <DropdownFilterCountry */}
-        {/*     title="Вид товара" */}
-        {/*     options={props.filters.product_types} */}
-        {/*     selected={props.state.productTypes} */}
-        {/*     onChange={props.onProductTypeToggle} */}
-        {/*     onReset={props.onProductTypeReset} */}
-        {/*   /> */}
-        {/* )} */}
+        {props.filtersData.product_types && props.filtersData.product_types.length > 1 && (
+          <DropdownFilterCountry
+            title="Вид товара"
+            options={props.filtersData.product_types}
+            selected={props.filters.product_types}
+            onChange={handleChangeProductTypes}
+            onReset={handleResetProductTypes}
+          />
+        )}
       </ScrollView>
     </View>
   );

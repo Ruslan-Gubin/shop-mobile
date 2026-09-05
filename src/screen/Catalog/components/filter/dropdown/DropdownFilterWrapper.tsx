@@ -66,7 +66,7 @@ export const DropdownFilterWrapper = (props: Props) => {
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gs) => gs.dy > 5,
+      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dy) > 5,
       onPanResponderMove: (_, gs) => {
         if (gs.dy > 0) {
           translateY.setValue(gs.dy);
@@ -99,29 +99,30 @@ export const DropdownFilterWrapper = (props: Props) => {
           <Pressable style={styles.overlayPressable} onPress={() => closeSheet()} />
         </Animated.View>
 
-        <Animated.View
-          style={[styles.sheet, { transform: [{ translateY }] }]}
-          {...panResponder.panHandlers}
-        >
-          <Pressable onPress={(event) => event.stopPropagation()}>
-            <View style={styles.grabberArea}>
-              <View style={styles.grabber} />
-            </View>
+        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
+          <View {...panResponder.panHandlers}>
+            <Pressable onPress={(event) => event.stopPropagation()}>
+              <View>
+                <View style={styles.grabberArea}>
+                  <View style={styles.grabber} />
+                </View>
 
-            <View style={styles.header}>
-              <Text style={styles.title}>{props.title}</Text>
-            </View>
-
-            <View style={styles.content}>{props.children}</View>
-
-            {props.onSubmit && (
-              <View style={styles.footer}>
-                <Pressable style={styles.submitButton} onPress={() => closeSheet(true)}>
-                  <Text style={styles.submitText}>{props.submitLabel || "Применить"}</Text>
-                </Pressable>
+                <View style={styles.header}>
+                  <Text style={styles.title}>{props.title}</Text>
+                </View>
               </View>
-            )}
-          </Pressable>
+            </Pressable>
+          </View>
+
+          <View style={styles.content}>{props.children}</View>
+
+          {props.onSubmit && (
+            <View style={styles.footer}>
+              <Pressable style={styles.submitButton} onPress={() => closeSheet(true)}>
+                <Text style={styles.submitText}>{props.submitLabel || "Применить"}</Text>
+              </Pressable>
+            </View>
+          )}
         </Animated.View>
       </View>
     </Modal>

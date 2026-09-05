@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Checkbox } from "../../../../../shared/ui/checkbox/Checkbox";
 import { DropdownFilterWrapper } from "./DropdownFilterWrapper";
 
@@ -7,38 +7,35 @@ type Props = {
   title: string;
   options: string[];
   selected: string[];
-  onChange: (value: string) => void;
+  onChange: (value: string[]) => void;
   onReset: () => void;
 };
 
 export const DropdownFilterCountry = (props: Props) => {
-  const { title, options, selected, onChange, onReset } = props;
   const [open, setOpen] = useState(false);
-  const [pendingSelected, setPendingSelected] = useState<string[]>([]);
-  const activeCount = selected.length;
+  const [selectValue, setSelectValue] = useState<string[]>(props.selected);
 
-  const label = `${title}${activeCount ? ` ${activeCount}` : ""}`;
+  const activeCount = props.selected.length;
 
-  const handleOpen = useCallback(() => {
-    setPendingSelected([...selected]);
+  const label = `${props.title}${activeCount ? ` ${activeCount}` : ""}`;
+
+  const handleOpen = () => {
+    setSelectValue(props.selected);
     setOpen(true);
-  }, [selected]);
+  };
 
-  const handleToggle = useCallback((v: string) => {
-    setPendingSelected((prev) =>
-      prev.includes(v) ? prev.filter((item) => item !== v) : [...prev, v],
-    );
-  }, []);
+  const handleReset = () => {
+    setSelectValue([]);
+    props.onReset();
+  };
 
-  const handleSubmit = useCallback(() => {
-    const toAdd = pendingSelected.filter((v) => !selected.includes(v));
-    const toRemove = selected.filter((v) => !pendingSelected.includes(v));
+  const handleToggle = (v: string) => {
+    setSelectValue((prev) => (prev.includes(v) ? prev.filter((item) => item !== v) : [...prev, v]));
+  };
 
-    toRemove.forEach((v) => onChange(v));
-    toAdd.forEach((v) => onChange(v));
-
-    setOpen(false);
-  }, [pendingSelected, selected, onChange]);
+  const handleSubmit = () => {
+    props.onChange(selectValue);
+  };
 
   return (
     <>
@@ -46,18 +43,9 @@ export const DropdownFilterCountry = (props: Props) => {
         style={[styles.button, activeCount > 0 && styles.buttonActive]}
         onPress={handleOpen}
       >
-        <Text style={[styles.buttonText, activeCount > 0 && styles.buttonTextActive]}>
-          {label}
-        </Text>
+        <Text style={[styles.buttonText, activeCount > 0 && styles.buttonTextActive]}>{label}</Text>
         {activeCount > 0 && (
-          <Pressable
-            hitSlop={8}
-            onPress={(e) => {
-              e.stopPropagation();
-              onReset();
-            }}
-            style={styles.resetIcon}
-          >
+          <Pressable hitSlop={8} onPress={handleReset} style={styles.resetIcon}>
             <Text style={styles.resetIconText}>×</Text>
           </Pressable>
         )}
@@ -65,7 +53,7 @@ export const DropdownFilterCountry = (props: Props) => {
 
       <DropdownFilterWrapper
         visible={open}
-        title={title}
+        title={props.title}
         onClose={() => setOpen(false)}
         onSubmit={handleSubmit}
       >
@@ -74,16 +62,12 @@ export const DropdownFilterCountry = (props: Props) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
         >
-          {options.map((v) => {
-            const isChecked = pendingSelected.includes(v);
+          {props.options.map((v) => {
+            const isChecked = selectValue.includes(v);
             return (
-              <Pressable key={v} style={styles.item} onPress={() => handleToggle(v)}>
-                <Checkbox
-                  checked={isChecked}
-                  onPress={() => handleToggle(v)}
-                  label={v}
-                />
-              </Pressable>
+              <View key={v} style={styles.item}>
+                <Checkbox checked={isChecked} onPress={() => handleToggle(v)} label={v} />
+              </View>
             );
           })}
         </ScrollView>
@@ -116,21 +100,21 @@ const styles = StyleSheet.create({
   },
   resetIcon: {
     marginLeft: 4,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 16,
+    height: 16,
+    borderRadius: "50%",
     backgroundColor: "#a73afd",
     alignItems: "center",
     justifyContent: "center",
   },
   resetIconText: {
     color: "white",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
-    lineHeight: 18,
+    top: -2,
   },
   list: {
-    maxHeight: 400,
+    maxHeight: 500,
   },
   listContent: {
     paddingBottom: 8,

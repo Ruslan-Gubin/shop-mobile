@@ -9,7 +9,7 @@ export type CatalogFilter = {
   sort: string;
   price_from: string;
   price_to: string;
-  specifications: string[];
+  specifications: { id: number; values: string[] }[];
   country: string[];
   product_types: string[];
 };

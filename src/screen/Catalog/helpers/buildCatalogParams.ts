@@ -1,4 +1,5 @@
 import type { CatalogFilter } from "../types";
+import { getSpecificationParams } from "./getSpecificationParams";
 
 export const buildCatalogParams = (
   page: string,
@@ -50,7 +51,7 @@ export const buildCatalogParams = (
   }
 
   if (filter.specifications.length > 0) {
-    params.specifications = filter.specifications.join(",");
+    params.specifications = getSpecificationParams(filter.specifications).join(",");
   }
 
   if (filter.country.length > 0) {

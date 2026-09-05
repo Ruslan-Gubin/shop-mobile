@@ -15,10 +15,9 @@ type Props = {
 
 export const DropdownFilterSelect = (props: Props) => {
   const [open, setOpen] = useState(false);
-  const [selectValue, setSelectValue] = useState(props.value);
+  const [selectValue, setSelectValue] = useState<string>(props.value);
 
   const handleSubmit = () => {
-    // console.log("submit");
     props.onChange(selectValue);
     setOpen(false);
   };
