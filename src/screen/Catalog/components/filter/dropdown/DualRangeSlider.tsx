@@ -1,5 +1,12 @@
 import { useCallback, useRef, useState } from "react";
-import { GestureResponderEvent, LayoutChangeEvent, PanResponder, StyleSheet, Text, View } from "react-native";
+import {
+  type GestureResponderEvent,
+  type LayoutChangeEvent,
+  PanResponder,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 type Props = {
   min: number;
@@ -111,11 +118,7 @@ export const DualRangeSlider = (props: Props) => {
         <Text style={styles.label}>{to.toLocaleString("ru-RU")} ₽</Text>
       </View>
 
-      <View
-        style={styles.sliderContainer}
-        onLayout={handleLayout}
-        {...panResponder.panHandlers}
-      >
+      <View style={styles.sliderContainer} onLayout={handleLayout} {...panResponder.panHandlers}>
         <View style={styles.track} />
 
         <View
@@ -128,21 +131,11 @@ export const DualRangeSlider = (props: Props) => {
           ]}
         />
 
-        <View
-          style={[
-            styles.thumb,
-            { left: fromPosition - THUMB_SIZE / 2 },
-          ]}
-        >
+        <View style={[styles.thumb, { left: fromPosition - THUMB_SIZE / 2 }]}>
           <View style={styles.thumbInner} />
         </View>
 
-        <View
-          style={[
-            styles.thumb,
-            { left: toPosition - THUMB_SIZE / 2 },
-          ]}
-        >
+        <View style={[styles.thumb, { left: toPosition - THUMB_SIZE / 2 }]}>
           <View style={styles.thumbInner} />
         </View>
       </View>

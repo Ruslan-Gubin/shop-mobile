@@ -1,68 +1,66 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
 import { DropdownFilterWrapper } from "./DropdownFilterWrapper";
 import { DualRangeSlider } from "./DualRangeSlider";
 
 type Props = {
-  minPrice: number;
-  maxPrice: number;
-  value: { from: string; to: string };
-  onChange: (value: { from: string; to: string }) => void;
+  min: number;
+  max: number;
+  price_from: string;
+  price_to: string;
+  onChange: (from: string, to: string) => void;
   onReset: () => void;
-  active: boolean;
 };
 
 export const DropdownFilterPrice = (props: Props) => {
-  const { minPrice, maxPrice, value, onChange, onReset, active } = props;
   const [open, setOpen] = useState(false);
-  const [fromValue, setFromValue] = useState(minPrice);
-  const [toValue, setToValue] = useState(maxPrice);
+  const [valueFrom, setValueFrom] = useState<number>(props.min);
+  const [valueTo, setValueTo] = useState<number>(props.max);
 
-  const handleOpen = useCallback(() => {
-    setFromValue(Number(value.from) || minPrice);
-    setToValue(Number(value.to) || maxPrice);
-    setOpen(true);
-  }, [value.from, value.to, minPrice, maxPrice]);
+  const active =
+    (!Number.isNaN(props.price_from) &&
+      !Number.isNaN(props.min) &&
+      Number(props.price_from) !== Number(props.min)) ||
+    (!Number.isNaN(props.price_to) &&
+      !Number.isNaN(props.max) &&
+      Number(props.price_to) !== Number(props.max));
 
-  const handleRangeChange = useCallback((from: number, to: number) => {
-    setFromValue(from);
-    setToValue(to);
-  }, []);
+  const handleOpen = () => {
+    if (!Number.isNaN(props.min) && !Number.isNaN(props.max)) {
+      setValueFrom(Number(props.price_from));
+      setValueTo(Number(props.price_to));
+      setOpen(true);
+    }
+  };
 
-  const handleSubmit = useCallback(() => {
-    onChange({ from: String(fromValue), to: String(toValue) });
+  const handleRangeChange = (from: number, to: number) => {
+    setValueFrom(from);
+    setValueTo(to);
+  };
+
+  const handleSubmit = () => {
+    props.onChange(String(valueFrom), String(valueTo));
     setOpen(false);
-  }, [fromValue, toValue, onChange]);
+  };
 
-  const handleReset = useCallback(() => {
-    setFromValue(minPrice);
-    setToValue(maxPrice);
-    onReset();
-    setOpen(false);
-  }, [minPrice, maxPrice, onReset]);
+  const handleReset = () => {
+    props.onReset();
+
+    if (open) {
+      setOpen(false);
+    }
+  };
 
   const label = active
-    ? `Цена: от ${Number(value.from).toLocaleString("ru-RU")} до ${Number(value.to).toLocaleString("ru-RU")}`
+    ? `Цена: от ${Number(props.price_from).toLocaleString("ru-RU")} до ${Number(props.price_to).toLocaleString("ru-RU")}`
     : "Цена, ₽";
 
   return (
     <>
-      <Pressable
-        style={[styles.button, active && styles.buttonActive]}
-        onPress={handleOpen}
-      >
-        <Text style={[styles.buttonText, active && styles.buttonTextActive]}>
-          {label}
-        </Text>
+      <Pressable style={[styles.button, active && styles.buttonActive]} onPress={handleOpen}>
+        <Text style={[styles.buttonText, active && styles.buttonTextActive]}>{label}</Text>
         {active && (
-          <Pressable
-            hitSlop={8}
-            onPress={(e) => {
-              e.stopPropagation();
-              onReset();
-            }}
-            style={styles.resetIcon}
-          >
+          <Pressable hitSlop={8} onPress={handleReset} style={styles.resetIcon}>
             <Text style={styles.resetIconText}>×</Text>
           </Pressable>
         )}
@@ -75,10 +73,10 @@ export const DropdownFilterPrice = (props: Props) => {
         onSubmit={handleSubmit}
       >
         <DualRangeSlider
-          min={minPrice}
-          max={maxPrice}
-          from={fromValue}
-          to={toValue}
+          min={props.min}
+          max={props.max}
+          from={valueFrom}
+          to={valueTo}
           onChange={handleRangeChange}
         />
 
@@ -116,18 +114,18 @@ const styles = StyleSheet.create({
   },
   resetIcon: {
     marginLeft: 4,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 16,
+    height: 16,
+    borderRadius: "50%",
     backgroundColor: "#a73afd",
     alignItems: "center",
     justifyContent: "center",
   },
   resetIconText: {
     color: "white",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
-    lineHeight: 18,
+    top: -2,
   },
   resetButton: {
     marginTop: 16,

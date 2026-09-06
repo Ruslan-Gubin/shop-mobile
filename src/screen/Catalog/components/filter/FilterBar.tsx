@@ -1,6 +1,11 @@
 import { ScrollView, StyleSheet, View } from "react-native";
 import type { CatalogFilter, CatalogFiltersResponse } from "../../types";
-import { DropdownFilterCountry, DropdownFilterMultiSelect, DropdownFilterSelect } from "./dropdown";
+import {
+  DropdownFilterCountry,
+  DropdownFilterMultiSelect,
+  DropdownFilterPrice,
+  DropdownFilterSelect,
+} from "./dropdown";
 
 type Props = {
   filters: CatalogFilter;
@@ -47,10 +52,26 @@ export const FilterBar = (props: Props) => {
     });
   };
 
-  // const minPrice = props.filters?.price?.min || 1;
-  // const maxPrice = props.filters?.price?.max || 100000;
-  //
-  // const priceActive = props.state.priceFrom !== "" || props.state.priceTo !== "";
+  const handleChangePrice = () => {
+    console.log("change price");
+    // props.setFilters((prev) => ({ ...prev, product_types: [] }));
+  };
+
+  const handleResetPrice = () => {
+    if (
+      Object.hasOwn(props.filtersData, "price") &&
+      !Number.isNaN(props.filtersData.price.min) &&
+      typeof props.filtersData.price.min === "number" &&
+      !Number.isNaN(props.filtersData.price.max) &&
+      typeof props.filtersData.price.max === "number" &&
+      props.filtersData.price.min !== props.filtersData.price.max
+    ) {
+      const price_from = String(props.filtersData.price.min) || "";
+      const price_to = String(props.filtersData.price.max) || "";
+
+      props.setFilters((prev) => ({ ...prev, price_from, price_to }));
+    }
+  };
 
   return (
     <View style={styles.wrapper}>
@@ -67,14 +88,14 @@ export const FilterBar = (props: Props) => {
           label={SORT_OPTIONS.find((el) => el.value === props.filters.sort)?.label || "Сортировка"}
         />
 
-        {/* <DropdownFilterPrice */}
-        {/*   minPrice={minPrice} */}
-        {/*   maxPrice={maxPrice} */}
-        {/*   value={{ from: props.state.priceFrom, to: props.state.priceTo }} */}
-        {/*   onChange={props.onPriceChange} */}
-        {/*   onReset={props.onPriceReset} */}
-        {/*   active={priceActive} */}
-        {/* /> */}
+        <DropdownFilterPrice
+          min={props.filtersData.price.min}
+          max={props.filtersData.price.max}
+          price_from={props.filters.price_from}
+          price_to={props.filters.price_to}
+          onChange={handleChangePrice}
+          onReset={handleResetPrice}
+        />
 
         {props.filtersData.specifications.map((specification) => (
           <DropdownFilterMultiSelect
