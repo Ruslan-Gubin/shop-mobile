@@ -1,3 +1,4 @@
+import type { NavigationContainerRefWithCurrent } from "@react-navigation/native";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -10,29 +11,33 @@ import {
   TextInput,
 } from "react-native";
 import { fetchService } from "../../../shared/fetch-api";
+import { getMessageError } from "../../../shared/helpers/getMessageError";
 import { saveTokens } from "../../../shared/storage/tokens";
+import { modalsAdapter } from "../../../store/modals/adapter";
+import { modalsStore } from "../../../store/modals/store";
 
-type LoginProps = {
-  visible: boolean;
-  onClose: () => void;
+type Props = {
+  navigationRef: NavigationContainerRefWithCurrent<ReactNavigation.RootParamList>;
 };
 
-export const Login = ({ visible, onClose }: LoginProps) => {
+export const Login = (props: Props) => {
+  const visible = modalsStore((store) => store.login);
   const [email, setLogin] = useState("gubin_ruslan3@rambler.ru");
   const [password, setPassword] = useState("123123");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSignIn = () => {
+  const handleCloseModal = () => modalsAdapter.closeLogin();
+
+  const handleSignIn = async () => {
     if (!email.trim() || !password.trim()) {
       setError("Заполните логин и пароль");
-      return;
-    }
+    } else {
+      const defaultErrorMessage = "Не удалось войти";
 
-    setIsLoading(true);
-    setError("");
+      setIsLoading(true);
+      setError("");
 
-    try {
       fetchService
         .post<{ token: string; refresh: string }>({
           url: "auth/sign-in",
@@ -41,100 +46,97 @@ export const Login = ({ visible, onClose }: LoginProps) => {
             password,
           },
         })
-        .then((response) => {
+        .then(async (response) => {
           if (
             response.status === "success" &&
             response.data &&
             response.data.token &&
             response.data.refresh
           ) {
-            saveTokens(response.data.token, response.data.refresh);
-          } else {
-            setError(response.message || "Не удалось войти");
-            return;
-          }
-        });
+            await saveTokens(response.data.token, response.data.refresh);
+            // setPassword("");
+            handleCloseModal();
 
-      setPassword("");
-      onClose();
-    } catch (err) {
-      console.log("sign-in request failed:", err);
-      setError("Ошибка сети. Попробуйте ещё раз");
-    } finally {
-      setIsLoading(false);
+            if (props.navigationRef.isReady()) {
+              props.navigationRef.reset({ index: 0, routes: [{ name: "Tabs" }] });
+            }
+          } else {
+            throw response.message || "Не удалось войти";
+          }
+        })
+        .catch((error) => {
+          const message = getMessageError(error, defaultErrorMessage);
+          setError(message);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <KeyboardAvoidingView
-          style={styles.avoiding}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <Modal
+      visible={visible}
+      presentationStyle="fullScreen"
+      animationType="slide"
+      onRequestClose={handleCloseModal}
+    >
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <Text style={styles.title}>Вход</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Логин"
+          placeholderTextColor="#c8c8d1"
+          value={email}
+          onChangeText={setLogin}
+          editable={!isLoading}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Пароль"
+          placeholderTextColor="#c8c8d1"
+          value={password}
+          onChangeText={setPassword}
+          editable={!isLoading}
+          secureTextEntry
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.button,
+            isLoading || pressed ? styles.buttonDisabled : null,
+          ]}
+          onPress={handleSignIn}
+          disabled={isLoading}
         >
-          <Pressable style={styles.card} onPress={(event) => event.stopPropagation()}>
-            <Text style={styles.title}>Вход</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Логин"
-              placeholderTextColor="#c8c8d1"
-              value={email}
-              onChangeText={setLogin}
-              editable={!isLoading}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Пароль"
-              placeholderTextColor="#c8c8d1"
-              value={password}
-              onChangeText={setPassword}
-              editable={!isLoading}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.button,
-                isLoading || pressed ? styles.buttonDisabled : null,
-              ]}
-              onPress={handleSignIn}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <Text style={styles.buttonText}>Войти</Text>
-              )}
-            </Pressable>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Pressable>
+          {isLoading ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <Text style={styles.buttonText}>Войти</Text>
+          )}
+        </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  backdrop: {
+  container: {
     flex: 1,
     justifyContent: "center",
-    padding: 12,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  avoiding: {
-    justifyContent: "center",
-  },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 16,
     padding: 24,
+    backgroundColor: "#ffffff",
   },
   title: {
     marginBottom: 20,

@@ -8,7 +8,6 @@ import { getWidthCard } from "../../shared/helpers/getWidthCard";
 import { useInfiniteScroll } from "../../shared/hooks/useInfiniteScroll";
 import type { ProductModel } from "../../shared/types/products";
 import { SearchNavigateButton } from "../../widgets/home/search-navigate-button/SearchNavigateButton";
-import { Login } from "../../widgets/modal/login/Login";
 import { ProductCard } from "../../widgets/product/product-card/ProductCard";
 
 type Props = {
@@ -21,7 +20,6 @@ type Props = {
 };
 
 export const HomeScreen = (props: Props) => {
-  const [open, setOpen] = useState(false);
   const [isError, setIsError] = useState<boolean>(false);
   const limit = 30;
   const width = getWidthCard(Dimensions.get("window").width, 0, 4, 2);
@@ -66,7 +64,6 @@ export const HomeScreen = (props: Props) => {
 
   return (
     <View style={styles.root}>
-      <Login visible={open} onClose={() => setOpen(false)} />
       <SearchNavigateButton
         title="Поиск"
         variant="violet"

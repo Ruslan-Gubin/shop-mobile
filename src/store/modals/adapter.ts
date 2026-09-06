@@ -14,6 +14,14 @@ export class ModalsAdapter {
   public clearDeleteItems() {
     this.store.setState({ deleteItems: [] });
   }
+
+  public openLogin() {
+    this.store.setState({ login: true });
+  }
+
+  public closeLogin() {
+    this.store.setState({ login: false });
+  }
 }
 
 export const modalsAdapter = new ModalsAdapter();

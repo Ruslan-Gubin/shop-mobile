@@ -1,3 +1,5 @@
+import { modalsAdapter } from "../../store/modals/adapter";
+import { clearTokens } from "../storage/tokens";
 import { fetchConfig, fetchUrl, getCurrentTokens } from "./fetch-config";
 import { fetchRefreshToken } from "./utils";
 
@@ -40,9 +42,11 @@ export const baseFetch = async (args: BaseFetchArgs) => {
           throw "403";
         }
       })
-      .catch(() => {
+      .catch(async () => {
+        await clearTokens();
         signal.abort();
         tokens = { token: "", refresh: "" };
+        modalsAdapter.openLogin();
       });
   }
 
