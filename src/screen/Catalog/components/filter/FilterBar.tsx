@@ -52,9 +52,8 @@ export const FilterBar = (props: Props) => {
     });
   };
 
-  const handleChangePrice = () => {
-    console.log("change price");
-    // props.setFilters((prev) => ({ ...prev, product_types: [] }));
+  const handleChangePrice = (price_from: string, price_to: string) => {
+    props.setFilters((prev) => ({ ...prev, price_from, price_to }));
   };
 
   const handleResetPrice = () => {
@@ -73,6 +72,8 @@ export const FilterBar = (props: Props) => {
     }
   };
 
+  const hasPriceRange = props.filters.price_from !== props.filters.price_to;
+
   return (
     <View style={styles.wrapper}>
       <ScrollView
@@ -88,14 +89,16 @@ export const FilterBar = (props: Props) => {
           label={SORT_OPTIONS.find((el) => el.value === props.filters.sort)?.label || "Сортировка"}
         />
 
-        <DropdownFilterPrice
-          min={props.filtersData.price.min}
-          max={props.filtersData.price.max}
-          price_from={props.filters.price_from}
-          price_to={props.filters.price_to}
-          onChange={handleChangePrice}
-          onReset={handleResetPrice}
-        />
+        {hasPriceRange && (
+          <DropdownFilterPrice
+            min={props.filtersData.price.min}
+            max={props.filtersData.price.max}
+            price_from={props.filters.price_from}
+            price_to={props.filters.price_to}
+            onChange={handleChangePrice}
+            onReset={handleResetPrice}
+          />
+        )}
 
         {props.filtersData.specifications.map((specification) => (
           <DropdownFilterMultiSelect

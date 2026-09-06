@@ -1,13 +1,5 @@
-import { useRef, useState } from "react";
-import {
-  type GestureResponderEvent,
-  type LayoutChangeEvent,
-  PanResponder,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { useRef } from "react";
+import { Animated, PanResponder, StyleSheet, View } from "react-native";
 
 type Props = {
   min: number;
@@ -15,192 +7,172 @@ type Props = {
   from: number;
   to: number;
   onChange: (from: number, to: number) => void;
+  thumbSize?: number;
+  trackHeight?: number;
+  trackWidth: number;
 };
 
-const THUMB_SIZE = 28;
-const TRACK_HEIGHT = 4;
-const MIN_GAP = 100;
-
 export const DualRangeSlider = (props: Props) => {
-  const [trackWidth, setTrackWidth] = useState(0);
-  const startValues = useRef<{
-    from: number;
-    to: number;
-    startX: number;
-    activeThumb?: "from" | "to";
-  }>({ from: 0, to: 0, startX: 0 });
-  const step = 1;
+  const trackHeight = props.trackHeight || 4;
+  const thumbSize = props.thumbSize || 24;
 
-  const clamp = (value: number) => {
-    const stepped = Math.round(value / step) * step;
-    return Math.max(props.min, Math.min(props.max, stepped));
-  };
+  const valueRange = props.max - props.min;
 
-  const valueToPosition = (value: number) => {
-    if (trackWidth === 0) return 0;
-    return ((value - props.min) / (props.max - props.min)) * trackWidth;
-  };
+  const valueToPx = (val: number) =>
+    ((val - props.min) / valueRange) * (props.trackWidth - thumbSize);
+  const pxToValue = (px: number) =>
+    Math.round(props.min + (px / (props.trackWidth - thumbSize)) * valueRange);
 
-  const positionToValue = (position: number) => {
-    if (trackWidth === 0) return props.min;
-    const raw = (position / trackWidth) * (props.max - props.min) + props.min;
-    return clamp(raw);
-  };
+  const leftStart = valueToPx(props.from);
+  const rightStart = valueToPx(props.to);
 
-  const panResponder = useRef(
+  const leftX = useRef(new Animated.Value(leftStart)).current;
+  const rightX = useRef(new Animated.Value(rightStart)).current;
+
+  const leftPosRef = useRef(leftStart);
+  const rightPosRef = useRef(rightStart);
+
+  const notify = (from: number, to: number) => props.onChange(from, to);
+
+  const leftPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt: GestureResponderEvent) => {
-        const { locationX } = evt.nativeEvent;
-        const fromPos = valueToPosition(props.from);
-        const toPos = valueToPosition(props.to);
-        const distToFrom = Math.abs(locationX - fromPos);
-        const distToTo = Math.abs(locationX - toPos);
+      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 2,
+      onPanResponderMove: (_, gs) => {
+        const currentValue = gs.moveX - thumbSize;
 
-        startValues.current = {
-          from: props.from,
-          to: props.to,
-          startX: locationX,
-          activeThumb: distToFrom <= distToTo ? "from" : "to",
-        };
-      },
-      onPanResponderMove: (_evt: GestureResponderEvent, gestureState) => {
-        const { startX, activeThumb } = startValues.current;
-
-        if (!activeThumb || trackWidth === 0) return;
-
-        const currentX = startX + gestureState.dx;
-        const newValue = positionToValue(currentX);
-
-        if (activeThumb === "from") {
-          const maxAllowed = props.to - MIN_GAP;
-          const clamped = Math.min(newValue, maxAllowed);
-          const finalValue = Math.max(clamped, props.min);
-          if (finalValue !== props.from) {
-            props.onChange(finalValue, props.to);
-          }
-        } else {
-          const minAllowed = props.from + MIN_GAP;
-          const clamped = Math.max(newValue, minAllowed);
-          const finalValue = Math.min(clamped, props.max);
-          if (finalValue !== props.to) {
-            props.onChange(props.from, finalValue);
-          }
+        if (currentValue > 0 && currentValue < rightPosRef.current - thumbSize) {
+          leftX.setValue(currentValue);
+          leftPosRef.current = currentValue;
         }
       },
       onPanResponderRelease: () => {
-        startValues.current.activeThumb = undefined;
+        const updateFrom = pxToValue(leftPosRef.current);
+        const updateTo = pxToValue(rightPosRef.current);
+
+        notify(updateFrom, updateTo);
       },
     }),
   ).current;
 
-  const handleLayout = (event: LayoutChangeEvent) => setTrackWidth(event.nativeEvent.layout.width);
+  const rightPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 2,
+      onPanResponderMove: (_, gs) => {
+        const currentValue = gs.moveX - thumbSize;
 
-  const fromPosition = valueToPosition(props.from);
-  const toPosition = valueToPosition(props.to);
+        if (
+          currentValue > leftPosRef.current + thumbSize &&
+          currentValue <= props.trackWidth - thumbSize
+        ) {
+          rightX.setValue(currentValue);
+          rightPosRef.current = currentValue;
+        }
+      },
+      onPanResponderRelease: () => {
+        const updateFrom = pxToValue(leftPosRef.current);
+        const updateTo = pxToValue(rightPosRef.current);
+        notify(updateFrom, updateTo);
+      },
+    }),
+  ).current;
+
+  const fillWidth = Animated.subtract(rightX, leftX);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.labelsRow}>
-        <Text style={styles.label}>{props.from.toLocaleString("ru-RU")} ₽</Text>
-        <Text style={styles.label}>{props.to.toLocaleString("ru-RU")} ₽</Text>
-      </View>
+    <View style={[styles.container, { width: props.trackWidth }]}>
+      <View
+        style={[
+          styles.track,
+          {
+            width: props.trackWidth,
+            height: trackHeight,
+            borderRadius: trackHeight / 2,
+          },
+        ]}
+      />
 
-      <View style={styles.sliderContainer} onLayout={handleLayout} {...panResponder.panHandlers}>
-        <View style={styles.track} />
+      <Animated.View
+        style={[
+          styles.fill,
+          {
+            height: trackHeight,
+            borderRadius: trackHeight / 2,
+            left: thumbSize / 2,
+            transform: [{ translateX: leftX }],
+            width: fillWidth,
+          },
+        ]}
+      />
 
-        <View
-          style={[
-            styles.trackActive,
-            {
-              left: fromPosition,
-              width: Math.max(0, toPosition - fromPosition),
-            },
-          ]}
-        />
+      <Animated.View
+        style={[
+          styles.thumb,
+          {
+            width: thumbSize,
+            height: thumbSize,
+            borderRadius: thumbSize / 2,
+            left: 0,
+            transform: [{ translateX: leftX }],
+          },
+        ]}
+        {...leftPanResponder.panHandlers}
+      >
+        <View style={styles.thumbLabel}></View>
+      </Animated.View>
 
-        <Pressable style={[styles.thumb, { left: fromPosition - THUMB_SIZE / 2 }]}>
-          <View style={styles.thumbInner} />
-        </Pressable>
-
-        <Pressable style={[styles.thumb, { left: toPosition - THUMB_SIZE / 2 }]}>
-          <View style={styles.thumbInner} />
-        </Pressable>
-      </View>
-
-      <View style={styles.rangeLabels}>
-        <Text style={styles.rangeLabel}>{props.min.toLocaleString("ru-RU")} ₽</Text>
-        <Text style={styles.rangeLabel}>{props.max.toLocaleString("ru-RU")} ₽</Text>
-      </View>
+      <Animated.View
+        style={[
+          styles.thumb,
+          {
+            width: thumbSize,
+            height: thumbSize,
+            borderRadius: thumbSize / 2,
+            left: 0,
+            transform: [{ translateX: rightX }],
+          },
+        ]}
+        {...rightPanResponder.panHandlers}
+      >
+        <View style={styles.thumbLabel}></View>
+      </Animated.View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 8,
-  },
-  labelsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#242424",
-  },
-  sliderContainer: {
-    height: THUMB_SIZE + TRACK_HEIGHT + 8,
+    height: 60,
     justifyContent: "center",
+    alignItems: "center",
   },
   track: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    height: TRACK_HEIGHT,
-    borderRadius: TRACK_HEIGHT / 2,
     backgroundColor: "#e1e1e6",
-    top: THUMB_SIZE / 2 + 4,
   },
-  trackActive: {
+  fill: {
     position: "absolute",
-    height: TRACK_HEIGHT,
-    borderRadius: TRACK_HEIGHT / 2,
     backgroundColor: "#a73afd",
-    top: THUMB_SIZE / 2 + 4,
   },
   thumb: {
     position: "absolute",
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    borderRadius: THUMB_SIZE / 2,
-    backgroundColor: "white",
+    backgroundColor: "#fff",
     borderWidth: 2,
     borderColor: "#a73afd",
-    elevation: 4,
+    elevation: 3,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
     alignItems: "center",
     justifyContent: "center",
-    top: 4,
   },
-  thumbInner: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  thumbLabel: {
     backgroundColor: "#a73afd",
-  },
-  rangeLabels: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-  },
-  rangeLabel: {
-    fontSize: 12,
-    color: "#868695",
+    width: 10,
+    height: 10,
+    borderRadius: "50%",
   },
 });
+

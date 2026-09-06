@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import { DropdownFilterWrapper } from "./DropdownFilterWrapper";
 import { DualRangeSlider } from "./DualRangeSlider";
 
@@ -13,6 +13,7 @@ type Props = {
 };
 
 export const DropdownFilterPrice = (props: Props) => {
+  const width = Dimensions.get("window").width;
   const [open, setOpen] = useState(false);
   const [valueFrom, setValueFrom] = useState<number>(props.min);
   const [valueTo, setValueTo] = useState<number>(props.max);
@@ -72,25 +73,34 @@ export const DropdownFilterPrice = (props: Props) => {
         onClose={() => setOpen(false)}
         onSubmit={handleSubmit}
       >
+        <View style={styles.rangeRow}>
+          <Text style={styles.rangeValue}>от {valueFrom.toLocaleString("ru-RU")} ₽</Text>
+          <Text style={styles.rangeValue}>до {valueTo.toLocaleString("ru-RU")} ₽</Text>
+        </View>
+
         <DualRangeSlider
           min={props.min}
           max={props.max}
           from={valueFrom}
           to={valueTo}
           onChange={handleRangeChange}
+          trackWidth={width - 32}
         />
-
-        {active && (
-          <Pressable style={styles.resetButton} onPress={handleReset}>
-            <Text style={styles.resetText}>Сбросить цену</Text>
-          </Pressable>
-        )}
       </DropdownFilterWrapper>
     </>
   );
 };
 
 const styles = StyleSheet.create({
+  rangeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  rangeValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#242424",
+  },
   button: {
     flexDirection: "row",
     alignItems: "center",
@@ -125,16 +135,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
-    top: -2,
-  },
-  resetButton: {
-    marginTop: 16,
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  resetText: {
-    color: "#868695",
-    fontSize: 14,
-    textDecorationLine: "underline",
+    top: -2.5,
   },
 });

@@ -70,7 +70,10 @@ export const CatalogScreen = (props: Props) => {
       .get<CatalogFiltersResponse>({ url: "product/filters", params })
       .then((response) => {
         if (response.status === "success" && response.data) {
-          setFiltersData(response.data);
+          setFiltersData({
+            ...response.data,
+            specifications: response.data.specifications.filter((el) => el.values.length > 1),
+          });
 
           if (
             Object.hasOwn(response.data, "price") &&

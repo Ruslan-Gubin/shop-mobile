@@ -21,7 +21,7 @@ export const SimilarSearch = (props: Props) => {
       {props.count > 0 && (
         <View style={styles.searchLine}>
           <Text numberOfLines={1} style={styles.searchTitle}>
-            {props.search && props.search.trim().length > 0 ? props.search : "Найдено"}
+            {props.search && props.search.trim().length > 0 ? props.search : "Товаров"}
           </Text>
           <Text numberOfLines={1} style={styles.searchCount}>
             {`${props.count} ${declOfNum(props.count, ["товар", "товара", "товаров"])}`}
