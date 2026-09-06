@@ -1,8 +1,9 @@
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   type GestureResponderEvent,
   type LayoutChangeEvent,
   PanResponder,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -14,7 +15,6 @@ type Props = {
   from: number;
   to: number;
   onChange: (from: number, to: number) => void;
-  step?: number;
 };
 
 const THUMB_SIZE = 28;
@@ -22,7 +22,6 @@ const TRACK_HEIGHT = 4;
 const MIN_GAP = 100;
 
 export const DualRangeSlider = (props: Props) => {
-  const { min, max, from, to, onChange, step = 1 } = props;
   const [trackWidth, setTrackWidth] = useState(0);
   const startValues = useRef<{
     from: number;
@@ -30,31 +29,23 @@ export const DualRangeSlider = (props: Props) => {
     startX: number;
     activeThumb?: "from" | "to";
   }>({ from: 0, to: 0, startX: 0 });
+  const step = 1;
 
-  const clamp = useCallback(
-    (value: number) => {
-      const stepped = Math.round(value / step) * step;
-      return Math.max(min, Math.min(max, stepped));
-    },
-    [min, max, step],
-  );
+  const clamp = (value: number) => {
+    const stepped = Math.round(value / step) * step;
+    return Math.max(props.min, Math.min(props.max, stepped));
+  };
 
-  const valueToPosition = useCallback(
-    (value: number) => {
-      if (trackWidth === 0) return 0;
-      return ((value - min) / (max - min)) * trackWidth;
-    },
-    [min, max, trackWidth],
-  );
+  const valueToPosition = (value: number) => {
+    if (trackWidth === 0) return 0;
+    return ((value - props.min) / (props.max - props.min)) * trackWidth;
+  };
 
-  const positionToValue = useCallback(
-    (position: number) => {
-      if (trackWidth === 0) return min;
-      const raw = (position / trackWidth) * (max - min) + min;
-      return clamp(raw);
-    },
-    [min, max, trackWidth, clamp],
-  );
+  const positionToValue = (position: number) => {
+    if (trackWidth === 0) return props.min;
+    const raw = (position / trackWidth) * (props.max - props.min) + props.min;
+    return clamp(raw);
+  };
 
   const panResponder = useRef(
     PanResponder.create({
@@ -62,14 +53,14 @@ export const DualRangeSlider = (props: Props) => {
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (evt: GestureResponderEvent) => {
         const { locationX } = evt.nativeEvent;
-        const fromPos = valueToPosition(from);
-        const toPos = valueToPosition(to);
+        const fromPos = valueToPosition(props.from);
+        const toPos = valueToPosition(props.to);
         const distToFrom = Math.abs(locationX - fromPos);
         const distToTo = Math.abs(locationX - toPos);
 
         startValues.current = {
-          from,
-          to,
+          from: props.from,
+          to: props.to,
           startX: locationX,
           activeThumb: distToFrom <= distToTo ? "from" : "to",
         };
@@ -83,18 +74,18 @@ export const DualRangeSlider = (props: Props) => {
         const newValue = positionToValue(currentX);
 
         if (activeThumb === "from") {
-          const maxAllowed = to - MIN_GAP;
+          const maxAllowed = props.to - MIN_GAP;
           const clamped = Math.min(newValue, maxAllowed);
-          const finalValue = Math.max(clamped, min);
-          if (finalValue !== from) {
-            onChange(finalValue, to);
+          const finalValue = Math.max(clamped, props.min);
+          if (finalValue !== props.from) {
+            props.onChange(finalValue, props.to);
           }
         } else {
-          const minAllowed = from + MIN_GAP;
+          const minAllowed = props.from + MIN_GAP;
           const clamped = Math.max(newValue, minAllowed);
-          const finalValue = Math.min(clamped, max);
-          if (finalValue !== to) {
-            onChange(from, finalValue);
+          const finalValue = Math.min(clamped, props.max);
+          if (finalValue !== props.to) {
+            props.onChange(props.from, finalValue);
           }
         }
       },
@@ -104,18 +95,16 @@ export const DualRangeSlider = (props: Props) => {
     }),
   ).current;
 
-  const handleLayout = useCallback((event: LayoutChangeEvent) => {
-    setTrackWidth(event.nativeEvent.layout.width);
-  }, []);
+  const handleLayout = (event: LayoutChangeEvent) => setTrackWidth(event.nativeEvent.layout.width);
 
-  const fromPosition = valueToPosition(from);
-  const toPosition = valueToPosition(to);
+  const fromPosition = valueToPosition(props.from);
+  const toPosition = valueToPosition(props.to);
 
   return (
     <View style={styles.container}>
       <View style={styles.labelsRow}>
-        <Text style={styles.label}>{from.toLocaleString("ru-RU")} ₽</Text>
-        <Text style={styles.label}>{to.toLocaleString("ru-RU")} ₽</Text>
+        <Text style={styles.label}>{props.from.toLocaleString("ru-RU")} ₽</Text>
+        <Text style={styles.label}>{props.to.toLocaleString("ru-RU")} ₽</Text>
       </View>
 
       <View style={styles.sliderContainer} onLayout={handleLayout} {...panResponder.panHandlers}>
@@ -131,18 +120,18 @@ export const DualRangeSlider = (props: Props) => {
           ]}
         />
 
-        <View style={[styles.thumb, { left: fromPosition - THUMB_SIZE / 2 }]}>
+        <Pressable style={[styles.thumb, { left: fromPosition - THUMB_SIZE / 2 }]}>
           <View style={styles.thumbInner} />
-        </View>
+        </Pressable>
 
-        <View style={[styles.thumb, { left: toPosition - THUMB_SIZE / 2 }]}>
+        <Pressable style={[styles.thumb, { left: toPosition - THUMB_SIZE / 2 }]}>
           <View style={styles.thumbInner} />
-        </View>
+        </Pressable>
       </View>
 
       <View style={styles.rangeLabels}>
-        <Text style={styles.rangeLabel}>{min.toLocaleString("ru-RU")} ₽</Text>
-        <Text style={styles.rangeLabel}>{max.toLocaleString("ru-RU")} ₽</Text>
+        <Text style={styles.rangeLabel}>{props.min.toLocaleString("ru-RU")} ₽</Text>
+        <Text style={styles.rangeLabel}>{props.max.toLocaleString("ru-RU")} ₽</Text>
       </View>
     </View>
   );
