@@ -26,6 +26,7 @@ export const Login = (props: Props) => {
   const [password, setPassword] = useState("123123");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  // const [step, setStep] = useState<number>(1);
 
   const handleCloseModal = () => modalsAdapter.closeLogin();
 
@@ -54,7 +55,7 @@ export const Login = (props: Props) => {
             response.data.refresh
           ) {
             await saveTokens(response.data.token, response.data.refresh);
-            // setPassword("");
+            setPassword("");
             handleCloseModal();
 
             if (props.navigationRef.isReady()) {
@@ -110,7 +111,7 @@ export const Login = (props: Props) => {
           autoCorrect={false}
         />
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        <Text style={styles.errorText}>{error || ""}</Text>
 
         <Pressable
           style={({ pressed }) => [

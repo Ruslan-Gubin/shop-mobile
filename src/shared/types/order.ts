@@ -11,19 +11,26 @@ export type OrderStatus =
 
 export type OrderModel = {
   id: number;
-  create_user_id: number;
-  order_number: string;
-  comment: string;
   status: OrderStatus;
   rejected_reason: string;
   phone: string;
   phoneCode: string;
   recipient_name: string;
-  payment_method: string;
-  method_receipt: string;
   date_from: Date | null;
   date_to: Date | null;
   discount: number;
   created_at: Date;
   updated_at: Date | null;
+  comment: string;
+  create_user_id: number;
+  discount_name: string;
+  discount_percent: number;
+  discount_quantity: number;
+  discount_total: number;
+  method_receipt: string;
+  order_number: string;
+  payment_method: string;
+  subtotal: number;
+  total: number;
 };
+

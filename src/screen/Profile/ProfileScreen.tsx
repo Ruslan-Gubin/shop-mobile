@@ -20,7 +20,7 @@ export const ProfileScreen = (props: Props) => {
       : "Нет товаров";
 
   const navigateList = [
-    { label: "Заказы", value: "Ближайшие: не ожидаются", href: "Favorites" },
+    { label: "Заказы", value: "Ближайшие: не ожидаются", href: "Orders" },
     { label: "Покупки", value: "Здесь можно купить что-то заново", href: "Favorites" },
     { label: "Лист ожидания", value: "Нет товаров", href: "Favorites" },
     { label: "Избранное", value: favoritesValue, href: favoritesCount > 0 ? "Favorites" : "" },

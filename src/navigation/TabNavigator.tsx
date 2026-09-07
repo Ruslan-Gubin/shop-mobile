@@ -7,6 +7,8 @@ import { CheckoutScreen } from "../screen/Checkout/CheckoutScreen";
 import { FavoritesScreen } from "../screen/Favorites/Favorites";
 import { HomeScreen } from "../screen/Home/HomeScreen";
 import { MenuScreen } from "../screen/Menu/MenuScreen";
+import { OrderDetailScreen } from "../screen/OrderDetail/OrderDetailScreen";
+import { OrdersScreen } from "../screen/Orders/OrdersScreen";
 import { ProductInfoScreen } from "../screen/ProductInfo/ProductInfoScreen";
 import { ProfileScreen } from "../screen/Profile/ProfileScreen";
 import { QuestionsScreen } from "../screen/Questions/QuestionsScreen";
@@ -74,6 +76,8 @@ const ProfileStack = () => {
       <RootStack.Screen key="ProductInfo" name="ProductInfo" component={ProductInfoScreen} />
       <RootStack.Screen key="ReviewsScreen" name="ReviewsScreen" component={ReviewsScreen} />
       <RootStack.Screen key="QuestionsScreen" name="QuestionsScreen" component={QuestionsScreen} />
+      <RootStack.Screen key="Orders" name="Orders" component={OrdersScreen} />
+      <RootStack.Screen name="OrderDetail" component={OrderDetailScreen} />
     </RootStack.Navigator>
   );
 };
@@ -113,8 +117,8 @@ export const TabNavigator = () => {
         }}
       />
       <Tab.Screen
-        key="CartStack"
-        name="CartStack"
+        key="BasketStack"
+        name="BasketStack"
         component={BasketStack}
         options={{
           tabBarIcon: ({ focused }) => (

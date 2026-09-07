@@ -77,24 +77,22 @@ export const HomeScreen = (props: Props) => {
         onEndReached={() => isHasMore && !isError && loadMore()}
         onEndReachedThreshold={1}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => {
-          return (
-            <ProductCard
-              width={width}
-              priceList={item.price_list}
-              index={index}
-              photos={item.photos}
-              accounting={item.accounting}
-              available={item.available}
-              id={item.id}
-              name={item.name}
-              rating={item.rating}
-              reviewCount={item.review_count}
-              brand_name={item.brand_name}
-              navigation={props.navigation}
-            />
-          );
-        }}
+        renderItem={({ item, index }) => (
+          <ProductCard
+            width={width}
+            priceList={item.price_list}
+            index={index}
+            photos={item.photos}
+            accounting={item.accounting}
+            available={item.available}
+            id={item.id}
+            name={item.name}
+            rating={item.rating}
+            reviewCount={item.review_count}
+            brand_name={item.brand_name}
+            navigation={props.navigation}
+          />
+        )}
         ListFooterComponent={
           <View style={styles.footerListPadding}>
             {loading && <ActivityIndicator size="small" color="#a73afd" />}

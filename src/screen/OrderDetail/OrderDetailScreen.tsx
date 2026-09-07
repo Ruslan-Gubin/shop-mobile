@@ -7,6 +7,7 @@ import { formatterRub } from "../../shared/helpers/formatters";
 import { getOrderStatusColor, getOrderStatusLabel } from "../../shared/helpers/orderStatus";
 import type { OrderModel, OrderStatus } from "../../shared/types/order";
 import { PageHeader } from "../../shared/ui/header/PageHeader";
+import { fetchService } from "../../shared/fetch-api";
 
 /* ---------- мок-данные (пока нет GET /orders/[id]) ---------- */
 
@@ -68,6 +69,10 @@ export const OrderDetailScreen = ({ navigation, route }: Props) => {
 
   const [order, setOrder] = useState<OrderModel | null>(null);
   const [loading, setLoading] = useState(!isInvalidId);
+
+  useEffect(() => {
+    fetchService.get<OrderModel>({ url: `orders/${40}` }).then((res) => console.log(res));
+  }, []);
 
   useEffect(() => {
     // TODO: заменить на реальный fetch GET /orders/{id}

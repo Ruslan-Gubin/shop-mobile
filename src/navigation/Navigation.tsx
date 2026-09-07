@@ -2,7 +2,6 @@ import { createNavigationContainerRef, NavigationContainer } from "@react-naviga
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AddAddressScreen } from "../screen/AddAddress/AddAddressScreen";
 import { AgreementScreen } from "../screen/Agreement/AgreementScreen";
-import { OrderDetailScreen } from "../screen/OrderDetail/OrderDetailScreen";
 import { Login } from "../widgets/modal/login/Login";
 import { TabNavigator } from "./TabNavigator";
 
@@ -16,7 +15,6 @@ export const Navigation = () => {
       <RootStack.Navigator screenOptions={{ headerShown: false, animation: "fade" }}>
         <RootStack.Screen name="Tabs" component={TabNavigator} />
         <RootStack.Screen name="AddAddress" component={AddAddressScreen} />
-        <RootStack.Screen name="OrderDetail" component={OrderDetailScreen} />
         <RootStack.Screen name="Agreement" component={AgreementScreen} />
       </RootStack.Navigator>
       <Login navigationRef={navigationRef} />
