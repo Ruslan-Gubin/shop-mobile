@@ -1,13 +1,45 @@
+import type { AddressItem } from "../../store/checkout/types";
+import type { WarehouseModel } from "./warehouse";
+
 export type OrderStatus =
   | "new"
   | "cancelled_new"
   | "processing"
   | "cancelled_assembly"
   | "ready"
+  | "cancelled_ready"
   | "in_delivery"
   | "cancelled_delivery"
   | "completed"
   | "cancelled_customer";
+
+export type OrderReservation = {
+  quantity: number;
+  stock_id: number;
+  warehouse_id: number;
+};
+
+export type OrderProductModel = {
+  id: number;
+  order_id: number;
+  product_id: number;
+  name: string;
+  code: string;
+  price: number;
+  quantity: number;
+  description: string;
+  country: string;
+  equipment: string;
+  product_type: string;
+  height: number | null;
+  width: number | null;
+  length: number | null;
+  weight: number | null;
+  created_at: string;
+  updated_at: string;
+  reservations: OrderReservation[];
+  transfers: OrderReservation[];
+};
 
 export type OrderModel = {
   id: number;
@@ -32,5 +64,6 @@ export type OrderModel = {
   payment_method: string;
   subtotal: number;
   total: number;
+  address?: AddressItem | null;
+  warehouse?: WarehouseModel | null;
 };
-

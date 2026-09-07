@@ -1,236 +1,330 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { declOfNum } from "../../shared/helpers/declOfNum";
-import { formatterRub } from "../../shared/helpers/formatters";
-import { getOrderStatusColor, getOrderStatusLabel } from "../../shared/helpers/orderStatus";
-import type { OrderModel, OrderStatus } from "../../shared/types/order";
-import { PageHeader } from "../../shared/ui/header/PageHeader";
+import { useEffect, useEffectEvent, useState } from "react";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { fetchService } from "../../shared/fetch-api";
-
-/* ---------- мок-данные (пока нет GET /orders/[id]) ---------- */
-
-const MOCK_PRODUCTS = [
-  { name: "Платье летнее", count: 1, price: 4500 },
-  { name: "Сумка кожаная", count: 2, price: 3500 },
-  { name: "Туфли", count: 1, price: 6200 },
-];
-
-const MOCK_STATUSES: OrderStatus[] = ["new", "processing", "in_delivery", "completed"];
-
-const mockOrder = (id: number): OrderModel => ({
-  id,
-  create_user_id: 1,
-  order_number: `ORD-${String(id).padStart(6, "0")}`,
-  comment: "",
-  status: MOCK_STATUSES[id % MOCK_STATUSES.length],
-  rejected_reason: "",
-  phone: "+7 (999) 123-45-67",
-  phoneCode: "+7",
-  recipient_name: "Иван Петров",
-  payment_method: id % 2 === 0 ? "card" : "cash",
-  method_receipt: id % 3 === 0 ? "pickup" : "courier",
-  date_from: new Date(Date.now() + 86400000),
-  date_to: new Date(Date.now() + 86400000 + 3600000),
-  discount: Math.floor(Math.random() * 1000) + 200,
-  created_at: new Date(),
-  updated_at: null,
-});
-
-const formatDate = (date: Date | null | undefined): string => {
-  if (!date) return "—";
-  return new Intl.DateTimeFormat("ru", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(date));
-};
-
-const formatDeliveryDate = (date: Date | null | undefined): string => {
-  if (!date) return "—";
-  return new Intl.DateTimeFormat("ru", {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-  }).format(new Date(date));
-};
+import { declOfNum } from "../../shared/helpers/declOfNum";
+import {
+  formatDateRu,
+  formatDeliveryInterval,
+  formatterRub,
+} from "../../shared/helpers/formatters";
+import { getFullAddressItem } from "../../shared/helpers/getFullAddressItem";
+import { getMessageError } from "../../shared/helpers/getMessageError";
+import { getOrderStatusColor, getOrderStatusLabel } from "../../shared/helpers/orderStatus";
+import type { OrderModel, OrderProductModel } from "../../shared/types/order";
+import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
+import { PageHeader } from "../../shared/ui/header/PageHeader";
 
 type Props = {
-  navigation: NativeStackNavigationProp<ParamListBase, "OrderDetail">;
-  route: { params?: { id?: number } };
+  navigation?: NativeStackNavigationProp<ParamListBase, "OrderDetail">;
+  route?: { params?: { id: number } };
 };
 
 export const OrderDetailScreen = ({ navigation, route }: Props) => {
-  const orderId = route?.params?.id ?? Number.NaN;
-  const isInvalidId = Number.isNaN(orderId);
+  const id = route?.params?.id;
 
   const [order, setOrder] = useState<OrderModel | null>(null);
-  const [loading, setLoading] = useState(!isInvalidId);
+  const [products, setProducts] = useState<OrderProductModel[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchOrderEvent = useEffectEvent((id: number) => {
+    const defaultErrorMessage = "Не удалось загрузить заказ";
+
+    fetchService
+      .get<OrderModel>({ url: `orders/${id}` })
+      .then((response) => {
+        if (response.status === "success" && response.data) {
+          setOrder(response.data);
+        } else {
+          throw response.message || defaultErrorMessage;
+        }
+      })
+      .catch((error) => {
+        const message = getMessageError(error, defaultErrorMessage);
+
+        Alert.alert("Ошибка", message, [
+          { text: "Отмена", style: "default" },
+          {
+            text: "Повторить",
+            isPreferred: true,
+            onPress: () => {
+              fetchOrderEvent(id);
+              setError("");
+            },
+          },
+        ]);
+        setError(message);
+      })
+      .finally(() => loading && setLoading(false));
+  });
+
+  const fetchProductsEvent = useEffectEvent((id: number) => {
+    const defaultErrorMessage = "Не удалось загрузить товары";
+
+    fetchService
+      .get<OrderProductModel[]>({ url: `order-product/order/${id}` })
+      .then((response) => {
+        if (response.status === "success" && response.data) {
+          setProducts(response.data);
+        } else {
+          throw response.message || defaultErrorMessage;
+        }
+      })
+      .catch((error) => {
+        const message = getMessageError(error, defaultErrorMessage);
+        setError(message);
+      })
+      .finally(() => loading && setLoading(false));
+  });
 
   useEffect(() => {
-    fetchService.get<OrderModel>({ url: `orders/${40}` }).then((res) => console.log(res));
-  }, []);
-
-  useEffect(() => {
-    // TODO: заменить на реальный fetch GET /orders/{id}
-    if (isInvalidId) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setOrder(mockOrder(orderId));
+    if (typeof id === "number" && !Number.isNaN(id)) {
+      fetchOrderEvent(id);
+      fetchProductsEvent(id);
+    } else {
       setLoading(false);
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, [orderId, isInvalidId]);
-
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
-
-  if (loading) {
-    return (
-      <View style={styles.page}>
-        <PageHeader title="" onBack={() => navigation.goBack()} />
-        <View style={styles.centerBlock}>
-          <Text style={styles.errorText}>Загрузка заказа…</Text>
-        </View>
-      </View>
-    );
-  }
-
-  if (!order || isInvalidId) {
-    return (
-      <View style={styles.page}>
-        <PageHeader title="" onBack={() => navigation.goBack()} />
-        <View style={styles.centerBlock}>
-          <Text style={styles.errorText}>Заказ не найден</Text>
-        </View>
-      </View>
-    );
-  }
-
-  const receiptLabel = order.method_receipt === "courier" ? "Курьер" : "Самовывоз";
-  const paymentLabel = order.payment_method === "card" ? "Банковской картой" : "Наличными";
-  const statusColor = getOrderStatusColor(order.status);
-
-  const total = MOCK_PRODUCTS.reduce((sum, p) => sum + p.price * p.count, 0);
-  const deliveryPrice = order.method_receipt === "courier" ? 100 : 0;
-  const grandTotal = total - order.discount + deliveryPrice;
+    }
+  }, [id]);
 
   return (
     <View style={styles.page}>
-      <PageHeader title="Заказ" onBack={() => navigation.goBack()} />
+      <PageHeader
+        title={order?.order_number ? `Заказ № ${order.order_number}` : "Заказ"}
+        onBack={() => navigation?.goBack()}
+      />
 
-      <ScrollView
-        contentContainerStyle={[styles.content, isDesktop && styles.contentDesktop]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Шапка — номер и статус */}
-        <View style={styles.header}>
-          <View style={styles.headerInfo}>
-            <Text style={styles.orderNumber}>Заказ {order.order_number}</Text>
-            <Text style={styles.orderDate}>от {formatDate(order.created_at)}</Text>
-          </View>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: `${statusColor}18`, borderColor: `${statusColor}40` },
-            ]}
-          >
-            <Text style={[styles.statusBadgeText, { color: statusColor }]}>
-              {getOrderStatusLabel(order.status)}
-            </Text>
-          </View>
+      {error.length > 0 && <ErrorAlert message={error} />}
+
+      {loading ? (
+        <View style={styles.centerBlock}>
+          <ActivityIndicator size="large" color="#a73afd" />
         </View>
-
-        {/* Доставка */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Доставка</Text>
-          <View style={styles.cardRow}>
-            <Text style={styles.cardLabel}>Способ получения</Text>
-            <Text style={styles.cardValue}>{receiptLabel}</Text>
-          </View>
-          <View style={styles.cardRow}>
-            <Text style={styles.cardLabel}>Дата доставки</Text>
-            <Text style={styles.cardValue}>
-              {formatDeliveryDate(order.date_from)}{" "}
-              {order.date_from && order.date_to
-                ? `${new Date(order.date_from).getHours()}:00 – ${new Date(
-                    order.date_to,
-                  ).getHours()}:00`
-                : ""}
-            </Text>
-          </View>
-          <View style={styles.cardRow}>
-            <Text style={styles.cardLabel}>Получатель</Text>
-            <Text style={styles.cardValue}>{order.recipient_name}</Text>
-          </View>
-          <View style={styles.cardRow}>
-            <Text style={styles.cardLabel}>Телефон</Text>
-            <Text style={styles.cardValue}>{order.phone}</Text>
-          </View>
-          {order.comment && (
-            <View style={styles.cardRow}>
-              <Text style={styles.cardLabel}>Комментарий</Text>
-              <Text style={styles.cardValue}>{order.comment}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Оплата */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Оплата</Text>
-          <View style={styles.cardRow}>
-            <Text style={styles.cardLabel}>Способ оплаты</Text>
-            <Text style={styles.cardValue}>{paymentLabel}</Text>
-          </View>
-        </View>
-
-        {/* Состав заказа */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Состав заказа</Text>
-          {MOCK_PRODUCTS.map((product, idx) => (
-            <View key={idx}>
-              {idx > 0 && <View style={styles.divider} />}
-              <View style={styles.productItem}>
-                <View style={styles.productInfo}>
-                  <Text style={styles.productName}>{product.name}</Text>
-                  <Text style={styles.productCount}>
-                    {product.count} {declOfNum(product.count, ["шт.", "шт.", "шт."])}
-                  </Text>
-                </View>
-                <Text style={styles.productPrice}>
-                  {formatterRub.format(product.price * product.count)}
+      ) : order ? (
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Шапка — номер, дата и статус */}
+          <View style={styles.header}>
+            <View style={styles.headerTopRow}>
+              <View style={styles.headerLeft}>
+                <Text style={styles.orderNumber}>Статус</Text>
+              </View>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {
+                    backgroundColor: `${getOrderStatusColor(order.status)}18`,
+                    borderColor: `${getOrderStatusColor(order.status)}40`,
+                  },
+                ]}
+              >
+                <Text
+                  style={[styles.statusBadgeText, { color: getOrderStatusColor(order.status) }]}
+                >
+                  {getOrderStatusLabel(order.status)}
                 </Text>
               </View>
             </View>
-          ))}
-        </View>
 
-        {/* Итого */}
-        <View style={styles.card}>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Товары</Text>
-            <Text style={styles.totalValue}>{formatterRub.format(total)}</Text>
+            <View style={styles.headerDateRow}>
+              <Text style={styles.infoLabel}>Дата оформления</Text>
+              <Text style={styles.infoValue}>
+                {formatDateRu(order.created_at, {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </Text>
+            </View>
+
+            {order.rejected_reason && (
+              <Text style={styles.rejectedText}>
+                <Text style={styles.infoLabel}>Причина отмены: </Text>
+                {order.rejected_reason}
+              </Text>
+            )}
           </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Скидка</Text>
-            <Text style={styles.totalValue}>−{formatterRub.format(order.discount)}</Text>
+
+          {order.method_receipt === "courier" ? (
+            /* Доставка — курьером */
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Доставка</Text>
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>Способ получения</Text>
+                <Text style={styles.cardValue}>Курьер</Text>
+              </View>
+              {order.date_from && (
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Дата доставки</Text>
+                  <Text style={styles.cardValue}>
+                    {formatDeliveryInterval(order.date_from, order.date_to)}
+                  </Text>
+                </View>
+              )}
+              {order.status === "completed" && order.updated_at && (
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Клиент получил заказ</Text>
+                  <Text style={styles.cardValue}>
+                    {formatDateRu(order.updated_at, {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </View>
+              )}
+              {order.recipient_name && (
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Получатель</Text>
+                  <Text style={styles.cardValue}>{order.recipient_name}</Text>
+                </View>
+              )}
+              {order.phone && (
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Телефон</Text>
+                  <Text style={styles.cardValue}>
+                    {order.phoneCode}
+                    {order.phone}
+                  </Text>
+                </View>
+              )}
+              {order.comment && (
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Комментарий</Text>
+                  <Text style={styles.cardValue}>{order.comment}</Text>
+                </View>
+              )}
+              <View style={styles.totalRow}>
+                <Text style={styles.cardLabel}>Стоимость доставки</Text>
+                <Text style={styles.cardValue}>{formatterRub.format(100)}</Text>
+              </View>
+              {order.address && (
+                <Text style={styles.rejectedText}>
+                  <Text style={styles.infoLabel}>Адрес: </Text>
+                  {getFullAddressItem(order.address)}
+                </Text>
+              )}
+            </View>
+          ) : (
+            /* Самовывоз */
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Самовывоз</Text>
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>Способ получения</Text>
+                <Text style={styles.cardValue}>Самовывоз</Text>
+              </View>
+              {order.date_from && (
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Дата выдачи</Text>
+                  <Text style={styles.cardValue}>
+                    {formatDeliveryInterval(order.date_from, order.date_to)}
+                  </Text>
+                </View>
+              )}
+              {order.address?.name && (
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Склад</Text>
+                  <Text style={styles.cardValue}>{order.address.name}</Text>
+                </View>
+              )}
+              {order.recipient_name && (
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Получатель</Text>
+                  <Text style={styles.cardValue}>{order.recipient_name}</Text>
+                </View>
+              )}
+              {order.phone && (
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Телефон</Text>
+                  <Text style={styles.cardValue}>
+                    {order.phoneCode}
+                    {order.phone}
+                  </Text>
+                </View>
+              )}
+              {order.comment && (
+                <View style={styles.cardRow}>
+                  <Text style={styles.cardLabel}>Комментарий</Text>
+                  <Text style={styles.cardValue}>{order.comment}</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Состав заказа */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Состав заказа</Text>
+            {products.length > 0 &&
+              products.map((product, idx) => (
+                <View key={product.id}>
+                  {idx > 0 && <View style={styles.divider} />}
+                  <View style={styles.productItem}>
+                    <View style={styles.productInfo}>
+                      <Text style={styles.productName}>{product.name}</Text>
+                      <Text style={styles.productCount}>
+                        {product.quantity} {declOfNum(product.quantity, ["шт.", "шт.", "шт."])}
+                      </Text>
+                    </View>
+                    <Text style={styles.productPrice}>
+                      {formatterRub.format(product.price * product.quantity)}
+                    </Text>
+                  </View>
+                </View>
+              ))}
           </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Доставка</Text>
-            <Text style={styles.totalValue}>
-              {deliveryPrice > 0 ? formatterRub.format(deliveryPrice) : "Бесплатно"}
-            </Text>
+
+          {/* Оплата */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Оплата</Text>
+            <View style={styles.cardRow}>
+              <Text style={styles.cardLabel}>Способ оплаты</Text>
+              <Text style={styles.cardValue}>
+                {order.payment_method === "card" ? "Банковской картой" : "Наличными"}
+              </Text>
+            </View>
+
+            {order.discount_quantity > 0 && (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Скидка за количество</Text>
+                <Text style={styles.totalValue}>
+                  −{formatterRub.format(order.discount_quantity)}
+                </Text>
+              </View>
+            )}
+            {order.discount_percent > 0 && (
+              <>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Скидка</Text>
+                  <Text style={styles.totalValue}>{order.discount_name}</Text>
+                </View>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Процент скидки</Text>
+                  <Text style={styles.totalValue}>{order.discount_percent}%</Text>
+                </View>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Скидка всего</Text>
+                  <Text style={styles.totalValue}>
+                    −{formatterRub.format(order.discount_total + order.discount_quantity)}
+                  </Text>
+                </View>
+              </>
+            )}
+            <View style={styles.divider} />
+            {order.total > 0 && (
+              <View style={styles.totalRow}>
+                <Text style={styles.grandTotal}>Всего</Text>
+                <Text style={styles.grandTotal}>{formatterRub.format(order.total)}</Text>
+              </View>
+            )}
           </View>
-          <View style={styles.divider} />
-          <Text style={styles.grandTotal}>{formatterRub.format(grandTotal)}</Text>
+        </ScrollView>
+      ) : (
+        <View style={styles.centerBlock}>
+          <Text style={styles.errorText}>Заказ не найден</Text>
         </View>
-      </ScrollView>
+      )}
     </View>
   );
 };
@@ -247,39 +341,50 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   content: {
-    rowGap: 12,
-    padding: 12,
-  },
-  contentDesktop: {
-    maxWidth: 720,
-    width: "100%",
-    alignSelf: "center",
+    rowGap: 8,
+    paddingBlock: 8,
   },
   errorText: {
     color: "#868695",
     fontSize: 15,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    columnGap: 12,
+    rowGap: 8,
     padding: 12,
     backgroundColor: "white",
-    borderRadius: 16,
+    borderRadius: 12,
   },
-  headerInfo: {
+  headerTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    columnGap: 8,
+  },
+  headerLeft: {
     flex: 1,
     rowGap: 4,
   },
+  headerDateRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    columnGap: 12,
+  },
   orderNumber: {
-    fontSize: 17,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "400",
     color: "#242424",
   },
-  orderDate: {
-    fontSize: 13,
-    color: "#868695",
+  infoLabel: {
+    fontSize: 14,
+    fontWeight: "400",
+    color: "#242424",
+  },
+  infoValue: {
+    flex: 1,
+    textAlign: "right",
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#242424",
   },
   statusBadge: {
     borderWidth: 1,
@@ -296,7 +401,7 @@ const styles = StyleSheet.create({
     rowGap: 12,
     padding: 12,
     backgroundColor: "white",
-    borderRadius: 16,
+    borderRadius: 12,
   },
   cardTitle: {
     fontSize: 16,
@@ -310,12 +415,14 @@ const styles = StyleSheet.create({
   },
   cardLabel: {
     fontSize: 13,
-    color: "#868695",
+    fontWeight: "400",
+    color: "#242424",
   },
   cardValue: {
     flex: 1,
     textAlign: "right",
     fontSize: 13,
+    fontWeight: "500",
     color: "#242424",
   },
   productItem: {
@@ -334,7 +441,8 @@ const styles = StyleSheet.create({
   },
   productCount: {
     fontSize: 13,
-    color: "#868695",
+    fontWeight: "500",
+    color: "#242424",
   },
   productPrice: {
     fontSize: 14,
@@ -353,10 +461,12 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 14,
-    color: "#868695",
+    fontWeight: "400",
+    color: "#242424",
   },
   totalValue: {
     fontSize: 14,
+    fontWeight: "500",
     color: "#242424",
   },
   grandTotal: {
@@ -364,5 +474,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#242424",
     textAlign: "right",
+  },
+  rejectedText: {
+    fontSize: 14,
+    color: "#242424",
   },
 });

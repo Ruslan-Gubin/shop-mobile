@@ -6,10 +6,10 @@ import { fetchService } from "../../shared/fetch-api";
 import { getMessageError } from "../../shared/helpers/getMessageError";
 import { useInfiniteScroll } from "../../shared/hooks/useInfiniteScroll";
 import type { OrderModel } from "../../shared/types/order";
-import { OrderCard } from "./components/OrderCard";
+import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
 import { PageHeader } from "../../shared/ui/header/PageHeader";
 import { NotContent } from "../../widgets/not-content/NotContent";
-import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
+import { OrderCard } from "./components/OrderCard";
 
 type Props = {
   navigation?: NativeStackNavigationProp<ParamListBase, "Orders">;
@@ -82,7 +82,7 @@ export const OrdersScreen = (props: Props) => {
         onEndReached={() => isHasMore && !error && loadMore()}
         onEndReachedThreshold={1}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => <OrderCard order={item} />}
+        renderItem={({ item }) => <OrderCard order={item} navigation={props.navigation} />}
         ListFooterComponent={
           <View style={styles.footerListPadding}>
             {loading && <ActivityIndicator size="small" color="#a73afd" />}
@@ -95,11 +95,12 @@ export const OrdersScreen = (props: Props) => {
 
 const styles = StyleSheet.create({
   root: {
-    backgroundColor: "white",
-    paddingBottom: 16,
+    backgroundColor: "#f7f8fa",
+    paddingBottom: 8,
   },
   listContent: {
-    paddingTop: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
     rowGap: 8,
   },
   footerListPadding: {

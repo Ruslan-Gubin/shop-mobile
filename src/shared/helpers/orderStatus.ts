@@ -2,14 +2,15 @@ import type { OrderStatus } from "../types/order";
 
 export const orderStatusLabels: Record<OrderStatus, string> = {
   new: "Новый",
-  cancelled_new: "Отменён",
+  cancelled_new: "Отменён на этапе оформления",
   processing: "В обработке",
-  cancelled_assembly: "Отменён",
-  ready: "Готов к выдаче",
+  cancelled_assembly: "Отменён в процессе сборки",
+  ready: "Готов",
+  cancelled_ready: "Отменён на этапе выдачи",
   in_delivery: "В доставке",
-  cancelled_delivery: "Отменён",
-  completed: "Выполнен",
-  cancelled_customer: "Отменён",
+  cancelled_delivery: "Отменён на этапе доставки",
+  completed: "Завершён",
+  cancelled_customer: "Отменён покупателем",
 };
 
 export const orderStatusColors: Record<OrderStatus, string> = {
@@ -18,6 +19,7 @@ export const orderStatusColors: Record<OrderStatus, string> = {
   processing: "#f59e0b",
   cancelled_assembly: "#ef4444",
   ready: "#22c55e",
+  cancelled_ready: "#ef4444",
   in_delivery: "#8b5cf6",
   cancelled_delivery: "#ef4444",
   completed: "#22c55e",
