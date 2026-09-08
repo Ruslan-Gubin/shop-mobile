@@ -68,7 +68,7 @@ export const AddAddressScreen = (props: Props) => {
     if (isValidAddress) {
       checkoutAdapter.addAddress(address);
       checkoutAdapter.setActiveAddress(address.lng, address.lat);
-      props?.navigation?.goBack();
+      props?.navigation?.reset({ index: 0, routes: [{ name: "Checkout" }] });
     }
   };
 

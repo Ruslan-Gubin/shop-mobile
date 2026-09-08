@@ -135,7 +135,7 @@ export const CancelOrderModal = (props: Props) => {
       </BaseModal>
 
       <Pressable style={styles.cancelButton} onPress={() => setOpen(true)} hitSlop={8}>
-        <Text style={styles.cancelButtonText}>Отменить заказ</Text>
+        <Text style={styles.cancelButtonText}>Отменить</Text>
       </Pressable>
     </>
   );

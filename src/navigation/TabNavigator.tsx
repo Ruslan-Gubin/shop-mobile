@@ -1,6 +1,7 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StyleSheet, View } from "react-native";
+import { AddAddressScreen } from "../screen/AddAddress/AddAddressScreen";
 import { BasketScreen } from "../screen/Basket/BasketScreen";
 import { CatalogScreen } from "../screen/Catalog/CatalogScreen";
 import { CheckoutScreen } from "../screen/Checkout/CheckoutScreen";
@@ -64,6 +65,7 @@ const BasketStack = () => {
       <RootStack.Screen key="ReviewsScreen" name="ReviewsScreen" component={ReviewsScreen} />
       <RootStack.Screen key="QuestionsScreen" name="QuestionsScreen" component={QuestionsScreen} />
       <RootStack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      <RootStack.Screen name="AddAddress" component={AddAddressScreen} />
     </RootStack.Navigator>
   );
 };
