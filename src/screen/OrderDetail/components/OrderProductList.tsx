@@ -11,21 +11,24 @@ import { NotContent } from "../../../widgets/not-content/NotContent";
 import { OrderProductCard } from "./OrderProductCard";
 
 type Props = {
-  order_id: number;
   order_status: OrderStatus;
+  products: OrderProductModel[];
+  productsLoading: boolean;
   navigation?: NativeStackNavigationProp<ParamListBase, string>;
+  ids: string;
 };
 
 export const OrderProductList = (props: Props) => {
   const [productsOrigin, setProductsOrigin] = useState<ProductModel[]>([]);
-  const [products, setProducts] = useState<OrderProductModel[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingOrigin, setLoadingOrigin] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchOriginProducts = (ids: string) => {
+  const fetchOriginProductsEvent = useEffectEvent((ids: string) => {
     const defaultError = "Не удалось получить список товаров";
 
     if (typeof ids === "string" && ids.length > 0) {
+      setLoadingOrigin(true);
+
       fetchService
         .get<ProductModel[]>({
           url: "product/by-ids",
@@ -43,40 +46,22 @@ export const OrderProductList = (props: Props) => {
           setError(message);
         })
         .finally(() => {
-          setLoading(false);
+          setLoadingOrigin(false);
         });
     }
-  };
-
-  const fetchProductsEvent = useEffectEvent((id: number) => {
-    setLoading(true);
-    const defaultErrorMessage = "Не удалось загрузить товары";
-
-    fetchService
-      .get<OrderProductModel[]>({ url: `order-product/order/${id}` })
-      .then((response) => {
-        if (response.status === "success" && response.data) {
-          setProducts(response.data);
-          fetchOriginProducts(response.data.map((el) => el.product_id).join(","));
-        } else {
-          throw response.message || defaultErrorMessage;
-        }
-      })
-      .catch((error) => {
-        const message = getMessageError(error, defaultErrorMessage);
-        setError(message);
-        setLoading(false);
-      });
   });
 
   useEffect(() => {
-    fetchProductsEvent(props.order_id);
-  }, [props.order_id]);
+    fetchOriginProductsEvent(props.ids);
+  }, [props.ids]);
+
+  const isLoading = props.productsLoading || loadingOrigin;
 
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Состав заказа</Text>
-      {loading && (
+
+      {isLoading && (
         <View style={styles.centerBlock}>
           <ActivityIndicator size="small" color="#a73afd" />
         </View>
@@ -84,7 +69,7 @@ export const OrderProductList = (props: Props) => {
 
       {error.length > 0 && <ErrorAlert message={error} />}
 
-      {!loading && (products.length === 0 || productsOrigin.length === 0) && (
+      {!isLoading && (props.products.length === 0 || productsOrigin.length === 0) && (
         <NotContent
           title="Не удалось получить список товаров"
           subTitle="Попробуйте перезагрузить страницу"
@@ -92,10 +77,10 @@ export const OrderProductList = (props: Props) => {
       )}
 
       <View style={styles.list}>
-        {!loading &&
-          products.length > 0 &&
+        {!isLoading &&
+          props.products.length > 0 &&
           productsOrigin.length > 0 &&
-          products.map((product) => (
+          props.products.map((product) => (
             <OrderProductCard
               product_id={product.product_id}
               navigation={props.navigation}
@@ -136,3 +121,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
 });
+
