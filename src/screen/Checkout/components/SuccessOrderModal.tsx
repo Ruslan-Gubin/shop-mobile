@@ -1,6 +1,6 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { formatterRub } from "../../../shared/helpers/formatters";
 import type { OrderModel } from "../../../shared/types/order";
 import { BaseModal } from "../../../widgets/modal/base-modal/BaseModal";
@@ -37,7 +37,6 @@ export const SuccessOrderModal = (props: Props) => {
       visible={props.active}
       onClose={props.onClose}
       title="Заказ успешно оформлен!"
-      subtitleText={`Номер заказа: ${orderNumber}`}
       footerAction={{
         cancel: {
           text: "На главную",
@@ -51,18 +50,18 @@ export const SuccessOrderModal = (props: Props) => {
         },
       }}
     >
-      <Text style={styles.label}>Способ получения</Text>
-      <Text style={styles.value}>{receiptLabel}</Text>
-      {props.addressName.length > 0 && (
-        <>
-          <Text style={styles.label}>Адрес</Text>
-          <Text style={styles.value}>{props.addressName}</Text>
-        </>
-      )}
-      <Text style={styles.label}>Оплата</Text>
-      <Text style={styles.value}>{paymentLabel}</Text>
-      <Text style={styles.label}>Итого</Text>
-      <Text style={styles.value}>{formatterRub.format(props.total)}</Text>
+      <View>
+        {orderNumber.length > 0 && <Text style={styles.label}>Номер заказа:</Text>}
+        {orderNumber.length > 0 && <Text style={styles.value}>{orderNumber}</Text>}
+        {receiptLabel.length > 0 && <Text style={styles.label}>Способ получения</Text>}
+        {receiptLabel.length > 0 && <Text style={styles.value}>{receiptLabel}</Text>}
+        {props.addressName.length > 0 && <Text style={styles.label}>Адрес</Text>}
+        {props.addressName.length > 0 && <Text style={styles.value}>{props.addressName}</Text>}
+        {paymentLabel.length > 0 && <Text style={styles.label}>Оплата</Text>}
+        {paymentLabel.length > 0 && <Text style={styles.value}>{paymentLabel}</Text>}
+        {props.total > 0 && <Text style={styles.label}>Итого</Text>}
+        {props.total > 0 && <Text style={styles.value}>{formatterRub.format(props.total)}</Text>}
+      </View>
     </BaseModal>
   );
 };
@@ -70,7 +69,6 @@ export const SuccessOrderModal = (props: Props) => {
 const styles = StyleSheet.create({
   label: {
     fontSize: 13,
-    color: "#8a8999",
   },
   value: {
     fontSize: 15,
@@ -78,4 +76,3 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
 });
-

@@ -26,12 +26,6 @@ type Props = {
 };
 
 export const ProductCard = (props: Props) => {
-  const revalidateBasketAction = async () => {
-    new Promise(() => {
-      console.log("revalidate");
-    });
-  };
-
   const handleNavigate = (id: number) => {
     if (props.navigation) {
       props.navigation.push("ProductInfo", { id });
@@ -50,9 +44,7 @@ export const ProductCard = (props: Props) => {
         />
         <ProductFavorites id={props.id} />
         {((props.accounting && typeof props.available === "number" && props.available > 0) ||
-          !props.accounting) && (
-          <AddBasket id={props.id} revalidateBasketAction={revalidateBasketAction} />
-        )}
+          !props.accounting) && <AddBasket id={props.id} />}
       </View>
 
       <Pressable onPress={() => handleNavigate(props.id)} style={styles.productInfoContainer}>

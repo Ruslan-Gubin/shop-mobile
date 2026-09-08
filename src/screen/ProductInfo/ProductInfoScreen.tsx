@@ -55,7 +55,6 @@ export const ProductInfoScreen = (props: Props) => {
       .get<ProductModel>({ url: `product/increment-view/${productId}` })
       .then((response) => {
         if (response.status === "success" && response.data) {
-          console.log("get product");
           setProduct(response.data);
           recentAdapter.add(productId);
         } else if (response.status === "error") {

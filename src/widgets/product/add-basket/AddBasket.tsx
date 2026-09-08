@@ -5,7 +5,6 @@ import { basketStore } from "../../../store/basket/store";
 
 type Props = {
   id: number;
-  revalidateBasketAction?: () => Promise<void>;
 };
 
 export const AddBasket = (props: Props) => {
@@ -18,9 +17,6 @@ export const AddBasket = (props: Props) => {
       basketAdapter.decrement(id);
     } else {
       basketAdapter.add(id);
-    }
-    if (props.revalidateBasketAction) {
-      props.revalidateBasketAction();
     }
   };
 

@@ -13,6 +13,7 @@ import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
 import { PageHeader } from "../../shared/ui/header/PageHeader";
 import { basketStore } from "../../store/basket/store";
 import type { AddressItem } from "../../store/checkout/types";
+import { NotContent } from "../../widgets/not-content/NotContent";
 import { AdditionalInformation } from "./components/AdditionalInformation";
 import { CheckoutFooter } from "./components/CheckoutFooter";
 import { DeliveryDateCard } from "./components/DeliveryDateCard";
@@ -27,6 +28,7 @@ type Props = {
 export const CheckoutScreen = (props: Props) => {
   const basket = basketStore((store) => store.items);
   const basketIds = Object.keys(basket).join(",");
+  const selected = basketStore((store) => store.selected);
 
   const [basketProducts, setBasketProducts] = useState<ProductModel[]>([]);
   const [cartDiscounts, setCartDiscounts] = useState<CartDiscountModel[]>([]);
@@ -197,10 +199,31 @@ export const CheckoutScreen = (props: Props) => {
   }, [basketIds]);
 
   const hasError = Object.values(errors).some((el) => el.length > 0);
+  const hasBasketItems = Object.keys(basket).length > 0;
+  const hasSelectedItems = selected.length > 0;
+  const notContentSubtitle =
+    hasBasketItems && !hasSelectedItems
+      ? "Перейдите в корзину и выберите товар"
+      : "Перейдите на главную и добавьте товары, которые могут вам понравиться.";
 
   return (
     <View style={styles.container}>
       <PageHeader title="Оформление заказа" onBack={() => props?.navigation?.goBack()} />
+
+      {(!hasSelectedItems || !hasBasketItems) && (
+        <NotContent
+          title="Невозможно оформить заказ"
+          subTitle={notContentSubtitle}
+          navigateText={
+            hasBasketItems && !hasSelectedItems ? "Перейти в корзину" : "Перейти на главную"
+          }
+          onNavigate={() =>
+            hasBasketItems && !hasSelectedItems
+              ? props.navigation.push("Basket")
+              : props.navigation.navigate("HomeStack")
+          }
+        />
+      )}
 
       {hasError && (
         <View style={styles.errorsBlock}>
@@ -211,28 +234,31 @@ export const CheckoutScreen = (props: Props) => {
         </View>
       )}
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <PaymentMethodCard />
-        <DeliveryDateCard />
-        <MethodReceiptCard
-          navigation={props.navigation}
-          pickupAddress={pickupAddress}
-          defaultCenter={defaultCenter}
-        />
-        <AdditionalInformation />
-        <OrderSummary
-          navigation={props.navigation}
-          basketProducts={basketProducts}
-          cartDiscounts={cartDiscounts}
-          promotions={promotions}
-          pickupAddress={pickupAddress}
-          defaultCenter={defaultCenter}
-          isAgreed={isAgreed}
-          onChangeAgreed={setIsAgreed}
-        />
-      </ScrollView>
+      {hasBasketItems && hasSelectedItems && (
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <PaymentMethodCard />
+          <DeliveryDateCard />
+          <MethodReceiptCard
+            navigation={props.navigation}
+            pickupAddress={pickupAddress}
+            defaultCenter={defaultCenter}
+          />
+          <AdditionalInformation />
+          <OrderSummary
+            navigation={props.navigation}
+            basketProducts={basketProducts}
+            cartDiscounts={cartDiscounts}
+            promotions={promotions}
+            pickupAddress={pickupAddress}
+            defaultCenter={defaultCenter}
+            isAgreed={isAgreed}
+            onChangeAgreed={setIsAgreed}
+          />
+        </ScrollView>
+      )}
 
       <CheckoutFooter
+        isShowButton={hasBasketItems && hasSelectedItems}
         navigation={props.navigation}
         basketProducts={basketProducts}
         cartDiscounts={cartDiscounts}

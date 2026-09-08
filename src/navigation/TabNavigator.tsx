@@ -63,6 +63,7 @@ const BasketStack = () => {
       <RootStack.Screen key="ProductInfo" name="ProductInfo" component={ProductInfoScreen} />
       <RootStack.Screen key="ReviewsScreen" name="ReviewsScreen" component={ReviewsScreen} />
       <RootStack.Screen key="QuestionsScreen" name="QuestionsScreen" component={QuestionsScreen} />
+      <RootStack.Screen name="OrderDetail" component={OrderDetailScreen} />
     </RootStack.Navigator>
   );
 };

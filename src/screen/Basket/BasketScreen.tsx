@@ -150,9 +150,7 @@ export const BasketScreen = (props: Props) => {
 
   return (
     <>
-      <BasketDeleteModal
-        revalidateBasketAction={() => new Promise(() => console.log("revalidate basket"))}
-      />
+      <BasketDeleteModal />
       <View style={{ flex: 1 }}>
         {hasError && (
           <View style={{ paddingBlock: 4, rowGap: 4 }}>

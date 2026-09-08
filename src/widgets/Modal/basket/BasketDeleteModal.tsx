@@ -3,11 +3,7 @@ import { modalsAdapter } from "../../../store/modals/adapter";
 import { modalsStore } from "../../../store/modals/store";
 import { BaseModal } from "../base-modal/BaseModal";
 
-type Props = {
-  revalidateBasketAction: () => Promise<void>;
-};
-
-export const BasketDeleteModal = (props: Props) => {
+export const BasketDeleteModal = () => {
   const deleteItems = modalsStore((store) => store.deleteItems);
 
   const closeModal = () => modalsAdapter.clearDeleteItems();
@@ -17,7 +13,6 @@ export const BasketDeleteModal = (props: Props) => {
       basketAdapter.delete(deleteItems[i]);
     }
     closeModal();
-    props.revalidateBasketAction();
   };
 
   return (

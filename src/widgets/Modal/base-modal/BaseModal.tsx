@@ -51,8 +51,12 @@ export const BaseModal = (props: Props) => {
             )}
 
             <View style={styles.content}>
-              {props.subtitleText && <Text style={styles.subtitleText}>{props.subtitleText}</Text>}
-              {props.errorText && <Text style={styles.errorText}>{props.errorText}</Text>}
+              {typeof props?.subtitleText === "string" && props?.subtitleText?.length > 0 && (
+                <Text style={styles.subtitleText}>{props.subtitleText}</Text>
+              )}
+              {typeof props?.errorText === "string" && props.errorText.length > 0 && (
+                <Text style={styles.errorText}>{props.errorText}</Text>
+              )}
               {props.children && props.children}
             </View>
             {props.footerAction && (

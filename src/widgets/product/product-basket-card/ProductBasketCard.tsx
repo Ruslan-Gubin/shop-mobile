@@ -25,13 +25,6 @@ type Props = {
 };
 
 export const ProductBasketCard = (props: Props) => {
-  //TODO REMOVE
-  const revalidateBasketAction = async () => {
-    new Promise(() => {
-      console.log("revalidate");
-    });
-  };
-
   const handleNavigate = (id: number) => {
     if (props.navigation) {
       props.navigation.push("ProductInfo", { id });
@@ -80,7 +73,6 @@ export const ProductBasketCard = (props: Props) => {
               accounting={props.accounting}
               available={props.available}
               id={props.id}
-              revalidateBasketAction={revalidateBasketAction}
             />
           </View>
           <View style={{ flex: 1 }}>

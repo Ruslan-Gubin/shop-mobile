@@ -30,6 +30,7 @@ type Props = {
   pickupAddress: AddressItem[];
   defaultCenter: { lng: number; lat: number };
   isAgreed: boolean;
+  isShowButton: boolean;
 };
 
 type CreateOrderPayload = {
@@ -260,7 +261,7 @@ export const CheckoutFooter = (props: Props) => {
         navigation={props.navigation}
         active={successOrder.isOpen}
         orderData={successOrder.orderData}
-        total={total}
+        total={successOrder?.orderData?.total || 0}
         addressName={address ? getFullAddressItem(address) : ""}
         onClose={() => setSuccessOrder({ isOpen: false, orderData: null })}
       />
@@ -275,36 +276,40 @@ export const CheckoutFooter = (props: Props) => {
         onSubmit={handleSubmitOrder}
       />
 
-      <View style={styles.footer}>
-        <Pressable
-          disabled={disabledSubmit}
-          onPress={handleSubmitOrder}
-          style={[styles.footerButton, !disabledSubmit && styles.footerButtonActive]}
-        >
-          <Text style={[styles.footerButtonText, !disabledSubmit && styles.footerButtonTextActive]}>
-            Оформить
-          </Text>
-
-          {!disabledSubmit && (
+      {props.isShowButton && (
+        <View style={styles.footer}>
+          <Pressable
+            disabled={disabledSubmit}
+            onPress={handleSubmitOrder}
+            style={[styles.footerButton, !disabledSubmit && styles.footerButtonActive]}
+          >
             <Text
-              style={[
-                styles.footerButtonText,
-                !disabledSubmit && styles.footerButtonTextActiveTotal,
-              ]}
+              style={[styles.footerButtonText, !disabledSubmit && styles.footerButtonTextActive]}
             >
-              {formatterRub.format(total)}
-              {orderInfo.totalDiscount > 0 && (
-                <>
-                  {"  "}
-                  <Text style={styles.discountText}>
-                    {formatterRub.format(orderInfo.totalDiscount + orderInfo.total)}
-                  </Text>
-                </>
-              )}
+              Оформить
             </Text>
-          )}
-        </Pressable>
-      </View>
+
+            {!disabledSubmit && (
+              <Text
+                style={[
+                  styles.footerButtonText,
+                  !disabledSubmit && styles.footerButtonTextActiveTotal,
+                ]}
+              >
+                {formatterRub.format(total)}
+                {orderInfo.totalDiscount > 0 && (
+                  <>
+                    <Text>{"  "}</Text>
+                    <Text style={styles.discountText}>
+                      {formatterRub.format(orderInfo.totalDiscount + orderInfo.total)}
+                    </Text>
+                  </>
+                )}
+              </Text>
+            )}
+          </Pressable>
+        </View>
+      )}
     </>
   );
 };
