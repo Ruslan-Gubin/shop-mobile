@@ -11,11 +11,12 @@ import {
 import { getFullAddressItem } from "../../shared/helpers/getFullAddressItem";
 import { getMessageError } from "../../shared/helpers/getMessageError";
 import { getOrderStatusColor, getOrderStatusLabel } from "../../shared/helpers/orderStatus";
-import type { OrderModel, OrderProductModel } from "../../shared/types/order";
+import type { OrderModel } from "../../shared/types/order";
 import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
 import { PageHeader } from "../../shared/ui/header/PageHeader";
 import { NotContent } from "../../widgets/not-content/NotContent";
 import { MapBox } from "../Checkout/components/map/MapBox";
+import { OrderProductList } from "./components/OrderProductList";
 
 type Props = {
   navigation?: NativeStackNavigationProp<ParamListBase, "OrderDetail">;
@@ -26,7 +27,6 @@ export const OrderDetailScreen = (props: Props) => {
   const id = props.route?.params?.id;
 
   const [order, setOrder] = useState<OrderModel | null>(null);
-  const [products, setProducts] = useState<OrderProductModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -61,29 +61,9 @@ export const OrderDetailScreen = (props: Props) => {
       .finally(() => loading && setLoading(false));
   });
 
-  const fetchProductsEvent = useEffectEvent((id: number) => {
-    const defaultErrorMessage = "Не удалось загрузить товары";
-
-    fetchService
-      .get<OrderProductModel[]>({ url: `order-product/order/${id}` })
-      .then((response) => {
-        if (response.status === "success" && response.data) {
-          setProducts(response.data);
-        } else {
-          throw response.message || defaultErrorMessage;
-        }
-      })
-      .catch((error) => {
-        const message = getMessageError(error, defaultErrorMessage);
-        setError(message);
-      })
-      .finally(() => loading && setLoading(false));
-  });
-
   useEffect(() => {
     if (typeof id === "number" && !Number.isNaN(id)) {
       fetchOrderEvent(id);
-      fetchProductsEvent(id);
     } else {
       setLoading(false);
     }
@@ -173,7 +153,7 @@ export const OrderDetailScreen = (props: Props) => {
             )}
             {order.status === "completed" && order.updated_at && (
               <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Клиент получил заказ</Text>
+                <Text style={styles.cardLabel}>Дата выдачи</Text>
                 <Text style={styles.cardValue}>
                   {formatDateRu(order.updated_at, {
                     day: "2-digit",
@@ -202,14 +182,11 @@ export const OrderDetailScreen = (props: Props) => {
             )}
             {order.comment && (
               <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Комментарий</Text>
-                <Text style={styles.cardValue}>{order.comment}</Text>
+                <Text style={styles.cardLabel}>
+                  Комментарий: <Text>{order.comment}</Text>
+                </Text>
               </View>
             )}
-            <View style={styles.totalRow}>
-              <Text style={styles.cardLabel}>Стоимость доставки</Text>
-              <Text style={styles.cardValue}>{formatterRub.format(100)}</Text>
-            </View>
             {order.address && (
               <Text style={styles.rejectedText}>
                 <Text style={styles.infoLabel}>
@@ -237,26 +214,10 @@ export const OrderDetailScreen = (props: Props) => {
                 </View>
               )}
           </View>
-          {/* Состав заказа */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Состав заказа</Text>
-            {products.length > 0 &&
-              products.map((product, idx) => (
-                <View key={product.id}>
-                  {idx > 0 && <View style={styles.divider} />}
-                  <View style={styles.productItem}>
-                    <View style={styles.productInfo}>
-                      <Text style={styles.productName}>
-                        {product.name} {product.quantity > 0 && <Text>({product.quantity})</Text>}
-                      </Text>
-                    </View>
-                    <Text style={styles.productPrice}>
-                      {formatterRub.format(product.price * product.quantity)}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-          </View>
+          {typeof id === "number" && !Number.isNaN(id) && (
+            <OrderProductList order_id={id} navigation={props.navigation} />
+          )}
+
           {/* Оплата */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Оплата</Text>
@@ -267,6 +228,13 @@ export const OrderDetailScreen = (props: Props) => {
               </Text>
             </View>
 
+            {order.subtotal > 0 && (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Всего на сумму</Text>
+                <Text style={styles.totalValue}>{formatterRub.format(order.subtotal)}</Text>
+              </View>
+            )}
+
             {order.discount_quantity > 0 && (
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Скидка за количество</Text>
@@ -275,16 +243,12 @@ export const OrderDetailScreen = (props: Props) => {
                 </Text>
               </View>
             )}
-            {order.discount_name.length > 0 && (
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Скидка</Text>
-                <Text style={styles.totalValue}>{order.discount_name}</Text>
-              </View>
-            )}
             {order.discount_percent > 0 && (
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Процент скидки</Text>
-                <Text style={styles.totalValue}>{order.discount_percent}%</Text>
+                <Text style={styles.totalLabel}>
+                  {order.discount_name ? order.discount_name : "Процент скидки"}
+                </Text>
+                <Text style={styles.totalValue}>- {order.discount_percent}%</Text>
               </View>
             )}
             {typeof order.discount_total === "number" &&
@@ -297,6 +261,13 @@ export const OrderDetailScreen = (props: Props) => {
                   </Text>
                 </View>
               )}
+
+            {order.method_receipt === "courier" && (
+              <View style={styles.totalRow}>
+                <Text style={styles.cardLabel}>Стоимость доставки</Text>
+                <Text style={styles.cardValue}>{formatterRub.format(100)}</Text>
+              </View>
+            )}
             <View style={styles.divider} />
             {order.total > 0 && (
               <View style={styles.totalRow}>
@@ -400,25 +371,6 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "right",
     fontSize: 13,
-    fontWeight: "500",
-    color: "#242424",
-  },
-  productItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    columnGap: 12,
-  },
-  productInfo: {
-    flex: 1,
-    rowGap: 4,
-  },
-  productName: {
-    fontSize: 14,
-    color: "#242424",
-  },
-  productPrice: {
-    fontSize: 14,
     fontWeight: "500",
     color: "#242424",
   },

@@ -1,7 +1,11 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { formatDateRu, formatDeliveryInterval, formatterRub } from "../../../shared/helpers/formatters";
+import {
+  formatDateRu,
+  formatDeliveryInterval,
+  formatterRub,
+} from "../../../shared/helpers/formatters";
 import { getOrderStatusColor, getOrderStatusLabel } from "../../../shared/helpers/orderStatus";
 import type { OrderModel } from "../../../shared/types/order";
 
@@ -79,28 +83,44 @@ export const OrderCard = (props: Props) => {
         </View>
         {showDiscount && (
           <>
-            {order.discount_name && (
+            {basePrice > 0 && !Number.isNaN(basePrice) && (
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Акция</Text>
-                <Text style={styles.infoValue} numberOfLines={1}>
-                  {order.discount_name}
+                <Text style={styles.infoLabel}>Цена без скидки</Text>
+                <Text style={styles.infoValue}>{formatterRub.format(basePrice)}</Text>
+              </View>
+            )}
+
+            {order.discount_quantity > 0 && !Number.isNaN(order.discount_quantity) && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Скидка за количество</Text>
+                <Text style={styles.infoValue}>
+                  −{formatterRub.format(order.discount_quantity)}
                 </Text>
               </View>
             )}
 
-            {basePrice > 0 && !Number.isNaN(basePrice) && (
+            {order.discount_percent > 0 && !Number.isNaN(order.discount_percent) && (
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Цена без скидки</Text>
-                <Text style={[styles.infoValue, styles.oldPriceValue]}>
-                  {formatterRub.format(basePrice)}
+                <Text style={styles.infoLabel}>
+                  {order.discount_name ? order.discount_name : "Процент скидки"}
                 </Text>
+                <Text style={styles.infoValue}>- {order.discount_percent}%</Text>
               </View>
             )}
 
             {order.discount_total > 0 && !Number.isNaN(order.discount_total) && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Скидка всего</Text>
-                <Text style={styles.infoValue}>−{formatterRub.format(order.discount_total)}</Text>
+                <Text style={styles.infoValue}>
+                  −{formatterRub.format(order.discount_total + order.discount_quantity)}
+                </Text>
+              </View>
+            )}
+
+            {order.method_receipt === "courier" && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Стоимость доставки</Text>
+                <Text style={styles.infoValue}>{formatterRub.format(100)}</Text>
               </View>
             )}
           </>
@@ -197,10 +217,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: "#242424",
-  },
-  oldPriceValue: {
-    textDecorationLine: "line-through",
-    color: "#c8c8d1",
   },
   totalValue: {
     fontSize: 20,
