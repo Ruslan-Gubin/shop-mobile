@@ -3,7 +3,6 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useEffect, useEffectEvent, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { fetchService } from "../../shared/fetch-api";
-import { declOfNum } from "../../shared/helpers/declOfNum";
 import {
   formatDateRu,
   formatDeliveryInterval,
@@ -15,14 +14,16 @@ import { getOrderStatusColor, getOrderStatusLabel } from "../../shared/helpers/o
 import type { OrderModel, OrderProductModel } from "../../shared/types/order";
 import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
 import { PageHeader } from "../../shared/ui/header/PageHeader";
+import { NotContent } from "../../widgets/not-content/NotContent";
+import { MapBox } from "../Checkout/components/map/MapBox";
 
 type Props = {
   navigation?: NativeStackNavigationProp<ParamListBase, "OrderDetail">;
   route?: { params?: { id: number } };
 };
 
-export const OrderDetailScreen = ({ navigation, route }: Props) => {
-  const id = route?.params?.id;
+export const OrderDetailScreen = (props: Props) => {
+  const id = props.route?.params?.id;
 
   const [order, setOrder] = useState<OrderModel | null>(null);
   const [products, setProducts] = useState<OrderProductModel[]>([]);
@@ -92,16 +93,27 @@ export const OrderDetailScreen = ({ navigation, route }: Props) => {
     <View style={styles.page}>
       <PageHeader
         title={order?.order_number ? `Заказ № ${order.order_number}` : "Заказ"}
-        onBack={() => navigation?.goBack()}
+        onBack={() => props.navigation?.goBack()}
       />
 
       {error.length > 0 && <ErrorAlert message={error} />}
 
-      {loading ? (
+      {loading && (
         <View style={styles.centerBlock}>
           <ActivityIndicator size="large" color="#a73afd" />
         </View>
-      ) : order ? (
+      )}
+
+      {!loading && !order && (
+        <NotContent
+          title="Заказ не найден"
+          subTitle="Попробуйте перезагрузить страницу или вернутся к список заказов"
+          navigateText="Вернутся к списку заказов"
+          onNavigate={() => props.navigation?.push("Orders")}
+        />
+      )}
+
+      {!loading && order && (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Шапка — номер, дата и статус */}
           <View style={styles.header}>
@@ -145,114 +157,86 @@ export const OrderDetailScreen = ({ navigation, route }: Props) => {
             )}
           </View>
 
-          {order.method_receipt === "courier" ? (
-            /* Доставка — курьером */
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Доставка</Text>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              {order.method_receipt === "courier" ? "Доставка" : "Самовывоз"}
+            </Text>
+            {order.date_from && (
               <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Способ получения</Text>
-                <Text style={styles.cardValue}>Курьер</Text>
-              </View>
-              {order.date_from && (
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Дата доставки</Text>
-                  <Text style={styles.cardValue}>
-                    {formatDeliveryInterval(order.date_from, order.date_to)}
-                  </Text>
-                </View>
-              )}
-              {order.status === "completed" && order.updated_at && (
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Клиент получил заказ</Text>
-                  <Text style={styles.cardValue}>
-                    {formatDateRu(order.updated_at, {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Text>
-                </View>
-              )}
-              {order.recipient_name && (
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Получатель</Text>
-                  <Text style={styles.cardValue}>{order.recipient_name}</Text>
-                </View>
-              )}
-              {order.phone && (
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Телефон</Text>
-                  <Text style={styles.cardValue}>
-                    {order.phoneCode}
-                    {order.phone}
-                  </Text>
-                </View>
-              )}
-              {order.comment && (
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Комментарий</Text>
-                  <Text style={styles.cardValue}>{order.comment}</Text>
-                </View>
-              )}
-              <View style={styles.totalRow}>
-                <Text style={styles.cardLabel}>Стоимость доставки</Text>
-                <Text style={styles.cardValue}>{formatterRub.format(100)}</Text>
-              </View>
-              {order.address && (
-                <Text style={styles.rejectedText}>
-                  <Text style={styles.infoLabel}>Адрес: </Text>
-                  {getFullAddressItem(order.address)}
+                <Text style={styles.cardLabel}>
+                  {order.method_receipt === "courier" ? "Дата доставки" : "Дата выдачи"}
                 </Text>
-              )}
-            </View>
-          ) : (
-            /* Самовывоз */
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Самовывоз</Text>
-              <View style={styles.cardRow}>
-                <Text style={styles.cardLabel}>Способ получения</Text>
-                <Text style={styles.cardValue}>Самовывоз</Text>
+                <Text style={styles.cardValue}>
+                  {formatDeliveryInterval(order.date_from, order.date_to)}
+                </Text>
               </View>
-              {order.date_from && (
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Дата выдачи</Text>
-                  <Text style={styles.cardValue}>
-                    {formatDeliveryInterval(order.date_from, order.date_to)}
-                  </Text>
-                </View>
-              )}
-              {order.address?.name && (
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Склад</Text>
-                  <Text style={styles.cardValue}>{order.address.name}</Text>
-                </View>
-              )}
-              {order.recipient_name && (
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Получатель</Text>
-                  <Text style={styles.cardValue}>{order.recipient_name}</Text>
-                </View>
-              )}
-              {order.phone && (
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Телефон</Text>
-                  <Text style={styles.cardValue}>
-                    {order.phoneCode}
-                    {order.phone}
-                  </Text>
-                </View>
-              )}
-              {order.comment && (
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Комментарий</Text>
-                  <Text style={styles.cardValue}>{order.comment}</Text>
-                </View>
-              )}
+            )}
+            {order.status === "completed" && order.updated_at && (
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>Клиент получил заказ</Text>
+                <Text style={styles.cardValue}>
+                  {formatDateRu(order.updated_at, {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </View>
+            )}
+            {order.recipient_name && (
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>Получатель</Text>
+                <Text style={styles.cardValue}>{order.recipient_name}</Text>
+              </View>
+            )}
+            {order.phone && (
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>Телефон</Text>
+                <Text style={styles.cardValue}>
+                  {order.phoneCode}
+                  {order.phone}
+                </Text>
+              </View>
+            )}
+            {order.comment && (
+              <View style={styles.cardRow}>
+                <Text style={styles.cardLabel}>Комментарий</Text>
+                <Text style={styles.cardValue}>{order.comment}</Text>
+              </View>
+            )}
+            <View style={styles.totalRow}>
+              <Text style={styles.cardLabel}>Стоимость доставки</Text>
+              <Text style={styles.cardValue}>{formatterRub.format(100)}</Text>
             </View>
-          )}
-
+            {order.address && (
+              <Text style={styles.rejectedText}>
+                <Text style={styles.infoLabel}>
+                  {order.method_receipt === "courier" ? "Адрес: " : "Склад"}{" "}
+                </Text>
+                {getFullAddressItem(order.address)}
+              </Text>
+            )}
+            {order.address &&
+              typeof order.address.lat === "number" &&
+              typeof order.address.lng === "number" &&
+              !Number.isNaN(order.address.lat) &&
+              !Number.isNaN(order.address.lng) &&
+              order.address.lng >= -180 &&
+              order.address.lng <= 180 &&
+              order.address.lat >= -90 &&
+              order.address.lat <= 90 && (
+                <View style={styles.mapContainer}>
+                  <MapBox
+                    markers={[order.address]}
+                    onClickMarker={() => {}}
+                    initCenter={{ lat: order.address.lat, lng: order.address.lng }}
+                    active={{ lat: order.address.lat, lng: order.address.lng }}
+                  />
+                </View>
+              )}
+          </View>
           {/* Состав заказа */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Состав заказа</Text>
@@ -262,9 +246,8 @@ export const OrderDetailScreen = ({ navigation, route }: Props) => {
                   {idx > 0 && <View style={styles.divider} />}
                   <View style={styles.productItem}>
                     <View style={styles.productInfo}>
-                      <Text style={styles.productName}>{product.name}</Text>
-                      <Text style={styles.productCount}>
-                        {product.quantity} {declOfNum(product.quantity, ["шт.", "шт.", "шт."])}
+                      <Text style={styles.productName}>
+                        {product.name} {product.quantity > 0 && <Text>({product.quantity})</Text>}
                       </Text>
                     </View>
                     <Text style={styles.productPrice}>
@@ -274,7 +257,6 @@ export const OrderDetailScreen = ({ navigation, route }: Props) => {
                 </View>
               ))}
           </View>
-
           {/* Оплата */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Оплата</Text>
@@ -293,24 +275,28 @@ export const OrderDetailScreen = ({ navigation, route }: Props) => {
                 </Text>
               </View>
             )}
+            {order.discount_name.length > 0 && (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Скидка</Text>
+                <Text style={styles.totalValue}>{order.discount_name}</Text>
+              </View>
+            )}
             {order.discount_percent > 0 && (
-              <>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>Скидка</Text>
-                  <Text style={styles.totalValue}>{order.discount_name}</Text>
-                </View>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>Процент скидки</Text>
-                  <Text style={styles.totalValue}>{order.discount_percent}%</Text>
-                </View>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Процент скидки</Text>
+                <Text style={styles.totalValue}>{order.discount_percent}%</Text>
+              </View>
+            )}
+            {typeof order.discount_total === "number" &&
+              typeof order.discount_quantity === "number" &&
+              order.discount_total + order.discount_quantity > 0 && (
                 <View style={styles.totalRow}>
                   <Text style={styles.totalLabel}>Скидка всего</Text>
                   <Text style={styles.totalValue}>
                     −{formatterRub.format(order.discount_total + order.discount_quantity)}
                   </Text>
                 </View>
-              </>
-            )}
+              )}
             <View style={styles.divider} />
             {order.total > 0 && (
               <View style={styles.totalRow}>
@@ -320,10 +306,6 @@ export const OrderDetailScreen = ({ navigation, route }: Props) => {
             )}
           </View>
         </ScrollView>
-      ) : (
-        <View style={styles.centerBlock}>
-          <Text style={styles.errorText}>Заказ не найден</Text>
-        </View>
       )}
     </View>
   );
@@ -343,10 +325,6 @@ const styles = StyleSheet.create({
   content: {
     rowGap: 8,
     paddingBlock: 8,
-  },
-  errorText: {
-    color: "#868695",
-    fontSize: 15,
   },
   header: {
     rowGap: 8,
@@ -439,11 +417,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#242424",
   },
-  productCount: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#242424",
-  },
   productPrice: {
     fontSize: 14,
     fontWeight: "500",
@@ -478,5 +451,10 @@ const styles = StyleSheet.create({
   rejectedText: {
     fontSize: 14,
     color: "#242424",
+  },
+  mapContainer: {
+    height: 220,
+    borderRadius: 16,
+    overflow: "hidden",
   },
 });
