@@ -4,7 +4,7 @@ import { useEffect, useEffectEvent, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { fetchService } from "../../../shared/fetch-api";
 import { getMessageError } from "../../../shared/helpers/getMessageError";
-import type { OrderProductModel } from "../../../shared/types/order";
+import type { OrderProductModel, OrderStatus } from "../../../shared/types/order";
 import type { ProductModel } from "../../../shared/types/products";
 import { ErrorAlert } from "../../../shared/ui/ErrorAlert/ErrorAlert";
 import { NotContent } from "../../../widgets/not-content/NotContent";
@@ -12,6 +12,7 @@ import { OrderProductCard } from "./OrderProductCard";
 
 type Props = {
   order_id: number;
+  order_status: OrderStatus;
   navigation?: NativeStackNavigationProp<ParamListBase, string>;
 };
 
@@ -103,6 +104,7 @@ export const OrderProductList = (props: Props) => {
               quantity={product.quantity}
               name={product.name}
               price={product.price}
+              order_status={props.order_status}
               photos={productsOrigin.find((el) => el.id === product.product_id)?.photos || []}
             />
           ))}

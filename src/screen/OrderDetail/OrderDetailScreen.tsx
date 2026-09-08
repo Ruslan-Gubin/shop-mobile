@@ -39,6 +39,7 @@ export const OrderDetailScreen = (props: Props) => {
       })
       .catch((error) => {
         const message = getMessageError(error, defaultErrorMessage);
+        setError(message);
 
         Alert.alert("Ошибка", message, [
           { text: "Отмена", style: "default" },
@@ -51,7 +52,6 @@ export const OrderDetailScreen = (props: Props) => {
             },
           },
         ]);
-        setError(message);
       })
       .finally(() => loading && setLoading(false));
   });
@@ -94,6 +94,8 @@ export const OrderDetailScreen = (props: Props) => {
             status={order.status}
             created_at={order.created_at}
             rejected_reason={order.rejected_reason}
+            id={id}
+            navigation={props.navigation}
           />
 
           <DeliveryInfo
@@ -110,7 +112,7 @@ export const OrderDetailScreen = (props: Props) => {
           />
 
           {typeof id === "number" && !Number.isNaN(id) && (
-            <OrderProductList order_id={id} navigation={props.navigation} />
+            <OrderProductList order_id={id} navigation={props.navigation} order_status={order.status} />
           )}
 
           <DetailPaid

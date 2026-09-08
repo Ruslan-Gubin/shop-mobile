@@ -1,15 +1,28 @@
+import type { ParamListBase } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { StyleSheet, Text, View } from "react-native";
 import { formatDateRu } from "../../../shared/helpers/formatters";
 import { getOrderStatusColor, getOrderStatusLabel } from "../../../shared/helpers/orderStatus";
 import type { OrderStatus } from "../../../shared/types/order";
+import { CancelOrderModal } from "./CancelOrderModal";
 
 type Props = {
   status: OrderStatus;
   created_at: Date | null;
   rejected_reason: string;
+  id: number | undefined;
+  navigation?: NativeStackNavigationProp<ParamListBase, string>;
 };
 
 export const MainInfo = (props: Props) => {
+  const CANCELLED_STATUSES: OrderStatus[] = [
+    "cancelled_new",
+    "cancelled_assembly",
+    "cancelled_ready",
+    "cancelled_delivery",
+    "cancelled_customer",
+  ];
+
   return (
     <View style={styles.header}>
       <View style={styles.headerTopRow}>
@@ -48,6 +61,11 @@ export const MainInfo = (props: Props) => {
           {props.rejected_reason}
         </Text>
       )}
+
+      {props.status !== "completed" &&
+        !CANCELLED_STATUSES.includes(props.status) &&
+        typeof props.id === "number" &&
+        props.id > 0 && <CancelOrderModal id={props.id} navigation={props.navigation} />}
     </View>
   );
 };
