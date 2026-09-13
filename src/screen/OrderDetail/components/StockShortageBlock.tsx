@@ -2,12 +2,11 @@ import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { OrderProductModel, OrderStockShortageItem } from "../../../shared/types/order";
+import type { OrderProductModel } from "../../../shared/types/order";
 import { StockShortageModal } from "./StockShortageModal";
 
 type Props = {
   order_id: number;
-  items: OrderStockShortageItem[];
   products: OrderProductModel[];
   loading: boolean;
   navigation?: NativeStackNavigationProp<ParamListBase, string>;
@@ -16,13 +15,36 @@ type Props = {
 export const StockShortageBlock = (props: Props) => {
   const [open, setOpen] = useState(false);
 
-  const noProductsLeft =
-    props.products.length > 0 &&
-    props.products.every((product) => {
-      const shortage = props.items.find((item) => item.id === product.id);
+  const getProblemProductStocks = (products: OrderProductModel[]) => {
+    let left = 0;
 
-      return typeof shortage === "object" && shortage !== null && shortage.quantity === 0;
-    });
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i];
+
+      for (let j = 0; j < product.reservations.length; j++) {
+        const reservation = product.reservations[j];
+
+        const findShortageStock = product.shortage_stocks.find(
+          (el) =>
+            el.stock_id === reservation.stock_id && el.warehouse_id === reservation.warehouse_id,
+        );
+
+        left +=
+          findShortageStock && reservation.quantity > findShortageStock.quantity
+            ? findShortageStock.quantity
+            : reservation.quantity;
+      }
+    }
+
+    return left;
+  };
+
+  const left = getProblemProductStocks(props.products);
+  const notProductLeft = left === 0;
+
+  const problemShortageStocksProducts = props.products.filter(
+    (el) => Array.isArray(el.shortage_stocks) && el.shortage_stocks.length > 0,
+  );
 
   return (
     <>
@@ -34,7 +56,7 @@ export const StockShortageBlock = (props: Props) => {
           <View style={styles.headerText}>
             <Text style={styles.title}>Проблема с остатками</Text>
             <Text>
-              {noProductsLeft
+              {notProductLeft
                 ? "Все товары из заказа закончились на складе"
                 : "Некоторые товары требуют уточнения"}
             </Text>
@@ -43,7 +65,7 @@ export const StockShortageBlock = (props: Props) => {
 
         <Pressable style={styles.button} onPress={() => setOpen(true)}>
           <Text style={styles.buttonText}>
-            {noProductsLeft ? "Отменить заказ" : "Решить проблему"}
+            {notProductLeft ? "Отменить заказ" : "Решить проблему"}
           </Text>
         </Pressable>
       </View>
@@ -52,9 +74,8 @@ export const StockShortageBlock = (props: Props) => {
         visible={open}
         onClose={() => setOpen(false)}
         order_id={props.order_id}
-        items={props.items}
-        products={props.products}
-        noProductsLeft={noProductsLeft}
+        products={problemShortageStocksProducts}
+        notProductLeft={notProductLeft}
         loading={props.loading}
         navigation={props.navigation}
       />
@@ -112,4 +133,3 @@ const styles = StyleSheet.create({
     color: "#ffffff",
   },
 });
-

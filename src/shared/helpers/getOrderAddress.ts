@@ -11,29 +11,29 @@ export const getOrderAddress = (
   let address: AddressItem | null = null;
 
   if (method_receipt === "pickup") {
-    if (activePickup) {
-      const findActiveAddress = (pickupAddress || []).find(
-        (el) => el.lng === activePickup.lng && el.lat === activePickup.lat,
-      );
+    const hasActivePickup =
+      typeof activePickup?.lat === "number" &&
+      activePickup?.lat > 0 &&
+      typeof activePickup?.lng === "number" &&
+      activePickup?.lng > 0;
 
-      if (findActiveAddress) {
-        address = findActiveAddress;
-      }
-    } else {
-      const findDefault = (pickupAddress || []).find(
-        (el) =>
-          typeof el.lng === "number" &&
-          el.lng === defaultCenter.lng &&
-          typeof el.lat === "number" &&
-          el.lat === defaultCenter.lat,
-      );
+    const findActiveAddress = hasActivePickup
+      ? (pickupAddress || []).find(
+          (el) => el.lng === activePickup.lng && el.lat === activePickup.lat,
+        )
+      : null;
 
-      if (findDefault) {
-        address = findDefault;
-      }
+    if (findActiveAddress) {
+      address = findActiveAddress;
     }
   } else {
-    if (activeCourier) {
+    const hasActiveCourier =
+      typeof activeCourier?.lat === "number" &&
+      activeCourier?.lat > 0 &&
+      typeof activeCourier?.lng === "number" &&
+      activeCourier?.lng > 0;
+
+    if (hasActiveCourier) {
       const findActiveAddress = courierAddress.find(
         (el) => el.lng === activeCourier.lng && el.lat === activeCourier.lat,
       );
@@ -41,7 +41,21 @@ export const getOrderAddress = (
       if (findActiveAddress) {
         address = findActiveAddress;
       }
-    } else if (!activeCourier && courierAddress.length > 0) {
+    }
+  }
+
+  if (!address) {
+    const findDefault = (pickupAddress || []).find(
+      (el) =>
+        typeof el.lng === "number" &&
+        el.lng === defaultCenter.lng &&
+        typeof el.lat === "number" &&
+        el.lat === defaultCenter.lat,
+    );
+
+    if (findDefault) {
+      address = findDefault;
+    } else {
       const findFirst = (pickupAddress || []).find(
         (el) => typeof el.lng === "number" && typeof el.lat === "number",
       );
@@ -53,3 +67,4 @@ export const getOrderAddress = (
 
   return address;
 };
+

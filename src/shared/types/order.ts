@@ -19,11 +19,6 @@ export type OrderReservation = {
   warehouse_id: number;
 };
 
-export type OrderStockShortageItem = {
-  id: number;
-  quantity: number;
-};
-
 export type OrderPriceChangeItem = {
   id: number;
   price: number;
@@ -49,6 +44,7 @@ export type OrderProductModel = {
   updated_at: string;
   reservations: OrderReservation[];
   transfers: OrderReservation[];
+  shortage_stocks: OrderReservation[];
 };
 
 export type OrderModel = {
@@ -74,7 +70,6 @@ export type OrderModel = {
   payment_method: string;
   subtotal: number;
   total: number;
-  shortage_stocks: OrderStockShortageItem[];
   price_changes: OrderPriceChangeItem[];
   address?: AddressItem | null;
   warehouse?: WarehouseModel | null;

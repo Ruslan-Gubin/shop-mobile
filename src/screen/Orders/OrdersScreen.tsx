@@ -30,7 +30,7 @@ export const OrdersScreen = (props: Props) => {
     fetchData: (page: number) =>
       fetchService
         .get<{ orders: OrderModel[]; paginationPage: string; totalCount: number }>({
-          url: "orders",
+          url: "orders/all-client",
           params: {
             limit: String(limit),
             page: page ? String(page) : "1",

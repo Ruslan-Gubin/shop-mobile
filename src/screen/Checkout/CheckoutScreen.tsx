@@ -61,17 +61,33 @@ export const CheckoutScreen = (props: Props) => {
       .get<WarehouseModel[]>({ url: "warehouses/public" })
       .then((response) => {
         if (response.status === "success" && Array.isArray(response.data)) {
-          const pickup: AddressItem[] = response.data.reduce<AddressItem[]>(
-            (acc, el) => (el.address ? acc.concat(el.address) : acc),
-            [],
-          );
-          const defaultWarehouse = response.data.find((el) => el.default_warehouse);
+          const pickup: AddressItem[] = [];
+          let default_lng = 0;
+          let default_lat = 0;
+
+          for (let i = 0; i < response.data.length; i++) {
+            const warehouse = response.data[i];
+
+            if (
+              Object.hasOwn(warehouse, "address") &&
+              warehouse.address &&
+              (warehouse.is_active || warehouse.default_warehouse)
+            ) {
+              pickup.push(warehouse.address);
+
+              if (warehouse.default_warehouse) {
+                default_lng = warehouse.address.lng;
+                default_lat = warehouse.address.lat;
+              }
+            }
+          }
 
           setPickupAddress(pickup);
-          if (defaultWarehouse?.address) {
+
+          if (default_lng > 0 && default_lat > 0) {
             setDefaultCenter({
-              lng: defaultWarehouse.address.lng,
-              lat: defaultWarehouse.address.lat,
+              lng: default_lng,
+              lat: default_lat,
             });
           }
         } else if (response.status === "error") {

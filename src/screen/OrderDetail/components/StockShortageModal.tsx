@@ -1,17 +1,16 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useState } from "react";
+import { useTransition } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { fetchService } from "../../../shared/fetch-api";
 import { getMessageError } from "../../../shared/helpers/getMessageError";
-import type { OrderProductModel, OrderStockShortageItem } from "../../../shared/types/order";
+import type { OrderProductModel, OrderReservation } from "../../../shared/types/order";
 import { BaseModal } from "../../../widgets/modal/base-modal/BaseModal";
 
 type Props = {
   order_id: number;
-  items: OrderStockShortageItem[];
   products: OrderProductModel[];
-  noProductsLeft: boolean;
+  notProductLeft: boolean;
   loading: boolean;
   visible: boolean;
   onClose: () => void;
@@ -19,77 +18,97 @@ type Props = {
 };
 
 export const StockShortageModal = (props: Props) => {
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, transition] = useTransition();
 
   const handleCancelOrder = () => {
-    setSubmitting(true);
     const defaultErrorMessage = "Не удалось отменить заказ";
 
-    fetchService
-      .patch<null>({
-        url: `orders/reject/${props.order_id}`,
-        payload: { rejected_reason: "Отменён из-за нехватки товара на складе" },
-      })
-      .then((response) => {
-        if (response.status === "success") {
-          props.onClose();
-          props.navigation?.reset({ index: 0, routes: [{ name: "Orders" }] });
-        } else {
-          throw response.message;
-        }
-      })
-      .catch((error) => {
-        const message = getMessageError(error, defaultErrorMessage);
+    transition(() => {
+      fetchService
+        .patch<null>({
+          url: `orders/reject/${props.order_id}`,
+          payload: { rejected_reason: "Отменён из-за нехватки товара на складе" },
+        })
+        .then((response) => {
+          if (response.status === "success") {
+            props.onClose();
+            props.navigation?.reset({ index: 0, routes: [{ name: "Orders" }] });
+          } else {
+            throw response.message;
+          }
+        })
+        .catch((error) => {
+          const message = getMessageError(error, defaultErrorMessage);
 
-        Alert.alert("Ошибка", message, [
-          { text: "Отмена", style: "default" },
-          {
-            text: "Повторить",
-            isPreferred: true,
-            onPress: () => {
-              handleCancelOrder();
+          Alert.alert("Ошибка", message, [
+            { text: "Отмена", style: "default" },
+            {
+              text: "Повторить",
+              isPreferred: true,
+              onPress: () => {
+                handleCancelOrder();
+              },
             },
-          },
-        ]);
-      })
-      .finally(() => setSubmitting(false));
+          ]);
+        });
+    });
   };
 
   const handleApply = () => {
-    setSubmitting(true);
     const defaultErrorMessage = "Не удалось применить изменения";
 
-    fetchService
-      .post<null>({
-        url: `orders/${props.order_id}/apply-stock-changes`,
-        payload: { stocks: props.items },
-      })
-      .then((response) => {
-        if (response.status === "success") {
-          props.onClose();
-          props.navigation?.reset({ index: 0, routes: [{ name: "Orders" }] });
-        } else {
-          throw response.message;
-        }
-      })
-      .catch((error) => {
-        const message = getMessageError(error, defaultErrorMessage);
+    transition(() => {
+      fetchService
+        .post<null>({
+          url: `orders/accept-shortage/${props.order_id}`,
+          payload: {},
+        })
+        .then((response) => {
+          if (response.status === "success") {
+            props.onClose();
+            props.navigation?.reset({ index: 0, routes: [{ name: "Orders" }] });
+          } else {
+            throw response.message;
+          }
+        })
+        .catch((error) => {
+          const message = getMessageError(error, defaultErrorMessage);
 
-        Alert.alert("Ошибка", message, [
-          { text: "Отмена", style: "default" },
-          {
-            text: "Повторить",
-            isPreferred: true,
-            onPress: () => {
-              handleApply();
+          Alert.alert("Ошибка", message, [
+            { text: "Отмена", style: "default" },
+            {
+              text: "Повторить",
+              isPreferred: true,
+              onPress: () => {
+                handleApply();
+              },
             },
-          },
-        ]);
-      })
-      .finally(() => setSubmitting(false));
+          ]);
+        });
+    });
   };
 
-  const disabled = submitting;
+  const getLeftQuantity = (
+    needQuantity: number,
+    reservations: OrderReservation[],
+    shortage_stocks: OrderReservation[],
+  ) => {
+    let left = needQuantity;
+
+    for (let j = 0; j < reservations.length; j++) {
+      const reservation = reservations[j];
+
+      const findShortageStock = shortage_stocks.find(
+        (el) =>
+          el.stock_id === reservation.stock_id && el.warehouse_id === reservation.warehouse_id,
+      );
+
+      if (findShortageStock && reservation.quantity > findShortageStock.quantity) {
+        left -= reservation.quantity - findShortageStock.quantity;
+      }
+    }
+    return left;
+  };
 
   return (
     <BaseModal
@@ -97,7 +116,7 @@ export const StockShortageModal = (props: Props) => {
       onClose={props.onClose}
       title="Недостаточно товара на складе"
       subtitleText={
-        props.noProductsLeft
+        props.notProductLeft
           ? "Все товары из заказа закончились на складе. Вы можете отменить заказ."
           : "Для некоторых товаров не хватает остатков на складе. Примените изменения или отмените заказ."
       }
@@ -107,14 +126,14 @@ export const StockShortageModal = (props: Props) => {
           action: handleCancelOrder,
           backgroundColor: "#f6f6f9",
           color: "#cd5c5c",
-          disabled,
+          disabled: loading,
         },
-        ...(!props.noProductsLeft && {
+        ...(!props.notProductLeft && {
           submit: {
             text: "Применить",
             action: handleApply,
             backgroundColor: "#a73afd",
-            disabled,
+            disabled: loading,
           },
         }),
       }}
@@ -131,27 +150,24 @@ export const StockShortageModal = (props: Props) => {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         >
-          {props.items.map((item) => {
-            const product = props.products.find((el) => el.id === item.id);
-
-            if (!product) {
-              return null;
-            }
-
-            const need = product.quantity;
-            const available = item.quantity;
+          {props.products.map((product) => {
+            const left = getLeftQuantity(
+              product.quantity,
+              product.reservations,
+              product.shortage_stocks,
+            );
 
             return (
-              <View key={item.id} style={styles.itemCard}>
+              <View key={product.id} style={styles.itemCard}>
                 <View style={styles.itemHeader}>
                   {typeof product.name === "string" && product.name.length > 0 && (
                     <Text numberOfLines={1} style={styles.itemName}>
                       {product.name}
                     </Text>
                   )}
-                  <Text style={[styles.stockInfo, available === 0 && styles.stockInfoDanger]}>
-                    {`Необходимо: ${need} шт. - ${
-                      available > 0 ? `Доступно: ${available} шт.` : "Нет в наличии"
+                  <Text style={[styles.stockInfo, left === 0 && styles.stockInfoDanger]}>
+                    {`Необходимо: ${product.quantity} шт. - ${
+                      left > 0 ? `Доступно: ${left} шт.` : "Нет в наличии"
                     }`}
                   </Text>
                 </View>
@@ -209,4 +225,3 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 });
-

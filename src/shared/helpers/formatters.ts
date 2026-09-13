@@ -74,3 +74,11 @@ export const formatDeliveryInterval = (
     to ? ` до ${formatDeliveryTime(to)}` : ""
   }`;
 };
+
+export const formatDeliveryIntervalHours = (
+  from: string | Date | null | undefined,
+  to: string | Date | null | undefined,
+): string => {
+  if (!from) return "";
+  return `с ${formatDeliveryTime(from)}${to ? ` до ${formatDeliveryTime(to)}` : ""}`;
+};

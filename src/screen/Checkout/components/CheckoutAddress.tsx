@@ -2,8 +2,8 @@ import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { getActiveAddress } from "../../../shared/helpers/getActiveAddress";
 import { getFullAddressItem } from "../../../shared/helpers/getFullAddressItem";
+import { getOrderAddress } from "../../../shared/helpers/getOrderAddress";
 import { PinAddressSvg } from "../../../shared/svg/PinAddressSvg";
 import { checkoutAdapter } from "../../../store/checkout/adapter";
 import { checkoutStore } from "../../../store/checkout/store";
@@ -25,10 +25,10 @@ export const CheckoutAddress = (props: Props) => {
 
   const [selectModal, setSelectModal] = useState(false);
 
-  const activeAddress = getActiveAddress(
+  const activeAddress = getOrderAddress(
+    props.defaultCenter,
     props.pickupAddress,
     courierAddress,
-    props.defaultCenter,
     props.method_receipt,
     activePickup,
     activeCourier,
@@ -91,7 +91,10 @@ export const CheckoutAddress = (props: Props) => {
       <View style={styles.mapContainer}>
         <MapBox
           initCenter={props.defaultCenter}
-          active={activeAddress}
+          active={{
+            lng: activeAddress?.lng || props.defaultCenter.lng,
+            lat: activeAddress?.lat || props.defaultCenter.lat,
+          }}
           markers={filterAddress}
           onClickMarker={(lng, lat) => {
             checkoutAdapter.setActiveAddress(lng, lat);

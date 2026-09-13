@@ -66,12 +66,7 @@ export const OrderDetailScreen = (props: Props) => {
       .get<OrderModel>({ url: `orders/${id}` })
       .then((response) => {
         if (response.status === "success" && response.data) {
-          //TODO Change -> setOrder(response.data)
-          setOrder({
-            ...response.data,
-            shortage_stocks: [],
-            price_changes: [],
-          });
+          setOrder(response.data);
         } else {
           throw response.message;
         }
@@ -104,6 +99,10 @@ export const OrderDetailScreen = (props: Props) => {
     }
   }, [id]);
 
+  const hasShortageStocks =
+    orderProducts.length > 0 &&
+    orderProducts.some((el) => Array.isArray(el.shortage_stocks) && el.shortage_stocks.length > 0);
+
   return (
     <View style={styles.page}>
       <PageHeader
@@ -130,15 +129,12 @@ export const OrderDetailScreen = (props: Props) => {
 
       {!loading && order && (
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {Array.isArray(order.shortage_stocks) &&
-            orderProducts.length > 0 &&
-            order.shortage_stocks.length > 0 &&
+          {hasShortageStocks &&
             ["new", "processing"].includes(order.status) &&
             typeof id === "number" &&
             !Number.isNaN(id) && (
               <StockShortageBlock
                 order_id={id}
-                items={order.shortage_stocks}
                 products={orderProducts}
                 loading={orderProductsLoading}
                 navigation={props.navigation}
@@ -161,10 +157,13 @@ export const OrderDetailScreen = (props: Props) => {
 
           <MainInfo
             status={order.status}
+            method_receipt={order.method_receipt}
             created_at={order.created_at}
             rejected_reason={order.rejected_reason}
             id={id}
             navigation={props.navigation}
+            date_from={order.date_from}
+            date_to={order.date_to}
           />
 
           <DeliveryInfo

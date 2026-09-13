@@ -1,17 +1,20 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { StyleSheet, Text, View } from "react-native";
-import { formatDateRu } from "../../../shared/helpers/formatters";
+import { formatDateRu, formatDeliveryIntervalHours } from "../../../shared/helpers/formatters";
 import { getOrderStatusColor, getOrderStatusLabel } from "../../../shared/helpers/orderStatus";
 import type { OrderStatus } from "../../../shared/types/order";
 import { CancelOrderModal } from "./CancelOrderModal";
 
 type Props = {
   status: OrderStatus;
+  method_receipt: string;
   created_at: Date | null;
   rejected_reason: string;
   id: number | undefined;
   navigation?: NativeStackNavigationProp<ParamListBase, string>;
+  date_from: Date | null;
+  date_to: Date | null;
 };
 
 export const MainInfo = (props: Props) => {
@@ -27,23 +30,30 @@ export const MainInfo = (props: Props) => {
     <View style={styles.header}>
       <View style={styles.headerTopRow}>
         <View style={styles.headerLeft}>
-          <Text style={styles.orderNumber}>Статус</Text>
-        </View>
-        <View
-          style={[
-            styles.statusBadge,
-            {
-              backgroundColor: `${getOrderStatusColor(props.status)}18`,
-              borderColor: `${getOrderStatusColor(props.status)}40`,
-            },
-          ]}
-        >
           <Text style={[styles.statusBadgeText, { color: getOrderStatusColor(props.status) }]}>
             {getOrderStatusLabel(props.status)}
           </Text>
         </View>
       </View>
-
+      {props.status === "ready" && (
+        <View style={styles.readyNotice}>
+          <View style={styles.readyIcon}>
+            <Text style={styles.readyIconText}>✓</Text>
+          </View>
+          <View style={styles.readyTextWrap}>
+            <Text style={styles.readyTitle}>
+              {props.method_receipt === "courier"
+                ? "Заказ готов к доставке"
+                : "Заказ готов к выдаче"}
+            </Text>
+            <Text style={styles.readyBody}>
+              {props.method_receipt === "courier"
+                ? "Ваш заказ собран. Передадим его курьеру — следите за обновлением статуса."
+                : `Ваш заказ собран и ждёт вас. Забрать можно на складе ${formatDeliveryIntervalHours(props.date_from, props.date_to)}.`}
+            </Text>
+          </View>
+        </View>
+      )}
       <View style={styles.headerDateRow}>
         <Text style={styles.infoLabel}>Дата оформления</Text>
         <Text style={styles.infoValue}>
@@ -92,11 +102,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     columnGap: 12,
   },
-  orderNumber: {
-    fontSize: 16,
-    fontWeight: "400",
-    color: "#242424",
-  },
   infoLabel: {
     fontSize: 14,
     fontWeight: "400",
@@ -109,19 +114,50 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#242424",
   },
-  statusBadge: {
-    borderWidth: 1,
-    borderStyle: "solid",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
   statusBadgeText: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: "500",
   },
   rejectedText: {
     fontSize: 14,
     color: "#242424",
+  },
+  readyNotice: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    columnGap: 10,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#22c55e14",
+    borderWidth: 1,
+    borderColor: "#22c55e30",
+  },
+  readyIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#22c55e",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  readyIconText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 15,
+  },
+  readyTextWrap: {
+    flex: 1,
+    rowGap: 4,
+  },
+  readyTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#15803d",
+  },
+  readyBody: {
+    fontSize: 13,
+    fontWeight: "400",
+    color: "#374151",
   },
 });
