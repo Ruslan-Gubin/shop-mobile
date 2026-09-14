@@ -137,6 +137,7 @@ export const UserReviewsScreen = (props: Props) => {
               description={item.description}
               brand_name={item.brand_name}
               photos={item.photos}
+              activeTab={activeValue}
               navigation={props.navigation}
             />
           )}

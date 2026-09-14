@@ -51,20 +51,28 @@ type Props = {
   canReview: boolean;
   totalRating: number;
   totalCount: number;
-  onChanged: () => void;
+  onChanged: (action?: "create" | "edit" | "delete") => void;
+  isNotClose?: boolean;
+  initActive?: boolean;
 };
 
 export const ReviewForm = (props: Props) => {
-  const [active, setActive] = useState<boolean>(false);
+  const [active, setActive] = useState<boolean>(props.initActive ? props.initActive : false);
+  const [isSaved, setIsSaved] = useState<boolean>(false);
   const [values, setValues] = useState(EMPTY_VALUES);
   const [errors, setErrors] = useState<ErrorsType>(EMPTY_ERRORS);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
-  const [isSaved, setIsSaved] = useState<boolean>(false);
   const [modalContent, setModalContent] = useState<{ title: string; subtitle: string }>({
     title: "",
     subtitle: "",
   });
+
+  useLayoutEffect(() => {
+    if (typeof props.initActive === "boolean") {
+      setActive(props.initActive ? props.initActive : false);
+    }
+  }, [props.initActive]);
 
   useLayoutEffect(() => {
     if (props.myReview) {
@@ -80,7 +88,9 @@ export const ReviewForm = (props: Props) => {
   const { rating, dignities, disadvantages, comment } = values;
 
   const handleReset = () => {
-    setActive(false);
+    if (!props.isNotClose) {
+      setActive(false);
+    }
     setErrors(EMPTY_ERRORS);
     setValues(EMPTY_VALUES);
   };
@@ -141,9 +151,8 @@ export const ReviewForm = (props: Props) => {
             title: "Спасибо за ваш отзыв",
             subtitle: "Отзыв будет опубликован после проверки",
           });
-          setActive(false);
           handleReset();
-          props.onChanged();
+          props.onChanged("create");
           setModalVisible(true);
         } else if (response.status === "error") {
           applyServerErrors(response.errors as unknown as Record<string, unknown>);
@@ -189,9 +198,11 @@ export const ReviewForm = (props: Props) => {
             title: "Спасибо за ваш отзыв",
             subtitle: "Ваш отзыв успешно изменен",
           });
-          setActive(false);
-          setIsSaved(true);
-          props.onChanged();
+          if (!props.isNotClose) {
+            setActive(false);
+            setIsSaved(true);
+          }
+          props.onChanged("edit");
           setModalVisible(true);
         } else if (response.status === "error") {
           applyServerErrors(response.errors as unknown as Record<string, unknown>);
@@ -218,7 +229,7 @@ export const ReviewForm = (props: Props) => {
           setDeleteModalVisible(false);
           setActive(false);
           handleReset();
-          props.onChanged();
+          props.onChanged("delete");
         } else if (response.status === "error") {
           setModalContent({ title: "Не удалось удалить отзыв", subtitle: response.message });
           setModalVisible(true);

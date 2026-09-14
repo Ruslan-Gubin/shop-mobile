@@ -13,9 +13,11 @@ import { OrdersScreen } from "../screen/Orders/OrdersScreen";
 import { ProductInfoScreen } from "../screen/ProductInfo/ProductInfoScreen";
 import { ProfileScreen } from "../screen/Profile/ProfileScreen";
 import { QuestionsScreen } from "../screen/Questions/QuestionsScreen";
+import { UserProductQuestionsScreen } from "../screen/Questions/UserProductQuestionsScreen";
 import { RecentScreen } from "../screen/Recent/RecentScreen";
 import { ReviewsScreen } from "../screen/Reviews/ReviewsScreen";
 import { SearchScreen } from "../screen/Search/SearchScreen";
+import { UserProductReviewScreen } from "../screen/UserReviews/UserProductReviewScreen";
 import { UserReviewsScreen } from "../screen/UserReviews/UserReviewsScreen";
 import { AccountSvg } from "../shared/svg/AccountSvg";
 import { CartSvg } from "../shared/svg/CartSvg";
@@ -83,6 +85,16 @@ const ProfileStack = () => {
       <RootStack.Screen key="Orders" name="Orders" component={OrdersScreen} />
       <RootStack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <RootStack.Screen key="UserReviews" name="UserReviews" component={UserReviewsScreen} />
+      <RootStack.Screen
+        key="UserProductQuestions"
+        name="UserProductQuestions"
+        component={UserProductQuestionsScreen}
+      />
+      <RootStack.Screen
+        key="UserProductReview"
+        name="UserProductReview"
+        component={UserProductReviewScreen}
+      />
     </RootStack.Navigator>
   );
 };

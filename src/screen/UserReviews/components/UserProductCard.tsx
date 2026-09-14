@@ -4,19 +4,27 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { PhotoModel } from "../../../shared/types/photo";
 import { ImageMain } from "../../../shared/ui/image/ImageMain";
 
+type SegmentKey = "waiting" | "reviews" | "questions";
+
 type Props = {
   id: number;
   name: string;
   description: string;
   brand_name: string;
   photos: PhotoModel[];
+  activeTab: SegmentKey;
   navigation?: NativeStackNavigationProp<ParamListBase, string>;
 };
 
 export const UserProductCard = (props: Props) => {
   const handlePress = () => {
-    if (typeof props.id === "number" && props.id > 0) {
-      props.navigation?.push("ProductInfo", { id: props.id });
+    if (
+      typeof props.id === "number" &&
+      props.id > 0 &&
+      typeof props.navigation?.push === "function"
+    ) {
+      const path = props.activeTab === "questions" ? "UserProductQuestions" : "UserProductReview";
+      props.navigation.push(path, { id: props.id });
     }
   };
 
@@ -91,4 +99,3 @@ const styles = StyleSheet.create({
     color: "#868695",
   },
 });
-
