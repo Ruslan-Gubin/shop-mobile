@@ -4,11 +4,11 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { PhotoModel } from "../../../shared/types/photo";
 import { ImageMain } from "../../../shared/ui/image/ImageMain";
 import { recentAdapter } from "../../../store/recent/adapter";
-import { AddBasketLarge } from "../add-basket-large/AddBasketLarge";
-import { BasketCardAction } from "../basket-card-action/BasketCardAction";
-import { BasketProductCheckbox } from "../basket-product-checkbox/BasketProductCheckbox";
-import { ProductPrice } from "../product-price/ProductPrice";
-import { RatingBadge } from "../rating-badge/RatingBadge";
+import { AddBasketLarge } from "../../../widgets/product/add-basket-large/AddBasketLarge";
+import { ProductPrice } from "../../../widgets/product/product-price/ProductPrice";
+import { RatingBadge } from "../../../widgets/product/rating-badge/RatingBadge";
+import { BasketCardAction } from "./BasketCardAction";
+import { BasketProductCheckbox } from "./BasketProductCheckbox";
 
 type Props = {
   name: string;

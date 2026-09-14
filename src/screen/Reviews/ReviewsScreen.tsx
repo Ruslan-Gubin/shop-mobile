@@ -69,7 +69,7 @@ export const ReviewsScreen = (props: Props) => {
   });
 
   const fetchCanReviewEvent = useEffectEvent((id: number) => {
-    fetchService.get<boolean>({ url: `product-review/can-review/${id}` }).then((response) => {
+    fetchService.get<boolean>({ url: `product/can-review/${id}` }).then((response) => {
       if (response.status === "success" && typeof response.data === "boolean") {
         setCanReview(response.data);
       }

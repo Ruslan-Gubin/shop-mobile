@@ -9,7 +9,7 @@ import type { ProductModel } from "../../shared/types/products";
 import type { PromotionModel } from "../../shared/types/promotion";
 import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
 import { basketStore } from "../../store/basket/store";
-import { BasketDeleteModal } from "../../widgets/modal/basket/BasketDeleteModal";
+import { BasketDeleteModal } from "./components/BasketDeleteModal";
 import { NotContent } from "../../widgets/not-content/NotContent";
 import { BasketFooter } from "./components/BasketFooter";
 import { BasketHeader } from "./components/BasketHeader";

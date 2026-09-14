@@ -68,13 +68,11 @@ export const ProductInfoScreen = (props: Props) => {
   });
 
   const fetchCanReviewEvent = useEffectEvent((productId: number) => {
-    fetchService
-      .get<boolean>({ url: `product-review/can-review/${productId}` })
-      .then((response) => {
-        if (response.status === "success" && response.data) {
-          setCanReview(response.data);
-        }
-      });
+    fetchService.get<boolean>({ url: `product/can-review/${productId}` }).then((response) => {
+      if (response.status === "success" && response.data) {
+        setCanReview(response.data);
+      }
+    });
   });
 
   const fetchPricesEvent = useEffectEvent((productId: number) => {

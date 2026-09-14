@@ -16,7 +16,7 @@ type Props = {
   route?: {
     key: string;
     name: string;
-    params?: Record<string, string>;
+    params?: { view?: "orders" | "purchases" | "waiting" };
   };
 };
 
@@ -24,6 +24,13 @@ export const OrdersScreen = (props: Props) => {
   const [error, setError] = useState<string>("");
   const limit = 30;
   const defaultError = "Не удалось загрузить заказы";
+  const view = props.route?.params?.view || "orders";
+
+  const titleTranslate = {
+    orders: "Заказы",
+    purchases: "Покупки",
+    waiting: "Лист ожидания",
+  };
 
   const { data, isHasMore, loadMore, loading, reloadAfterError, total } = useInfiniteScroll({
     limit,
@@ -34,6 +41,7 @@ export const OrdersScreen = (props: Props) => {
           params: {
             limit: String(limit),
             page: page ? String(page) : "1",
+            view,
           },
         })
         .then((response) => {
@@ -66,7 +74,10 @@ export const OrdersScreen = (props: Props) => {
 
   return (
     <View style={styles.root}>
-      <PageHeader title="Заказы" onBack={() => props.navigation?.goBack()} />
+      <PageHeader
+        title={titleTranslate[view] || "Заказы"}
+        onBack={() => props.navigation?.goBack()}
+      />
       {error.length > 0 && <ErrorAlert message={error} />}
       {data.length === 0 && total === 0 && !loading && (
         <NotContent

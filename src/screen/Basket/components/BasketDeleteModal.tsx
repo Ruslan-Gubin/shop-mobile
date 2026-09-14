@@ -1,7 +1,7 @@
 import { basketAdapter } from "../../../store/basket/adapter";
 import { modalsAdapter } from "../../../store/modals/adapter";
 import { modalsStore } from "../../../store/modals/store";
-import { BaseModal } from "../base-modal/BaseModal";
+import { BaseModal } from "../../../widgets/modal/base-modal/BaseModal";
 
 export const BasketDeleteModal = () => {
   const deleteItems = modalsStore((store) => store.deleteItems);

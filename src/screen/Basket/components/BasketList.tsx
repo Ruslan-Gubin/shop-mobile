@@ -2,7 +2,7 @@ import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Dimensions, FlatList, StyleSheet } from "react-native";
 import type { ProductModel } from "../../../shared/types/products";
-import { ProductBasketCard } from "../../../widgets/product/product-basket-card/ProductBasketCard";
+import { ProductBasketCard } from "./ProductBasketCard";
 
 type Props = {
   navigation: NativeStackNavigationProp<ParamListBase, "Basket">;

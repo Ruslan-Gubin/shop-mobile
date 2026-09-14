@@ -16,6 +16,7 @@ import { QuestionsScreen } from "../screen/Questions/QuestionsScreen";
 import { RecentScreen } from "../screen/Recent/RecentScreen";
 import { ReviewsScreen } from "../screen/Reviews/ReviewsScreen";
 import { SearchScreen } from "../screen/Search/SearchScreen";
+import { UserReviewsScreen } from "../screen/UserReviews/UserReviewsScreen";
 import { AccountSvg } from "../shared/svg/AccountSvg";
 import { CartSvg } from "../shared/svg/CartSvg";
 import { HomeSvg } from "../shared/svg/HomeSvg";
@@ -81,6 +82,7 @@ const ProfileStack = () => {
       <RootStack.Screen key="QuestionsScreen" name="QuestionsScreen" component={QuestionsScreen} />
       <RootStack.Screen key="Orders" name="Orders" component={OrdersScreen} />
       <RootStack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      <RootStack.Screen key="UserReviews" name="UserReviews" component={UserReviewsScreen} />
     </RootStack.Navigator>
   );
 };

@@ -1,7 +1,10 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useEffectEvent, useState } from "react";
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { fetchService } from "../../shared/fetch-api";
 import { declOfNum } from "../../shared/helpers/declOfNum";
+import { getMessageError } from "../../shared/helpers/getMessageError";
 import { ArrowBackIcon } from "../../shared/svg/ArrowBackIcon";
 import { favoritesStore } from "../../store/favorites/store";
 import { ProductRecent } from "../../widgets/product/product-recent/ProductRecent";
@@ -14,20 +17,96 @@ type Props = {
 export const ProfileScreen = (props: Props) => {
   const favorites = favoritesStore((store) => store.items);
   const favoritesCount = Object.values(favorites).length || 0;
+  const [counts, setCounts] = useState<{
+    orders: number;
+    purchases: number;
+    waiting: number;
+  }>({
+    orders: 0,
+    purchases: 0,
+    waiting: 0,
+  });
   const favoritesValue =
     favoritesCount > 0
       ? `${favoritesCount} ${declOfNum(favoritesCount, ["товар", "товара", "товаров"])}`
       : "Нет товаров";
 
+  const fetchOrderCounts = useEffectEvent(() => {
+    fetchService
+      .get<{
+        orders: number;
+        purchases: number;
+        waiting: number;
+      }>({
+        url: "orders/order-client-counts",
+      })
+      .then((response) => {
+        if (response.status === "success" && response.data) {
+          setCounts({
+            orders: response.data?.orders || 0,
+            purchases: response.data?.purchases || 0,
+            waiting: response.data?.waiting || 0,
+          });
+        } else {
+          throw response.message;
+        }
+      })
+      .catch((error) => {
+        const message = getMessageError(error, "Не удалось получить количество заказов");
+
+        Alert.alert("Ошибка", message, [
+          {
+            text: "Отмена",
+            style: "default",
+          },
+          {
+            text: "Повторить",
+            isPreferred: true,
+            onPress: () => {
+              fetchOrderCounts();
+            },
+          },
+        ]);
+      });
+  });
+
+  useEffect(() => {
+    fetchOrderCounts();
+  }, []);
+
   const navigateList = [
-    { label: "Заказы", value: "Ближайшие: не ожидаются", href: "Orders" },
-    { label: "Покупки", value: "Здесь можно купить что-то заново", href: "Favorites" },
-    { label: "Лист ожидания", value: "Нет товаров", href: "Favorites" },
+    {
+      label: "Заказы",
+      value:
+        counts.orders > 0
+          ? `${counts.orders} ${declOfNum(counts.orders, ["заказ", "заказа", "заказов"])}`
+          : "Ближайшие: не ожидаются",
+      href: "Orders",
+      params: { view: "orders" },
+    },
+    {
+      label: "Покупки",
+      value:
+        counts.purchases > 0
+          ? `Купили ${counts.purchases} раз`
+          : "Здесь можно купить что-то заново",
+      href: "Orders",
+      params: { view: "purchases" },
+    },
+    {
+      label: "Лист ожидания",
+      value:
+        counts.waiting > 0
+          ? `Ожидается ${counts.waiting} ${declOfNum(counts.waiting, ["заказ", "заказа", "заказов"])}`
+          : "Нет ожидания",
+      href: "Orders",
+      params: { view: "waiting" },
+    },
     { label: "Избранное", value: favoritesValue, href: favoritesCount > 0 ? "Favorites" : "" },
     {
       label: "Отзывы и вопросы",
       value: "Делитесь мнением и узнавайте о товарах",
-      href: "Favorites",
+      href: "UserReviews",
     },
     { label: "Возврат товара", value: "", href: "Favorites" },
   ];
@@ -48,7 +127,9 @@ export const ProfileScreen = (props: Props) => {
               {navigateList.map((item) => (
                 <Pressable
                   key={item.label}
-                  onPress={() => item.href && props.navigation.push(item.href)}
+                  onPress={() =>
+                    item.href && props.navigation.push(item.href, item.params ? item.params : {})
+                  }
                 >
                   <View style={styles.navigateItem}>
                     <View style={styles.navigateItemLeftSide}>
