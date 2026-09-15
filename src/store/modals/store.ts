@@ -3,5 +3,5 @@ import type { ModalsInitState } from "./types";
 
 export const modalsStore = createStore<ModalsInitState>({
   deleteItems: [],
-  login: false,
+  login: true, //TODO false
 });
