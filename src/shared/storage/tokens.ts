@@ -23,3 +23,9 @@ export const getTokens = () =>
 
 export const clearTokens = () =>
   tokensStorage.removeMany([CONFIG_APP.ACCESS_TOKEN_COOKIE, CONFIG_APP.REFRESH_TOKEN_COOKIE]);
+
+export const getDeviceId = () => tokensStorage.getItem("DEVICE_ID").catch(() => null);
+export const setDeviceId = (value: string) =>
+  tokensStorage
+    .setItem("DEVICE_ID", value)
+    .catch((error) => `Не удалось сохранить токены: ${error.message}`);
