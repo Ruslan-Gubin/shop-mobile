@@ -1,6 +1,5 @@
-import type { ElementRef } from 'react';
-import { useRef } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useRef } from "react";
+import { Pressable, StyleSheet, Text, TextInput, type TextInputInstance, View } from "react-native";
 
 type Props = {
   value: string;
@@ -17,8 +16,8 @@ export const OtpInput = ({
   editable = true,
   error = false,
 }: Props) => {
-  const inputRef = useRef<ElementRef<typeof TextInput>>(null);
-  const digits = value.split('').slice(0, length);
+  const inputRef = useRef<TextInputInstance | null>(null);
+  const digits = value.split("").slice(0, length);
 
   const handlePressContainer = () => {
     inputRef.current?.focus();
@@ -28,7 +27,7 @@ export const OtpInput = ({
     <View style={styles.root}>
       <Pressable style={styles.boxes} onPress={handlePressContainer}>
         {Array.from({ length }).map((_, index) => {
-          const digit = digits[index] || '';
+          const digit = digits[index] || "";
           const isFilled = Boolean(digit);
           const isActive = !isFilled && index === digits.length;
 
@@ -67,38 +66,38 @@ export const OtpInput = ({
 
 const styles = StyleSheet.create({
   root: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   boxes: {
-    flexDirection: 'row',
+    flexDirection: "row",
     columnGap: 8,
   },
   box: {
     width: 48,
     height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: '#cecece',
+    borderColor: "#cecece",
     borderRadius: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   boxFilled: {
-    borderColor: '#a73afd',
+    borderColor: "#a73afd",
   },
   boxActive: {
-    borderColor: '#a73afd',
+    borderColor: "#a73afd",
   },
   boxError: {
-    borderColor: '#e0245e',
+    borderColor: "#e0245e",
   },
   digit: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#171717',
+    fontWeight: "600",
+    color: "#171717",
   },
   hiddenInput: {
-    position: 'absolute',
+    position: "absolute",
     width: 1,
     height: 1,
     opacity: 0,

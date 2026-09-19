@@ -1,11 +1,18 @@
 import type { NavigationContainerRefWithCurrent } from "@react-navigation/native";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { useOtpVerification } from "react-native-otp-auto-verify";
 import { fetchService } from "../../../shared/fetch-api";
-import { getFormattedPhone } from "../../../shared/helpers/getFormattedPhone";
 import { getMessageError } from "../../../shared/helpers/getMessageError";
-import { loginCodeSchema, loginPhoneSchema } from "../../../shared/helpers/loginSchema";
+import { loginCodeSchema, phoneSchema } from "../../../shared/helpers/loginSchema";
 import { getDeviceId, saveTokens, setDeviceId } from "../../../shared/storage/tokens";
 import { OtpInput } from "../../otp/OtpInput";
 
@@ -31,44 +38,37 @@ export const LoginByPhone = (props: Props) => {
   const { hashCode, otp, startListening, stopListening } = useOtpVerification({
     numberOfDigits: CODE_LENGTH,
   });
+  const isAndroid = Platform.OS === "android";
 
   useEffect(() => {
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
-      stopListening;
+      stopListening();
     };
   }, []);
 
-  // useEffect(() => {
-  //   if (step !== 2) {
-  //     return;
-  //   }
-  //
-  //   startListening().catch((error) => {
-  //     Alert.alert(`Не удалось определить код из SMS ${error}`);
-  //   });
-  //
-  //   return stopListening;
-  // }, [step, startListening, stopListening]);
-
   useEffect(() => {
-    if (otp) {
-      const validation = loginCodeSchema.safeParse(otp);
-      setValidCode(validation.success);
-      setCode(otp);
-      setError("");
+    if (otp && isAndroid) {
+      const validationCode = loginCodeSchema.safeParse(otp);
+      const validationPhone = phoneSchema.safeParse(phone);
+
+      if (validationCode.success && validationPhone.success) {
+        setValidCode(validationCode.success);
+        setCode(otp);
+        setError("");
+        fetchSendCode(validationPhone.data, validationCode.data);
+      }
     }
-  }, [otp]);
+  }, [otp, phone, isAndroid]);
 
   const handleChangePhone = (value: string) => {
-    const validation = loginPhoneSchema.safeParse(value.replace(/\D/g, ""));
+    const validation = phoneSchema.safeParse(value);
+    console.log(validation.data);
 
-    if (validation.success && !validPhone) {
-      setValidPhone(true);
-    } else if (!validation.success && validPhone) {
-      setValidPhone(false);
+    if (validation.success !== validPhone) {
+      setValidPhone(validation.success);
     }
 
     setPhone(value);
@@ -110,51 +110,52 @@ export const LoginByPhone = (props: Props) => {
   };
 
   const fetchSendPhone = (phone: string) => {
-    transition(async () => {
-      const device_id = await getDeviceId();
+    transition(() => {
+      return getDeviceId().then((device_id) => {
+        return fetchService
+          .post<{ device_id: string; phone: string }>({
+            url: "sms/request-otp",
+            payload: { phone, device_id, hash_code: isAndroid ? hashCode : "" },
+          })
+          .then((response) => {
+            if (response.status === "success" && response.data) {
+              if (response.data?.device_id) {
+                setDeviceId(response.data.device_id);
+              }
 
-      return await fetchService
-        .post<{ device_id: string; phone: string }>({
-          url: "sms/request-otp",
-          payload: { phone, device_id },
-        })
-        .then((response) => {
-          console.log(response);
-          if (response.status === "success" && response.data) {
-            if (response.data?.device_id) {
-              setDeviceId(response.data.device_id);
-            }
+              if (error) {
+                setError("");
+              }
 
-            if (error) {
-              setError("");
+              startResendTimer();
+              if (isAndroid) {
+                startListening().catch((err) =>
+                  console.warn("Не удалось определить код из SMS", err),
+                );
+              }
+              if (step !== 2) {
+                setStep(2);
+              }
+            } else {
+              throw response.message;
             }
-
-            startResendTimer();
-            startListening().catch((err) => console.warn("Не удалось определить код из SMS", err));
-            if (step !== 2) {
-              setStep(2);
-            }
-          } else {
-            throw response.message;
-          }
-        })
-        .catch((error) => {
-          const errorMessage = getMessageError(error, "Не удалось выслать код на этот номер");
-          setError(errorMessage);
-        });
+          })
+          .catch((error) => {
+            const errorMessage = getMessageError(error, "Не удалось выслать код на этот номер");
+            setError(errorMessage);
+          });
+      });
     });
   };
 
   const fetchSendCode = (phone: string, code: string) => {
-    transition(async () => {
-      return await fetchService
+    transition(() => {
+      return fetchService
         .post<{ token: string; refresh: string }>({
           url: "auth/verify-otp",
           payload: { phone, code },
         })
         .then(async (response) => {
-          console.log(response);
-
           if (response.status === "success" && response.data) {
             setCode("");
             if (timerRef.current) {
@@ -180,30 +181,30 @@ export const LoginByPhone = (props: Props) => {
   };
 
   const handleSignIn = async () => {
-    if (step === 1) {
-      const validation = loginPhoneSchema.safeParse(phone.replace(/\D/g, ""));
+    const validationPhone = phoneSchema.safeParse(phone);
 
-      if (validation.success) {
-        fetchSendPhone(validation.data);
+    if (step === 1) {
+      if (validationPhone.success) {
+        fetchSendPhone(validationPhone.data);
       } else {
         const errorMessage =
-          Array.isArray(validation.error.issues) &&
-          typeof validation.error.issues[0]?.message === "string"
-            ? validation.error.issues[0]?.message
+          Array.isArray(validationPhone.error.issues) &&
+          typeof validationPhone.error.issues[0]?.message === "string"
+            ? validationPhone.error.issues[0]?.message
             : "Некорректный номер";
         setError(errorMessage);
         setValidPhone(false);
       }
     } else {
-      const validation = loginCodeSchema.safeParse(code.replace(/\D/g, ""));
+      const validationCode = loginCodeSchema.safeParse(code.replace(/\D/g, ""));
 
-      if (validation.success) {
-        fetchSendCode(phone, code);
-      } else {
+      if (validationCode.success && validationPhone.success) {
+        fetchSendCode(validationPhone.data, validationCode.data);
+      } else if (!validationCode.success) {
         const errorMessage =
-          Array.isArray(validation.error.issues) &&
-          typeof validation.error.issues[0]?.message === "string"
-            ? validation.error.issues[0]?.message
+          Array.isArray(validationCode.error.issues) &&
+          typeof validationCode.error.issues[0]?.message === "string"
+            ? validationCode.error.issues[0]?.message
             : "Некорректный номер";
         setError(errorMessage);
         setValidCode(false);
@@ -218,7 +219,7 @@ export const LoginByPhone = (props: Props) => {
   };
 
   const handleResendCode = () => {
-    const validation = loginPhoneSchema.safeParse(phone.replace(/\D/g, ""));
+    const validation = phoneSchema.safeParse(phone);
 
     if (validation.success) {
       fetchSendPhone(validation.data);
@@ -245,23 +246,24 @@ export const LoginByPhone = (props: Props) => {
         <Text style={styles.subtitle}>
           {step === 1
             ? "На него придёт SMS с кодом подтверждения"
-            : `Код отправлен на ${phone ? `+7 ${getFormattedPhone(phone)}` : ""}`}
+            : `Код отправлен на ${phone ? `${phone}` : ""}`}
         </Text>
       </View>
 
       {step === 1 && (
         <View style={styles.inputWrapper}>
           <View style={[styles.inputContainer, error && styles.inputContainerError]}>
-            <Text style={styles.phoneCode}>+7</Text>
             <TextInput
               style={styles.input}
-              placeholder="900 123 45 67"
+              placeholder="+7 949 123 45 67"
               placeholderTextColor="#b3b3b3"
               value={phone}
               onChangeText={handleChangePhone}
               keyboardType="phone-pad"
               editable={!isLoading}
               autoFocus
+              textContentType="telephoneNumber"
+              autoComplete="tel"
             />
           </View>
         </View>
@@ -352,11 +354,6 @@ const styles = StyleSheet.create({
   },
   inputContainerError: {
     borderColor: "#e0245e",
-  },
-  phoneCode: {
-    paddingLeft: 14,
-    fontSize: 16,
-    color: "#171717",
   },
   input: {
     flex: 1,
