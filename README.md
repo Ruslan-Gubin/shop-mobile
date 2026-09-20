@@ -60,25 +60,27 @@ yarn ios
 
 If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
 
-## RNMapbox Maps — ручной фикс нативной правки
+## @rnmapbox/maps — нативные фиксы через patch-package
 
-`@rnmapbox/maps@10.3.5` несовместим с React Native 0.87: в `LayoutMetrics`
-поле `borderWidth` стало `EdgeInsets`, из-за чего сборка iOS падает в
-`RNMBXMarkerViewComponentView.mm` (ошибка `no viable conversion from
-'EdgeInsets' to 'Float'`).
+Форки `@rnmapbox/maps@10.3.5`, несовместимые со свежими версиями RN/AGP:
 
-Исправленная копия файла хранится в репозитории:
-`patches/@rnmapbox/maps/ios/RNMBX/RNMBXMarkerViewComponentView.mm`
+1. **iOS** — в `LayoutMetrics` поле `borderWidth` стало `EdgeInsets`, сборка
+   падает в `RNMBXMarkerViewComponentView.mm` (`no viable conversion from
+   'EdgeInsets' to 'Float'`).
+2. **Android** — в `android/build.gradle` используется
+   `getDefaultProguardFile('proguard-android.txt')`, запрещённый AGP 9.
+   Это ломало CI-сборку `assembleRelease` (fail: EvalIssueException).
 
-После **каждой переустановки зависимостей** (`npm install` / `npm ci`,
-новый клон репозитория, новый Mac) примени её вручную:
+Оба фикса применяются **автоматически** при установке зависимостей
+(`npm install` / `npm ci` в скрипте `postinstall: patch-package`) из
+патча `patches/@rnmapbox+maps+10.3.5.patch`. Ничего вручную копировать
+не нужно.
 
-```sh
-cp patches/@rnmapbox/maps/ios/RNMBX/RNMBXMarkerViewComponentView.mm \
-   node_modules/@rnmapbox/maps/ios/RNMBX/RNMBXMarkerViewComponentView.mm
+Обновление `@rnmapbox/maps` потребует пересоздать патч:
 ```
-
-Затем пересобери нативную часть через `pod install` и Xcode.
+npx patch-package @rnmapbox/maps
+```
+(сначала поправить файлы в `node_modules/@rnmapbox/maps`).
 
 This is one way to run your app — you can also build it directly from Android Studio or Xcode.
 
