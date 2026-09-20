@@ -21,4 +21,15 @@ buildscript {
     }
 }
 
+// Рантайм-артефакты @rnmapbox/maps живут в приватном Maven-репо Mapbox.
+// Прописываем его глобально (allprojects), т.к. buildscript.repositories
+// обслуживает только classpath сборки, а не зависимости модулей.
+allprojects {
+    repositories {
+        maven {
+            url 'https://api.mapbox.com/downloads/v2/releases/maven'
+        }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"
