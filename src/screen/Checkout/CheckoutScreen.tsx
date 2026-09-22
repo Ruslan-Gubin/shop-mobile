@@ -20,6 +20,8 @@ import { DeliveryDateCard } from "./components/DeliveryDateCard";
 import { MethodReceiptCard } from "./components/MethodReceiptCard";
 import { OrderSummary } from "./components/OrderSummary";
 import { PaymentMethodCard } from "./components/PaymentMethodCard";
+import { checkoutStore } from "../../store/checkout/store";
+import { checkoutAdapter } from "../../store/checkout/adapter";
 
 type Props = {
   navigation: NativeStackNavigationProp<ParamListBase, "Checkout">;
@@ -29,6 +31,7 @@ export const CheckoutScreen = (props: Props) => {
   const basket = basketStore((store) => store.items);
   const basketIds = Object.keys(basket).join(",");
   const selected = basketStore((store) => store.selected);
+  const checkoutPhone = checkoutStore((store) => store.phone);
 
   const [basketProducts, setBasketProducts] = useState<ProductModel[]>([]);
   const [cartDiscounts, setCartDiscounts] = useState<CartDiscountModel[]>([]);
@@ -111,6 +114,29 @@ export const CheckoutScreen = (props: Props) => {
         ]);
       });
   });
+
+  const fetchUser = () => {
+    fetchService
+      .get<{
+        email: string | null;
+        id: number;
+        name: string;
+        phone: string;
+        role: string;
+      }>({
+        url: "users/me",
+      })
+      .then((response) => {
+        if (
+          response.status === "success" &&
+          response.data &&
+          response.data.phone.length > 0 &&
+          !checkoutPhone
+        ) {
+          checkoutAdapter.changeAdditionalInfoInputs(response.data.phone, "phone");
+        }
+      });
+  };
 
   const fetchBasketEvent = useEffectEvent(async (ids: string) => {
     if (ids.length > 0) {
@@ -212,6 +238,7 @@ export const CheckoutScreen = (props: Props) => {
 
   useEffect(() => {
     fetchBasketEvent(basketIds);
+    fetchUser();
   }, [basketIds]);
 
   const hasError = Object.values(errors).some((el) => el.length > 0);

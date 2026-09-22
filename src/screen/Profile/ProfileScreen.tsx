@@ -4,6 +4,7 @@ import { useEffect, useEffectEvent, useState } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { fetchService } from "../../shared/fetch-api";
 import { declOfNum } from "../../shared/helpers/declOfNum";
+import { getPhoneDisplay } from "../../shared/helpers/getFormattedPhone";
 import { getMessageError } from "../../shared/helpers/getMessageError";
 import { ArrowBackIcon } from "../../shared/svg/ArrowBackIcon";
 import { favoritesStore } from "../../store/favorites/store";
@@ -26,6 +27,7 @@ export const ProfileScreen = (props: Props) => {
     purchases: 0,
     waiting: 0,
   });
+  const [phone, setPhone] = useState<string>("");
   const favoritesValue =
     favoritesCount > 0
       ? `${favoritesCount} ${declOfNum(favoritesCount, ["товар", "товара", "товаров"])}`
@@ -70,8 +72,29 @@ export const ProfileScreen = (props: Props) => {
       });
   });
 
+  const fetchUser = useEffectEvent(() => {
+    fetchService
+      .get<{
+        email: string | null;
+        id: number;
+        name: string;
+        phone: string;
+        role: string;
+      }>({
+        url: "users/me",
+      })
+      .then((response) => {
+        if (response.status === "success" && response.data) {
+          setPhone(response.data.phone);
+        } else {
+          throw response.message;
+        }
+      });
+  });
+
   useEffect(() => {
     fetchOrderCounts();
+    fetchUser();
   }, []);
 
   const navigateList = [
@@ -118,10 +141,12 @@ export const ProfileScreen = (props: Props) => {
         ListHeaderComponentStyle={styles.listHeaderComponentStyle}
         ListHeaderComponent={
           <View style={styles.content}>
-            <View style={styles.profileInfo}>
-              <Text>Телефон:</Text>
-              <Text style={styles.profileInfoPhone}>+7 949 386-57-86</Text>
-            </View>
+            {phone && (
+              <View style={styles.profileInfo}>
+                <Text>Телефон:</Text>
+                <Text style={styles.profileInfoPhone}>{getPhoneDisplay(phone)}</Text>
+              </View>
+            )}
 
             <View>
               {navigateList.map((item) => (

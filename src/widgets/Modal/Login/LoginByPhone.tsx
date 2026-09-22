@@ -65,7 +65,6 @@ export const LoginByPhone = (props: Props) => {
 
   const handleChangePhone = (value: string) => {
     const validation = phoneSchema.safeParse(value);
-    console.log(validation.data);
 
     if (validation.success !== validPhone) {
       setValidPhone(validation.success);

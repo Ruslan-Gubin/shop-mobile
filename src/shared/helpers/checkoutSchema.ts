@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isRfDefCode, normalizePhone } from "./phoneValidation";
 
 const addressSchema = z.object({
   type: z.enum(["pickup", "courier"]),
@@ -17,13 +18,22 @@ const productSchema = z.object({
   quantity: z.number().min(1, { message: "Количество должно быть минимум 1" }),
 });
 
+// Телефон опционален (может быть пустым), но если заполнен — должен быть
+// 11-значным номером с ведущей 7 и кодом оператора РФ, как в логине (phoneSchema).
+const optionalPhoneSchema = z
+  .string()
+  .refine((val) => {
+    if (val === "") return true;
+
+    const normalized = normalizePhone(val);
+
+    return normalized !== null && isRfDefCode(normalized);
+  }, {
+    message: "Некорректный формат номера телефона",
+  });
+
 export const createOrderSchema = z.object({
-  phone: z
-    .string()
-    .min(10, { message: "Телефон получателя должен состоять минимум из 10 цифр" })
-    .regex(/^\d{10,15}$/, { message: "Некорректный формат номера телефона" })
-    .or(z.literal("")),
-  phoneCode: z.string().or(z.literal("")),
+  phone: optionalPhoneSchema,
   recipient_name: z
     .string()
     .max(50, { message: "Максимум 50 символов" })

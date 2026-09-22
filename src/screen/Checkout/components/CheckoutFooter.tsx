@@ -97,7 +97,7 @@ export const CheckoutFooter = (props: Props) => {
       method_receipt,
       comment,
       phone: phone.replace(/\D/g, ""),
-      phoneCode: phone ? "+7" : "",
+      phoneCode: "",
       recipient_name,
       address,
       products: selectedProducts,
@@ -110,6 +110,7 @@ export const CheckoutFooter = (props: Props) => {
 
       validation.error.issues.forEach((issue) => {
         const field = issue.path[0] as string;
+        console.log(field);
 
         if (field === "phone") {
           checkoutAdapter.activeErrorAdditionalInfoInputs(issue.message, "phone_error");

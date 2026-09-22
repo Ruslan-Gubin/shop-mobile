@@ -1,5 +1,4 @@
 import { StyleSheet, View } from "react-native";
-import { getFormattedPhone } from "../../../shared/helpers/getFormattedPhone";
 import { FieldInput } from "../../../shared/ui/FieldInput/FieldInput";
 import { FieldTextArea } from "../../../shared/ui/FieldTextArea/FieldTextArea";
 import { checkoutAdapter } from "../../../store/checkout/adapter";
@@ -18,10 +17,6 @@ export const AdditionalInformation = () => {
     checkoutAdapter.changeAdditionalInfoInputs(value, key);
   };
 
-  const handleChangePhone = (value: string) => {
-    checkoutAdapter.changeAdditionalInfoInputs(getFormattedPhone(value), "phone");
-  };
-
   return (
     <InfoCard title="Дополнительная информация">
       <View style={styles.root}>
@@ -36,9 +31,8 @@ export const AdditionalInformation = () => {
         <FieldInput
           error={phone_error}
           label="Телефон получателя"
-          phoneCodes="+7"
-          onChangeText={handleChangePhone}
-          placeholder="Введите телефон"
+          onChangeText={(value) => handleChangeValues(value, "phone")}
+          placeholder="7 949 123 45 67"
           keyboardType="phone-pad"
           maxLength={13}
           value={phone}
