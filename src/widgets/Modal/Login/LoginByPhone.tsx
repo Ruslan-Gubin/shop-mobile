@@ -254,7 +254,7 @@ export const LoginByPhone = (props: Props) => {
           <View style={[styles.inputContainer, error && styles.inputContainerError]}>
             <TextInput
               style={styles.input}
-              placeholder="+7 949 123 45 67"
+              placeholder="7 949 123 45 67"
               placeholderTextColor="#b3b3b3"
               value={phone}
               onChangeText={handleChangePhone}
@@ -311,6 +311,9 @@ export const LoginByPhone = (props: Props) => {
           {isLoading && <ActivityIndicator style={styles.buttonIndicator} color="#ffffff" />}
           <Text style={styles.buttonText}>{submitText}</Text>
         </View>
+      </Pressable>
+      <Pressable style={[styles.button, styles.buttonCancel]} onPress={props.handleCloseModal}>
+        <Text style={[styles.buttonText, styles.buttonTextCancel]}>Отмена</Text>
       </Pressable>
     </View>
   );
@@ -373,6 +376,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#a73afd",
     width: "100%",
   },
+  buttonCancel: {
+    backgroundColor: "lightgray",
+  },
   buttonContent: {
     position: "relative",
   },
@@ -388,6 +394,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 600,
     color: "#ffffff",
+  },
+  buttonTextCancel: {
+    color: "#242424",
   },
   resendLink: {
     fontSize: 14,

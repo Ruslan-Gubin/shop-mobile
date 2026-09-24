@@ -1,7 +1,7 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useEffect, useEffectEvent, useState } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { fetchService } from "../../shared/fetch-api";
 import { declOfNum } from "../../shared/helpers/declOfNum";
 import { getMessageError } from "../../shared/helpers/getMessageError";
@@ -9,6 +9,7 @@ import { useInfiniteScroll } from "../../shared/hooks/useInfiniteScroll";
 import type { ProductModel } from "../../shared/types/products";
 import type { QuestionModel } from "../../shared/types/question";
 import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
+import { modalsAdapter } from "../../store/modals/adapter";
 import { NotContent } from "../../widgets/not-content/NotContent";
 import { QuestionCard } from "../../widgets/question/QuestionCard";
 import { ProductInfoFooter } from "../ProductInfo/components/ProductInfoFooter";
@@ -33,6 +34,7 @@ export const QuestionsScreen = (props: Props) => {
   const [prices, setPrices] = useState<PriceItem[]>([]);
   const [isProductError, setIsProductError] = useState<boolean>(false);
   const [totalCount, setTotalCount] = useState<number>(0);
+  const [isRegister, setRegister] = useState<boolean>(false);
 
   const fetchProductEvent = useEffectEvent((id: number) => {
     fetchService
@@ -67,8 +69,17 @@ export const QuestionsScreen = (props: Props) => {
       });
   });
 
+  const fetchUserEvent = useEffectEvent(() => {
+    fetchService.get<{ id: number; phone: string }>({ url: "users/me" }).then((response) => {
+      if (response.status === "success" && response.data) {
+        setRegister(true);
+      }
+    });
+  });
+
   useEffect(() => {
     if (typeof id === "number") {
+      fetchUserEvent();
       fetchProductEvent(id);
       fetchStocksEvent(id);
       fetchPricesEvent(id);
@@ -140,7 +151,22 @@ export const QuestionsScreen = (props: Props) => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListHeaderComponentStyle={{ rowGap: 8 }}
-        ListHeaderComponent={<View>{id && <QuestionsForm id={id} />}</View>}
+        ListHeaderComponent={
+          <View>
+            {id &&
+              (isRegister ? (
+                <QuestionsForm id={id} />
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => modalsAdapter.openLogin()}
+                  style={styles.loginButton}
+                >
+                  <Text style={styles.loginButtonText}>Войдите, чтобы задать вопрос</Text>
+                </Pressable>
+              ))}
+          </View>
+        }
         ListEmptyComponent={
           !loading && data.length === 0 ? (
             <NotContent
@@ -177,6 +203,17 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     rowGap: 8,
+  },
+  loginButton: {
+    backgroundColor: "#a73afd",
+    borderRadius: 12,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loginButtonText: {
+    color: "white",
+    fontWeight: "800",
   },
   listContent: {
     paddingTop: 8,

@@ -22,7 +22,7 @@ export const ProductInfoFooter = (props: Props) => {
       if (count <= 0) {
         handleAddBasket(id);
       }
-      props.navigation.navigate("CartStack");
+      props.navigation.navigate("BasketStack");
     }
   };
 
@@ -51,7 +51,7 @@ export const ProductInfoFooter = (props: Props) => {
                 style={[styles.goToBasketButton, styles.addBasketButton]}
                 onPress={() => handleAddBasket(props.id)}
               >
-                <Text style={styles.buttonText}>В козину</Text>
+                <Text style={styles.buttonText}>В корзину</Text>
               </Pressable>
             )}
           </View>

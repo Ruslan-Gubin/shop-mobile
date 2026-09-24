@@ -104,7 +104,7 @@ export const SearchScreen = (props: Props) => {
   const handleCancelSearch = () => {
     if (props.navigation) {
       setSearch("");
-      props.navigation.push("Home");
+      props.navigation.goBack();
     }
   };
 

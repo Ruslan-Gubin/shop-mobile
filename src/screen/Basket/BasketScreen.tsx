@@ -9,8 +9,8 @@ import type { ProductModel } from "../../shared/types/products";
 import type { PromotionModel } from "../../shared/types/promotion";
 import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
 import { basketStore } from "../../store/basket/store";
-import { BasketDeleteModal } from "./components/BasketDeleteModal";
 import { NotContent } from "../../widgets/not-content/NotContent";
+import { BasketDeleteModal } from "./components/BasketDeleteModal";
 import { BasketFooter } from "./components/BasketFooter";
 import { BasketHeader } from "./components/BasketHeader";
 import { BasketList } from "./components/BasketList";
@@ -20,6 +20,7 @@ type Props = {
 };
 
 export const BasketScreen = (props: Props) => {
+  const [isRegister, setIsRegister] = useState<boolean>(false);
   const [basketData, setBasketData] = useState<ProductModel[]>([]);
   const [cartDiscounts, setCartDiscounts] = useState<CartDiscountModel[]>([]);
   const [promotions, setPromotions] = useState<PromotionModel[]>([]);
@@ -142,8 +143,23 @@ export const BasketScreen = (props: Props) => {
     await fetchPromotions();
   });
 
+  const fetchUserEvent = useEffectEvent(async () => {
+    await fetchService
+      .get<ProductModel[]>({
+        url: "users/me",
+        params: { ids: basketIds },
+      })
+      .then((response) => {
+        console.log("rerender check user");
+        if (response.status === "success" && response.data) {
+          setIsRegister(true);
+        }
+      });
+  });
+
   useEffect(() => {
     fetchBasketEvent(basketIds);
+    fetchUserEvent();
   }, [basketIds]);
 
   const hasError = Object.values(errors).some((el) => el.length > 0);
@@ -169,6 +185,7 @@ export const BasketScreen = (props: Props) => {
               basketProducts={basketData}
               cartDiscounts={cartDiscounts}
               promotions={promotions}
+              isRegister={isRegister}
             />
           </>
         )}

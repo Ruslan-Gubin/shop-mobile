@@ -8,6 +8,8 @@ import { getPhoneDisplay } from "../../shared/helpers/getFormattedPhone";
 import { getMessageError } from "../../shared/helpers/getMessageError";
 import { ArrowBackIcon } from "../../shared/svg/ArrowBackIcon";
 import { favoritesStore } from "../../store/favorites/store";
+import { modalsAdapter } from "../../store/modals/adapter";
+import { NotContent } from "../../widgets/not-content/NotContent";
 import { ProductRecent } from "../../widgets/product/product-recent/ProductRecent";
 import { ProductRecommended } from "../../widgets/product/product-recommended/ProductRecommended";
 
@@ -28,10 +30,13 @@ export const ProfileScreen = (props: Props) => {
     waiting: 0,
   });
   const [phone, setPhone] = useState<string>("");
+  const [isLoading, setLoading] = useState<boolean>(true);
   const favoritesValue =
     favoritesCount > 0
       ? `${favoritesCount} ${declOfNum(favoritesCount, ["товар", "товара", "товаров"])}`
       : "Нет товаров";
+
+  const handleOpenLoginModal = () => modalsAdapter.openLogin();
 
   const fetchOrderCounts = useEffectEvent(() => {
     fetchService
@@ -73,6 +78,7 @@ export const ProfileScreen = (props: Props) => {
   });
 
   const fetchUser = useEffectEvent(() => {
+    setLoading(true);
     fetchService
       .get<{
         email: string | null;
@@ -86,14 +92,15 @@ export const ProfileScreen = (props: Props) => {
       .then((response) => {
         if (response.status === "success" && response.data) {
           setPhone(response.data.phone);
+          fetchOrderCounts();
         } else {
-          throw response.message;
+          handleOpenLoginModal();
         }
-      });
+      })
+      .finally(() => setLoading(false));
   });
 
   useEffect(() => {
-    fetchOrderCounts();
     fetchUser();
   }, []);
 
@@ -131,55 +138,65 @@ export const ProfileScreen = (props: Props) => {
       value: "Делитесь мнением и узнавайте о товарах",
       href: "UserReviews",
     },
-    { label: "Возврат товара", value: "", href: "Favorites" },
+    // { label: "Возврат товара", value: "", href: "Favorites" },
   ];
 
   return (
     <View style={styles.root}>
-      <FlatList
-        data={[]}
-        ListHeaderComponentStyle={styles.listHeaderComponentStyle}
-        ListHeaderComponent={
-          <View style={styles.content}>
-            {phone && (
-              <View style={styles.profileInfo}>
-                <Text>Телефон:</Text>
-                <Text style={styles.profileInfoPhone}>{getPhoneDisplay(phone)}</Text>
+      {!phone && !isLoading && (
+        <NotContent
+          title="Войдите, чтобы продолжить"
+          subTitle="Заказы, избранное, лист ожидания и отзывы — всё в одном аккаунте. Введите номер телефона — на него придёт код подтверждения, и вы войдёте в систему."
+          navigateText="Войти"
+          onNavigate={handleOpenLoginModal}
+        />
+      )}
+      {phone && (
+        <FlatList
+          data={[]}
+          ListHeaderComponentStyle={styles.listHeaderComponentStyle}
+          ListHeaderComponent={
+            <View style={styles.content}>
+              {phone && (
+                <View style={styles.profileInfo}>
+                  <Text>Телефон:</Text>
+                  <Text style={styles.profileInfoPhone}>{getPhoneDisplay(phone)}</Text>
+                </View>
+              )}
+
+              <View>
+                {navigateList.map((item) => (
+                  <Pressable
+                    key={item.label}
+                    onPress={() =>
+                      item.href && props.navigation.push(item.href, item.params ? item.params : {})
+                    }
+                  >
+                    <View style={styles.navigateItem}>
+                      <View style={styles.navigateItemLeftSide}>
+                        <Text style={styles.navigateItemTextLabel}>{item.label}</Text>
+                        {item.value && <Text style={styles.navigateItemText}>{item.value}</Text>}
+                      </View>
+
+                      <View style={styles.navigateItemRightSide}>
+                        {item.href.length > 0 && <ArrowBackIcon fill="black" size={20} />}
+                      </View>
+                    </View>
+                  </Pressable>
+                ))}
               </View>
-            )}
-
-            <View>
-              {navigateList.map((item) => (
-                <Pressable
-                  key={item.label}
-                  onPress={() =>
-                    item.href && props.navigation.push(item.href, item.params ? item.params : {})
-                  }
-                >
-                  <View style={styles.navigateItem}>
-                    <View style={styles.navigateItemLeftSide}>
-                      <Text style={styles.navigateItemTextLabel}>{item.label}</Text>
-                      {item.value && <Text style={styles.navigateItemText}>{item.value}</Text>}
-                    </View>
-
-                    <View style={styles.navigateItemRightSide}>
-                      {item.href.length > 0 && <ArrowBackIcon fill="black" size={20} />}
-                    </View>
-                  </View>
-                </Pressable>
-              ))}
+              <ProductRecent navigation={props.navigation} isHasNavigateSeeAll />
             </View>
-            <ProductRecent navigation={props.navigation} isHasNavigateSeeAll />
-          </View>
-        }
-        showsVerticalScrollIndicator={false}
-        ListFooterComponentStyle={styles.listFooterComponentStyle}
-        ListFooterComponent={
-          <View>
-            <ProductRecommended title="Подобрали для вас" navigation={props.navigation} />
-          </View>
-        }
-      />
+          }
+          showsVerticalScrollIndicator={false}
+          ListFooterComponentStyle={styles.listFooterComponentStyle}
+          ListFooterComponent={
+            <View>
+              <ProductRecommended title="Подобрали для вас" navigation={props.navigation} />
+            </View>
+          }
+        />
+      )}
     </View>
   );
 };

@@ -11,7 +11,15 @@ type Props = {
 export const Login = (props: Props) => {
   const visible = modalsStore((store) => store.login);
 
-  const handleCloseModal = () => modalsAdapter.closeLogin();
+  //TODO надо перезагрузить текушее состаяние после удачного входа, проверяем на закрытии
+  const handleCloseModal = () => {
+    // const rootState = props.navigationRef.getRootState();
+    // const state = props.navigationRef.getState();
+    // console.log(rootState);
+    // props.navigationRef.resetRoot(rootState);
+    // props.navigationRef.reset(state);
+    modalsAdapter.closeLogin();
+  };
 
   return (
     <Modal

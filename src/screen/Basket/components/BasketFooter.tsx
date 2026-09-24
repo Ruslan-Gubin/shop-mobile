@@ -10,6 +10,7 @@ import type { CartDiscountModel } from "../../../shared/types/cart-discount";
 import type { ProductModel } from "../../../shared/types/products";
 import type { PromotionModel } from "../../../shared/types/promotion";
 import { basketStore } from "../../../store/basket/store";
+import { modalsAdapter } from "../../../store/modals/adapter";
 import { StockWarningModal } from "./StockWarningModal";
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
   basketProducts: ProductModel[];
   cartDiscounts: CartDiscountModel[];
   promotions: PromotionModel[];
+  isRegister: boolean;
 };
 
 export const BasketFooter = (props: Props) => {
@@ -83,7 +85,7 @@ export const BasketFooter = (props: Props) => {
         ) {
           props?.navigation?.push("Checkout");
         } else if (response.status === "error") {
-          throw response.message || defaultErrorMessage;
+          throw response.message;
         }
       })
       .catch((error) => {
@@ -102,6 +104,10 @@ export const BasketFooter = (props: Props) => {
       });
   };
 
+  const handleOpenLoginModal = () => {
+    modalsAdapter.openLogin();
+  };
+
   return (
     <>
       <StockWarningModal
@@ -115,34 +121,48 @@ export const BasketFooter = (props: Props) => {
         onSubmit={handleSubmitOrder}
       />
       <View style={styles.footer}>
-        <Pressable
-          disabled={disabledSubmit}
-          onPress={handleSubmitOrder}
-          style={[styles.footerButton, !disabledSubmit && styles.footerButtonActive]}
-        >
-          <Text style={[styles.footerButtonText, !disabledSubmit && styles.footerButtonTextActive]}>
-            {disabledSubmit ? "Выберите товары" : `К оформлению: ${orderInfo.productCount || ""}`}
-          </Text>
-
-          {!disabledSubmit && (
+        {props.isRegister ? (
+          <Pressable
+            disabled={disabledSubmit}
+            onPress={handleSubmitOrder}
+            style={[styles.footerButton, !disabledSubmit && styles.footerButtonActive]}
+          >
             <Text
-              style={[
-                styles.footerButtonText,
-                !disabledSubmit && styles.footerButtonTextActiveTotal,
-              ]}
+              style={[styles.footerButtonText, !disabledSubmit && styles.footerButtonTextActive]}
             >
-              {formatterRub.format(orderInfo.total)}
-              {orderInfo.totalDiscount > 0 && (
-                <>
-                  {"  "}
-                  <Text style={styles.discountText}>
-                    {formatterRub.format(orderInfo.totalDiscount + orderInfo.total)}
-                  </Text>
-                </>
-              )}
+              {disabledSubmit ? "Выберите товары" : `К оформлению: ${orderInfo.productCount || ""}`}
             </Text>
-          )}
-        </Pressable>
+
+            {!disabledSubmit && (
+              <Text
+                style={[
+                  styles.footerButtonText,
+                  !disabledSubmit && styles.footerButtonTextActiveTotal,
+                ]}
+              >
+                {formatterRub.format(orderInfo.total)}
+                {orderInfo.totalDiscount > 0 && (
+                  <>
+                    {"  "}
+                    <Text style={styles.discountText}>
+                      {formatterRub.format(orderInfo.totalDiscount + orderInfo.total)}
+                    </Text>
+                  </>
+                )}
+              </Text>
+            )}
+          </Pressable>
+        ) : (
+          <Pressable
+            disabled={disabledSubmit}
+            onPress={handleOpenLoginModal}
+            style={[styles.footerButton, styles.footerButtonLogin]}
+          >
+            <Text style={[styles.footerButtonText, styles.footerButtonTextActive]}>
+              Для продолжения необходимо войти
+            </Text>
+          </Pressable>
+        )}
       </View>
     </>
   );
@@ -162,6 +182,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
+  },
+  footerButtonLogin: {
+    backgroundColor: "#f86c25",
   },
   footerButtonActive: {
     backgroundColor: "#f86c25",

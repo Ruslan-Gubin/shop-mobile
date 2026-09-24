@@ -39,7 +39,7 @@ export const HomeScreen = (props: Props) => {
           if (response.status === "success" && response.data) {
             return { data: response.data.products, total: response.data.totalCount };
           } else {
-            throw response.message || "Не удалось загрузить товары";
+            throw response.message;
           }
         })
         .catch((error) => {
