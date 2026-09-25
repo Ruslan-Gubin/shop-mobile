@@ -1,21 +1,26 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useEffect, useEffectEvent, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { fetchService } from "../../shared/fetch-api";
 import { getMessageError } from "../../shared/helpers/getMessageError";
+import { FieldInput } from "../../shared/ui/FieldInput/FieldInput";
 import { PageHeader } from "../../shared/ui/header/PageHeader";
 import { modalsAdapter } from "../../store/modals/adapter";
 import { NotContent } from "../../widgets/not-content/NotContent";
-import { FieldInput } from "../../shared/ui/FieldInput/FieldInput";
+import { changeProfileSchema } from "./schema";
 
 type Props = {
   navigation: NativeStackNavigationProp<ParamListBase, "ProfileSettings">;
 };
 
 export const ProfileSettingsScreen = (props: Props) => {
-  const [user, setUser] = useState<{ phone: string; name: string; email: string } | null>(null);
-  const [errors, seError] = useState<{ name: string; email: string }>({
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [values, setValues] = useState<{ name: string; email: string }>({
+    name: "",
+    email: "",
+  });
+  const [errors, setError] = useState<{ name: string; email: string }>({
     name: "",
     email: "",
   });
@@ -36,7 +41,10 @@ export const ProfileSettingsScreen = (props: Props) => {
       .then((response) => {
         if (response.status === "success" && response.data) {
           setUser({
-            phone: response.data.phone,
+            name: response.data?.name || "",
+            email: response.data?.email || "",
+          });
+          setValues({
             name: response.data?.name || "",
             email: response.data?.email || "",
           });
@@ -69,13 +77,75 @@ export const ProfileSettingsScreen = (props: Props) => {
   const handleClickOpenLogout = () => modalsAdapter.openLogout();
   const handleOpenLoginModal = () => modalsAdapter.openLogin();
 
-  const handleChangeValues = (value: string, key: "name" | "phone" | "email") => {
-    setUser((prev) => prev && { ...prev, [key]: value });
+  const handleChangeValues = (value: string, key: "name" | "email") => {
+    setValues((prev) => prev && { ...prev, [key]: value });
+    setError((prev) => ({ ...prev, [key]: "" }));
   };
 
   const handleSubmit = () => {
-    console.log("submit");
+    const validation = changeProfileSchema.safeParse({
+      name: values.name,
+      email: values.email,
+    });
+
+    if (!validation.success) {
+      const updateError = {
+        name: "",
+        email: "",
+      };
+
+      validation.error.issues.forEach((issue) => {
+        const field = issue.path[0] as string;
+        console.log(field);
+
+        if (field === "name") {
+          updateError.name = issue.message;
+        }
+        if (field === "email") {
+          updateError.email = issue.message;
+        }
+      });
+    } else {
+      setLoading(true);
+
+      fetchService
+        .patch<null>({
+          url: "users/update-profile",
+          payload: validation.data,
+        })
+        .then((response) => {
+          if (response.status === "success") {
+            fetchUser();
+          } else {
+            if (response.errors.length > 0) {
+              const updateErrors = {
+                name: "",
+                email: "",
+              };
+              const emailError = response.errors.find((el) => el.key === "email");
+              if (emailError) {
+                updateErrors.email = emailError.message;
+              }
+
+              const nameError = response.errors.find((el) => el.key === "name");
+
+              if (nameError) {
+                updateErrors.name = nameError.message;
+              }
+
+              setError(updateErrors);
+            }
+          }
+        })
+        .finally(() => setLoading(false));
+    }
   };
+
+  const handleReset = () =>
+    setValues({ name: user ? user.name : "", email: user ? user.email : "" });
+
+  const hasChange = user && (user.name !== values.name || user.email !== values.email);
+  const disabledSubmit = isLoading || !hasChange;
 
   return (
     <View style={styles.root}>
@@ -89,7 +159,7 @@ export const ProfileSettingsScreen = (props: Props) => {
               onChangeText={(value) => handleChangeValues(value, "name")}
               placeholder="Введите имя"
               maxLength={50}
-              value={user.name}
+              value={values.name}
             />
             <FieldInput
               error={errors.email}
@@ -98,15 +168,24 @@ export const ProfileSettingsScreen = (props: Props) => {
               placeholder="Введите почту"
               maxLength={50}
               keyboardType="email-address"
-              value={user.email}
+              value={values.email}
             />
             <View style={styles.inputActions}>
-              <Pressable style={[styles.inputSubmitButton, styles.inputSubmitButtonCancel]}>
-                <Text style={[styles.buttonActionText, styles.inputSubmitButtonCancelText]}>
-                  Отмена
-                </Text>
-              </Pressable>
-              <Pressable style={[styles.inputSubmitButton, isLoading && styles.buttonDisabled]}>
+              {hasChange && (
+                <Pressable
+                  onPress={handleReset}
+                  style={[styles.inputSubmitButton, styles.inputSubmitButtonCancel]}
+                >
+                  <Text style={[styles.buttonActionText, styles.inputSubmitButtonCancelText]}>
+                    Отмена
+                  </Text>
+                </Pressable>
+              )}
+              <Pressable
+                onPress={handleSubmit}
+                disabled={disabledSubmit}
+                style={[styles.inputSubmitButton, disabledSubmit && styles.buttonDisabled]}
+              >
                 <Text style={styles.buttonActionText}>Подтвердить</Text>
               </Pressable>
             </View>
@@ -151,7 +230,8 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   inputSubmitButton: {
-    flex: 1,
+    flex: 0.5,
+    maxWidth: "50%",
     borderRadius: 12,
     height: 36,
     alignItems: "center",

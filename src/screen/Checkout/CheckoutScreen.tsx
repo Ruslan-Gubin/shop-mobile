@@ -12,6 +12,8 @@ import type { WarehouseModel } from "../../shared/types/warehouse";
 import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
 import { PageHeader } from "../../shared/ui/header/PageHeader";
 import { basketStore } from "../../store/basket/store";
+import { checkoutAdapter } from "../../store/checkout/adapter";
+import { checkoutStore } from "../../store/checkout/store";
 import type { AddressItem } from "../../store/checkout/types";
 import { NotContent } from "../../widgets/not-content/NotContent";
 import { AdditionalInformation } from "./components/AdditionalInformation";
@@ -20,8 +22,6 @@ import { DeliveryDateCard } from "./components/DeliveryDateCard";
 import { MethodReceiptCard } from "./components/MethodReceiptCard";
 import { OrderSummary } from "./components/OrderSummary";
 import { PaymentMethodCard } from "./components/PaymentMethodCard";
-import { checkoutStore } from "../../store/checkout/store";
-import { checkoutAdapter } from "../../store/checkout/adapter";
 
 type Props = {
   navigation: NativeStackNavigationProp<ParamListBase, "Checkout">;

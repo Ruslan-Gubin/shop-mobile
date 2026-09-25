@@ -110,7 +110,6 @@ export const CheckoutFooter = (props: Props) => {
 
       validation.error.issues.forEach((issue) => {
         const field = issue.path[0] as string;
-        console.log(field);
 
         if (field === "phone") {
           checkoutAdapter.activeErrorAdditionalInfoInputs(issue.message, "phone_error");
