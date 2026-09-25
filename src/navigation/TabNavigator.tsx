@@ -12,6 +12,7 @@ import { OrderDetailScreen } from "../screen/OrderDetail/OrderDetailScreen";
 import { OrdersScreen } from "../screen/Orders/OrdersScreen";
 import { ProductInfoScreen } from "../screen/ProductInfo/ProductInfoScreen";
 import { ProfileScreen } from "../screen/Profile/ProfileScreen";
+import { ProfileSettingsScreen } from "../screen/ProfileSettings/ProfileSettingsScreen";
 import { QuestionsScreen } from "../screen/Questions/QuestionsScreen";
 import { UserProductQuestionsScreen } from "../screen/Questions/UserProductQuestionsScreen";
 import { RecentScreen } from "../screen/Recent/RecentScreen";
@@ -85,6 +86,11 @@ const ProfileStack = () => {
       <RootStack.Screen key="Orders" name="Orders" component={OrdersScreen} />
       <RootStack.Screen name="OrderDetail" component={OrderDetailScreen} />
       <RootStack.Screen key="UserReviews" name="UserReviews" component={UserReviewsScreen} />
+      <RootStack.Screen
+        key="ProfileSettings"
+        name="ProfileSettings"
+        component={ProfileSettingsScreen}
+      />
       <RootStack.Screen
         key="UserProductQuestions"
         name="UserProductQuestions"

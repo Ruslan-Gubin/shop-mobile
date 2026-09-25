@@ -141,6 +141,10 @@ export const ProfileScreen = (props: Props) => {
     // { label: "Возврат товара", value: "", href: "Favorites" },
   ];
 
+  const handleClickOpenLogout = () => {
+    props.navigation.push("ProfileSettings");
+  };
+
   return (
     <View style={styles.root}>
       {!phone && !isLoading && (
@@ -159,8 +163,15 @@ export const ProfileScreen = (props: Props) => {
             <View style={styles.content}>
               {phone && (
                 <View style={styles.profileInfo}>
-                  <Text>Телефон:</Text>
-                  <Text style={styles.profileInfoPhone}>{getPhoneDisplay(phone)}</Text>
+                  <View style={styles.profilePhone}>
+                    <Text>Телефон:</Text>
+                    <Text style={styles.profileInfoPhone}>{getPhoneDisplay(phone)}</Text>
+                  </View>
+                  <View>
+                    <Pressable onPress={handleClickOpenLogout}>
+                      <Text style={styles.linkSettingsText}>Настройки</Text>
+                    </Pressable>
+                  </View>
                 </View>
               )}
 
@@ -220,7 +231,16 @@ const styles = StyleSheet.create({
   },
   profileInfo: {
     flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  profilePhone: {
+    flexDirection: "row",
     columnGap: 8,
+  },
+  linkSettingsText: {
+    color: "#9a1cc6",
+    fontWeight: 500,
+    fontSize: 13,
   },
   profileInfoPhone: {
     fontSize: 13,

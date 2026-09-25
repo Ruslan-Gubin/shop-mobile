@@ -22,6 +22,14 @@ export class ModalsAdapter {
   public closeLogin() {
     this.store.setState({ login: false });
   }
+
+  public openLogout() {
+    this.store.setState({ logout: true });
+  }
+
+  public closeLogout() {
+    this.store.setState({ logout: false });
+  }
 }
 
 export const modalsAdapter = new ModalsAdapter();

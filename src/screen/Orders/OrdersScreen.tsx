@@ -78,14 +78,20 @@ export const OrdersScreen = (props: Props) => {
         title={titleTranslate[view] || "Заказы"}
         onBack={() => props.navigation?.goBack()}
       />
-      {error.length > 0 && <ErrorAlert message={error} />}
+      {error.length > 0 && (
+        <View style={styles.errorContainer}>
+          <ErrorAlert message={error} />
+        </View>
+      )}
       {data.length === 0 && total === 0 && !loading && (
-        <NotContent
-          title="Заказов пока нет"
-          subTitle="Перейдите в корзину что бы оформить заказ."
-          navigateText="Перейти в корзину"
-          onNavigate={() => props.navigation?.navigate("BasketStack")}
-        />
+        <View style={styles.notContentContainer}>
+          <NotContent
+            title="Заказов пока нет"
+            subTitle="Перейдите в корзину что бы оформить заказ."
+            navigateText="Перейти в корзину"
+            onNavigate={() => props.navigation?.navigate("BasketStack")}
+          />
+        </View>
       )}
       <FlatList
         data={data}
@@ -108,6 +114,13 @@ const styles = StyleSheet.create({
   root: {
     backgroundColor: "#f7f8fa",
     paddingBottom: 8,
+    flex: 1,
+  },
+  notContentContainer: {
+    paddingTop: 4,
+  },
+  errorContainer: {
+    paddingTop: 8,
   },
   listContent: {
     paddingTop: 8,

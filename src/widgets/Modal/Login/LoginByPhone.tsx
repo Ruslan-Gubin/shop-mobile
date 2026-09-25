@@ -1,4 +1,3 @@
-import type { NavigationContainerRefWithCurrent } from "@react-navigation/native";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   ActivityIndicator,
@@ -23,7 +22,7 @@ type Props = {
 
 export const LoginByPhone = (props: Props) => {
   const [step, setStep] = useState<number>(1);
-  const [phone, setPhone] = useState(""); //79493865786
+  const [phone, setPhone] = useState(""); //7949 386 57 86
   const [validPhone, setValidPhone] = useState<boolean>(false);
   const [code, setCode] = useState("");
   const [validCode, setValidCode] = useState<boolean>(false);
@@ -375,7 +374,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   buttonCancel: {
-    backgroundColor: "lightgray",
+    backgroundColor: "#f1f1f5",
   },
   buttonContent: {
     position: "relative",
@@ -394,7 +393,7 @@ const styles = StyleSheet.create({
     color: "#ffffff",
   },
   buttonTextCancel: {
-    color: "#242424",
+    color: "#a73afd",
   },
   resendLink: {
     fontSize: 14,
