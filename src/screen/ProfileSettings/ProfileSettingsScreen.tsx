@@ -96,11 +96,11 @@ export const ProfileSettingsScreen = (props: Props) => {
 
       validation.error.issues.forEach((issue) => {
         const field = issue.path[0] as string;
-        console.log(field);
 
         if (field === "name") {
           updateError.name = issue.message;
         }
+
         if (field === "email") {
           updateError.email = issue.message;
         }
@@ -195,14 +195,12 @@ export const ProfileSettingsScreen = (props: Props) => {
           </Pressable>
         </View>
       ) : (
-        <View>
-          <NotContent
-            title="Не удалось получить данные о пользователе"
-            subTitle="Заказы, избранное, лист ожидания и отзывы — всё в одном аккаунте. Введите номер телефона — на него придёт код подтверждения, и вы войдёте в систему."
-            navigateText="Войти"
-            onNavigate={handleOpenLoginModal}
-          />
-        </View>
+        <NotContent
+          title="Не удалось получить данные о пользователе"
+          subTitle="Заказы, избранное, лист ожидания и отзывы — всё в одном аккаунте. Введите номер телефона — на него придёт код подтверждения, и вы войдёте в систему."
+          navigateText="Войти"
+          onNavigate={handleOpenLoginModal}
+        />
       )}
     </View>
   );
@@ -252,13 +250,8 @@ const styles = StyleSheet.create({
   inputSubmitButtonCancelText: {
     color: "#a73afd",
   },
-  buttonText: {
-    fontWeight: "bold",
-    color: "white",
-  },
   logoutButton: {
     height: 48,
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
