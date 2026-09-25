@@ -150,7 +150,6 @@ export const BasketScreen = (props: Props) => {
         params: { ids: basketIds },
       })
       .then((response) => {
-        console.log("rerender check user");
         if (response.status === "success" && response.data) {
           setIsRegister(true);
         }

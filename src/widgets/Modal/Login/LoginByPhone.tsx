@@ -17,13 +17,13 @@ import { getDeviceId, saveTokens, setDeviceId } from "../../../shared/storage/to
 import { OtpInput } from "../../otp/OtpInput";
 
 type Props = {
-  navigationRef: NavigationContainerRefWithCurrent<ReactNavigation.RootParamList>;
   handleCloseModal: () => void;
+  rerender: () => void;
 };
 
 export const LoginByPhone = (props: Props) => {
   const [step, setStep] = useState<number>(1);
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(""); //79493865786
   const [validPhone, setValidPhone] = useState<boolean>(false);
   const [code, setCode] = useState("");
   const [validCode, setValidCode] = useState<boolean>(false);
@@ -162,10 +162,8 @@ export const LoginByPhone = (props: Props) => {
             }
             stopListening();
             saveTokens(response.data.token, response.data.refresh).then(() => {
-              if (props.navigationRef.isReady()) {
-                props.handleCloseModal();
-                props.navigationRef.reset({ index: 0, routes: [{ name: "Tabs" }] });
-              }
+              props.handleCloseModal();
+              props.rerender();
             });
             setError("");
           } else {
