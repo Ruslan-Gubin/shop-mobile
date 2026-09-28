@@ -1,11 +1,17 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import type { FeatureCollection, Polygon, Position } from "geojson";
+import { useEffect, useEffectEvent, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CONFIG_APP } from "../../shared/config/config";
+import { fetchService } from "../../shared/fetch-api";
+import { findMapSector } from "../../shared/helpers/findMapSector";
+import { formatterRub } from "../../shared/helpers/formatters";
 import { fetchReverseAction, type GeocodeResult } from "../../shared/helpers/geocode";
+import { getMessageError } from "../../shared/helpers/getMessageError";
 import { ArrowBackIcon } from "../../shared/svg/ArrowBackIcon";
 import { PinAddressSvg } from "../../shared/svg/PinAddressSvg";
+import type { SectorModel } from "../../shared/types/sectors";
 import { FieldInput } from "../../shared/ui/FieldInput/FieldInput";
 import { checkoutAdapter } from "../../store/checkout/adapter";
 import { checkoutStore } from "../../store/checkout/store";
@@ -23,6 +29,46 @@ export const AddAddressScreen = (props: Props) => {
   const [searchText, setSearchText] = useState("");
   const courierAddress = checkoutStore((store) => store.courierAddress);
   const activeCourier = checkoutStore((store) => store.activeCourier);
+  const [zones, setZones] = useState<
+    FeatureCollection<Polygon, { id: number; color: string; price: number }>
+  >({ type: "FeatureCollection", features: [] });
+  const [isOutOfZone, setIsOutOfZone] = useState<boolean>(false);
+  const [deliveryPrice, setDeliveryPrice] = useState<number>(0);
+
+  const fetchDeliverySectors = useEffectEvent(() => {
+    fetchService
+      .get<SectorModel[]>({ url: "sectors/delivery" })
+      .then((response) => {
+        if (response.status === "success" && Array.isArray(response.data)) {
+          setZones({
+            type: "FeatureCollection",
+            features: response.data.map((sector) => ({
+              type: "Feature",
+              properties: { id: sector.id, color: sector.color, price: sector.price },
+              geometry: { type: "Polygon", coordinates: [sector.coordinates as Position[]] },
+            })),
+          });
+        } else if (response.status === "error") {
+          throw response.message;
+        }
+      })
+      .catch((error) => {
+        const message = getMessageError(error, "Не удалось получить список секторов для доставки");
+
+        Alert.alert("Ошибка", message, [
+          { text: "Отмена", style: "default" },
+          {
+            text: "Повторить",
+            isPreferred: true,
+            onPress: fetchDeliverySectors,
+          },
+        ]);
+      });
+  });
+
+  useEffect(() => {
+    fetchDeliverySectors();
+  }, []);
 
   const handleClickMap = (lng: number, lat: number) => {
     fetchReverseAction(lng, lat)
@@ -35,11 +81,19 @@ export const AddAddressScreen = (props: Props) => {
           intercom: "",
           type: "courier",
         });
+        const zone = findMapSector(zones.features, lng, lat);
+
+        setIsOutOfZone(zone === null);
+        setDeliveryPrice(zone?.properties?.price || 0);
       })
       .catch(() => undefined);
   };
 
   const handleSelectFromSearch = (payload: GeocodeResult) => {
+    const zone = findMapSector(zones.features, payload.lng, payload.lat);
+    setIsOutOfZone(zone === null);
+    setDeliveryPrice(zone?.properties?.price || 0);
+
     setAddress({
       ...payload,
       entrance: "",
@@ -96,6 +150,7 @@ export const AddAddressScreen = (props: Props) => {
       />
       <View style={styles.mapContainer}>
         <MapBox
+          zones={zones}
           initCenter={initCenter}
           active={address}
           markers={address ? [address] : []}
@@ -112,22 +167,38 @@ export const AddAddressScreen = (props: Props) => {
         >
           <ArrowBackIcon fill="#242424" size={28} />
         </Pressable>
+        {isValidAddress && !isOutOfZone && (
+          <View style={styles.deliveryPrice}>
+            {deliveryPrice > 0 ? (
+              <>
+                <Text>Доставка</Text>
+                <Text style={styles.deliveryPriceValue}>{formatterRub.format(deliveryPrice)}</Text>
+              </>
+            ) : (
+              <Text style={styles.deliveryPriceFree}>Бесплатно</Text>
+            )}
+          </View>
+        )}
       </View>
 
       <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
-        {!isValidAddress && (
+        {(!isValidAddress || isOutOfZone) && (
           <View style={styles.noAddressBlock}>
+            {isOutOfZone && (
+              <Text style={styles.outOfZoneText}>По этому адресу доставка не осуществляется.</Text>
+            )}
             <Pressable style={styles.searchButton} onPress={handleOpenSearch}>
               <PinAddressSvg size={20} fill="#8a8999" />
               <Text style={styles.searchButtonText}>Укажите адрес на карте или найдите</Text>
             </Pressable>
+
             <Pressable style={styles.submitButtonDisabled} disabled>
               <Text style={styles.submitButtonTextDisabled}>Продолжить</Text>
             </Pressable>
           </View>
         )}
 
-        {isValidAddress && (
+        {isValidAddress && !isOutOfZone && (
           <View style={styles.addressBlock}>
             <Pressable
               style={styles.addressInfo}
@@ -191,7 +262,7 @@ export const AddAddressScreen = (props: Props) => {
 
             <Pressable
               style={[styles.submitButton]}
-              disabled={!isValidAddress}
+              disabled={!isValidAddress || isOutOfZone}
               onPress={handleSubmit}
             >
               <Text style={styles.submitButtonText}>Продолжить</Text>
@@ -207,6 +278,9 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  outOfZoneText: {
+    color: "#cd5c5c",
   },
   mapContainer: {
     flex: 1,
@@ -227,6 +301,32 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
+  },
+  deliveryPrice: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    maxWidth: "70%",
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 8,
+    paddingHorizontal: 14,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  deliveryPriceValue: {
+    fontWeight: "600",
+    color: "#242424",
+  },
+  deliveryPriceFree: {
+    fontWeight: "500",
+    color: "#22c55e",
   },
   formContainer: {
     maxHeight: 350,

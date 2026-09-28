@@ -1,5 +1,5 @@
 import Mapbox, { type MapState, type ScreenPointPayload } from "@rnmapbox/maps";
-import type { Feature, Point, Position } from "geojson";
+import type { Feature, FeatureCollection, Point, Polygon, Position } from "geojson";
 import { useMemo, useState } from "react";
 import { CONFIG_APP } from "../../../../shared/config/config";
 import type { AddressItem } from "../../../../store/checkout/types";
@@ -14,6 +14,7 @@ type Props = {
   initZoom?: number;
   onClickMarker: (lng: number, lat: number) => void;
   onClickMap?: (lng: number, lat: number) => void;
+  zones?: FeatureCollection<Polygon, { id: number; color: string; price: number }>;
 };
 
 export const MapBox = ({
@@ -23,6 +24,7 @@ export const MapBox = ({
   initZoom,
   onClickMarker,
   onClickMap,
+  zones,
 }: Props) => {
   const [mapZoom, setMapZoom] = useState<"sm" | "md" | "lg">("md");
 
@@ -83,6 +85,18 @@ export const MapBox = ({
         zoomLevel={initZoom || 17}
         animationDuration={400}
       />
+      {zones && zones.features.length > 0 && (
+        <Mapbox.ShapeSource id="delivery-zones" shape={zones}>
+          <Mapbox.FillLayer
+            id="delivery-zones-fill"
+            style={{ fillColor: ["get", "color"], fillOpacity: 0.15 }}
+          />
+          <Mapbox.LineLayer
+            id="delivery-zones-line"
+            style={{ lineColor: ["get", "color"], lineWidth: 1.5, lineOpacity: 0.6 }}
+          />
+        </Mapbox.ShapeSource>
+      )}
       <MarkerList
         active={active}
         mapZoom={mapZoom}

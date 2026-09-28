@@ -18,6 +18,7 @@ type Props = {
   defaultCenter: { lng: number; lat: number };
   activePickup: { lng: number; lat: number } | null;
   activeCourier: { lng: number; lat: number } | null;
+  isDeliveryCourier: boolean;
 };
 
 export const ModalSelectAddress = (props: Props) => {
@@ -140,6 +141,7 @@ export const ModalSelectAddress = (props: Props) => {
       <View style={styles.selectTypeRoot}>
         <SelectMethodReceiptModal
           methodReceipt={methodReceipt}
+          isDeliveryCourier={props.isDeliveryCourier}
           onChangeMethod={handleChangeMethod}
         />
       </View>
@@ -159,9 +161,11 @@ export const ModalSelectAddress = (props: Props) => {
               />
             </View>
             {methodReceipt === "courier" &&
-              !(props.activeCourier !== null &&
+              !(
+                props.activeCourier !== null &&
                 props.activeCourier.lng === address.lng &&
-                props.activeCourier.lat === address.lat) && (
+                props.activeCourier.lat === address.lat
+              ) && (
                 <Pressable
                   onPress={() => handleDeleteAddress(address.lng, address.lat, address.name)}
                   style={styles.deleteButton}

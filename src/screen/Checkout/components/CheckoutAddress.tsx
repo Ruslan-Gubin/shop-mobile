@@ -1,9 +1,8 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { formatterRub } from "../../../shared/helpers/formatters";
 import { getFullAddressItem } from "../../../shared/helpers/getFullAddressItem";
-import { getOrderAddress } from "../../../shared/helpers/getOrderAddress";
 import { PinAddressSvg } from "../../../shared/svg/PinAddressSvg";
 import { checkoutAdapter } from "../../../store/checkout/adapter";
 import { checkoutStore } from "../../../store/checkout/store";
@@ -16,6 +15,11 @@ type Props = {
   defaultCenter: { lng: number; lat: number };
   navigation: NativeStackNavigationProp<ParamListBase, "Checkout">;
   method_receipt: "pickup" | "courier";
+  minOrderSum: number;
+  selectModal: boolean;
+  setSelectModal: (value: boolean) => void;
+  isDeliveryCourier: boolean;
+  address: AddressItem | null;
 };
 
 export const CheckoutAddress = (props: Props) => {
@@ -23,26 +27,16 @@ export const CheckoutAddress = (props: Props) => {
   const activeCourier = checkoutStore((store) => store.activeCourier);
   const courierAddress = checkoutStore((store) => store.courierAddress);
 
-  const [selectModal, setSelectModal] = useState(false);
-
-  const activeAddress = getOrderAddress(
-    props.defaultCenter,
-    props.pickupAddress,
-    courierAddress,
-    props.method_receipt,
-    activePickup,
-    activeCourier,
-  );
-
   const filterAddress = props.method_receipt === "pickup" ? props.pickupAddress : courierAddress;
 
-  const selectAddress = activeAddress
-    ? (filterAddress.find((el) => el.lng === activeAddress.lng && el.lat === activeAddress.lat) ??
-      null)
+  const selectAddress = props.address
+    ? (filterAddress.find(
+        (el) => props.address && el.lng === props.address.lng && el.lat === props.address.lat,
+      ) ?? null)
     : null;
 
   const handleClickAddAddress = () => {
-    setSelectModal(false);
+    props.setSelectModal(false);
     props.navigation.navigate("AddAddress");
   };
 
@@ -53,8 +47,9 @@ export const CheckoutAddress = (props: Props) => {
   return (
     <View style={styles.root}>
       <ModalSelectAddress
-        active={selectModal}
-        onClose={() => setSelectModal(false)}
+        isDeliveryCourier={props.isDeliveryCourier}
+        active={props.selectModal}
+        onClose={() => props.setSelectModal(false)}
         onAddAddress={handleClickAddAddress}
         method_receipt={props.method_receipt}
         pickupAddress={props.pickupAddress}
@@ -72,9 +67,11 @@ export const CheckoutAddress = (props: Props) => {
               {selectAddress.type === "courier" ? "Курьером по адресу:" : "Адрес самовывоза:"}
             </Text>
             <Text style={styles.activeMarkerAddressText}>{getFullAddressItem(selectAddress)}</Text>
-            <Text style={styles.activeMarkerAddressText}>
-              Минимальная сумма заказа {props.method_receipt === "courier" ? 5000 : 0} ₽.
-            </Text>
+            {props.minOrderSum > 0 && (
+              <Text style={styles.activeMarkerAddressText}>
+                Минимальная сумма заказа {formatterRub.format(props.minOrderSum)}.
+              </Text>
+            )}
             <Text style={styles.activeMarkerAddressText}>
               Способ оплаты: наличными или оплата картой по терминалу.
             </Text>
@@ -83,7 +80,7 @@ export const CheckoutAddress = (props: Props) => {
       )}
 
       <View style={styles.leftSideFooter}>
-        <Pressable style={styles.button} onPress={() => setSelectModal(true)}>
+        <Pressable style={styles.button} onPress={() => props.setSelectModal(true)}>
           <Text style={styles.buttonText}>{hasActive ? "Изменить адрес" : "Выбрать адрес"}</Text>
         </Pressable>
       </View>
@@ -92,8 +89,8 @@ export const CheckoutAddress = (props: Props) => {
         <MapBox
           initCenter={props.defaultCenter}
           active={{
-            lng: activeAddress?.lng || props.defaultCenter.lng,
-            lat: activeAddress?.lat || props.defaultCenter.lat,
+            lng: props.address?.lng || props.defaultCenter.lng,
+            lat: props.address?.lat || props.defaultCenter.lat,
           }}
           markers={filterAddress}
           onClickMarker={(lng, lat) => {

@@ -3,33 +3,44 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 type Props = {
   methodReceipt: "pickup" | "courier";
   onChangeMethod: (value: "pickup" | "courier") => void;
+  isDeliveryCourier: boolean;
 };
 
-export const SelectMethodReceiptModal = ({ methodReceipt, onChangeMethod }: Props) => {
+export const SelectMethodReceiptModal = (props: Props) => {
   return (
     <View style={styles.selectTypeContainer}>
       <Pressable
         style={[
           styles.selectTypeButton,
-          methodReceipt === "pickup" && styles.selectTypeButtonActive,
+          props.methodReceipt === "pickup" && styles.selectTypeButtonActive,
         ]}
-        onPress={() => onChangeMethod("pickup")}
+        onPress={() => props.onChangeMethod("pickup")}
       >
-        <Text style={[styles.buttonText, methodReceipt === "pickup" && styles.buttonTextActive]}>
+        <Text
+          style={[styles.buttonText, props.methodReceipt === "pickup" && styles.buttonTextActive]}
+        >
           Самовывоз
         </Text>
       </Pressable>
-      <Pressable
-        style={[
-          styles.selectTypeButton,
-          methodReceipt === "courier" && styles.selectTypeButtonActive,
-        ]}
-        onPress={() => onChangeMethod("courier")}
-      >
-        <Text style={[styles.buttonText, methodReceipt === "courier" && styles.buttonTextActive]}>
-          Курьером
-        </Text>
-      </Pressable>
+      {props.isDeliveryCourier && (
+        <Pressable
+          disabled={!props.isDeliveryCourier}
+          style={[
+            styles.selectTypeButton,
+            props.methodReceipt === "courier" && styles.selectTypeButtonActive,
+          ]}
+          onPress={() => props.onChangeMethod("courier")}
+        >
+          <Text
+            style={[
+              styles.buttonText,
+              props.methodReceipt === "courier" && styles.buttonTextActive,
+            ]}
+          >
+            Курьером
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 };
@@ -62,4 +73,3 @@ const styles = StyleSheet.create({
     color: "#242424",
   },
 });
-

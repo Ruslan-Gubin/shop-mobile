@@ -1,15 +1,16 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { FeatureCollection, Polygon } from "geojson";
 import { useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { fetchService } from "../../../shared/fetch-api";
 import { calcBasketInfo } from "../../../shared/helpers/calcBasketInfo";
 import { createOrderSchema } from "../../../shared/helpers/checkoutSchema";
+import { findMapSector } from "../../../shared/helpers/findMapSector";
 import { formatterRub } from "../../../shared/helpers/formatters";
 import { getDateFromAndDateTo } from "../../../shared/helpers/getDateFromAndDateTo";
 import { getFullAddressItem } from "../../../shared/helpers/getFullAddressItem";
 import { getMessageError } from "../../../shared/helpers/getMessageError";
-import { getOrderAddress } from "../../../shared/helpers/getOrderAddress";
 import type { CartDiscountModel } from "../../../shared/types/cart-discount";
 import type { OrderModel } from "../../../shared/types/order";
 import type { ProductModel } from "../../../shared/types/products";
@@ -31,6 +32,15 @@ type Props = {
   defaultCenter: { lng: number; lat: number };
   isAgreed: boolean;
   isShowButton: boolean;
+  sectors: FeatureCollection<
+    Polygon,
+    { id: number; color: string; price: number; min_sum: number }
+  >;
+  minOrderSum: number;
+  setSelectModal: (value: boolean) => void;
+  method_receipt: "pickup" | "courier";
+  address: AddressItem | null;
+  delivery_price: number;
 };
 
 type CreateOrderPayload = {
@@ -52,10 +62,6 @@ export const CheckoutFooter = (props: Props) => {
   const payment_method = checkoutStore((store) => store.payment_method);
   const delivery_date = checkoutStore((store) => store.delivery_date);
   const delivery_time = checkoutStore((store) => store.delivery_time);
-  const method_receipt = checkoutStore((store) => store.method_receipt);
-  const activePickup = checkoutStore((store) => store.activePickup);
-  const activeCourier = checkoutStore((store) => store.activeCourier);
-  const courierAddress = checkoutStore((store) => store.courierAddress);
   const comment = checkoutStore((store) => store.comment);
   const recipient_name = checkoutStore((store) => store.recipient_name);
   const phone = checkoutStore((store) => store.phone);
@@ -74,18 +80,28 @@ export const CheckoutFooter = (props: Props) => {
     [selected, basket, props.basketProducts, props.cartDiscounts, props.promotions],
   );
 
-  const delivery_price = method_receipt === "courier" ? 100 : 0;
+  const isDisabledDeliveryAddress = useMemo(() => {
+    let disabled = false;
 
-  const address = getOrderAddress(
-    props.defaultCenter,
-    props.pickupAddress,
-    courierAddress,
-    method_receipt,
-    activePickup,
-    activeCourier,
-  );
+    if (props.method_receipt === "courier" && props.address) {
+      const sector = findMapSector(props.sectors.features, props.address.lng, props.address.lat);
+      if (!sector) {
+        disabled = true;
+      }
+    }
 
-  const disabledSubmit = orderInfo.total === 0 || address === null || !props.isAgreed;
+    return disabled;
+  }, [props.address, props.method_receipt, props.sectors.features]);
+
+  const isDisabledMinOrderSum =
+    orderInfo.total > 0 && props.minOrderSum > 0 && orderInfo.total < props.minOrderSum;
+
+  const disabledSubmit =
+    orderInfo.total <= 0 ||
+    props.address === null ||
+    !props.isAgreed ||
+    isDisabledMinOrderSum ||
+    isDisabledDeliveryAddress;
 
   const createOrder = (selectedProducts: { product_id: number; quantity: number }[]) => {
     const { date_from, date_to } = getDateFromAndDateTo(delivery_date, delivery_time, 10, 19);
@@ -94,12 +110,12 @@ export const CheckoutFooter = (props: Props) => {
       payment_method,
       date_from,
       date_to,
-      method_receipt,
+      method_receipt: props.method_receipt,
       comment,
       phone: phone.replace(/\D/g, ""),
       phoneCode: "",
       recipient_name,
-      address,
+      address: props.address,
       products: selectedProducts,
     };
 
@@ -253,7 +269,7 @@ export const CheckoutFooter = (props: Props) => {
       });
   };
 
-  const total = orderInfo.total + delivery_price;
+  const total = orderInfo.total + props.delivery_price;
 
   return (
     <>
@@ -262,7 +278,7 @@ export const CheckoutFooter = (props: Props) => {
         active={successOrder.isOpen}
         orderData={successOrder.orderData}
         total={successOrder?.orderData?.total || 0}
-        addressName={address ? getFullAddressItem(address) : ""}
+        addressName={props.address ? getFullAddressItem(props.address) : ""}
         onClose={() => setSuccessOrder({ isOpen: false, orderData: null })}
       />
       <StockWarningModal
@@ -278,36 +294,63 @@ export const CheckoutFooter = (props: Props) => {
 
       {props.isShowButton && (
         <View style={styles.footer}>
-          <Pressable
-            disabled={disabledSubmit}
-            onPress={handleSubmitOrder}
-            style={[styles.footerButton, !disabledSubmit && styles.footerButtonActive]}
-          >
-            <Text
-              style={[styles.footerButtonText, !disabledSubmit && styles.footerButtonTextActive]}
+          {isDisabledDeliveryAddress ? (
+            <Pressable
+              onPress={() => props.setSelectModal(true)}
+              style={[styles.footerButton, styles.footerButtonFailed]}
             >
-              Оформить
-            </Text>
-
-            {!disabledSubmit && (
-              <Text
-                style={[
-                  styles.footerButtonText,
-                  !disabledSubmit && styles.footerButtonTextActiveTotal,
-                ]}
-              >
-                {formatterRub.format(total)}
-                {orderInfo.totalDiscount > 0 && (
-                  <>
-                    <Text>{"  "}</Text>
-                    <Text style={styles.discountText}>
-                      {formatterRub.format(orderInfo.totalDiscount + orderInfo.total)}
-                    </Text>
-                  </>
-                )}
+              <Text style={[styles.footerButtonText, styles.footerButtonFailedText]}>
+                По этому адресу доставка не осуществляется
               </Text>
-            )}
-          </Pressable>
+            </Pressable>
+          ) : (
+            // biome-ignore lint/complexity/noUselessFragments: <>
+            <>
+              {isDisabledMinOrderSum && (
+                <Pressable
+                  onPress={() => props.navigation.navigate("Basket")}
+                  style={[styles.footerButton, styles.footerButtonFailed]}
+                >
+                  <Text style={[styles.footerButtonText, styles.footerButtonFailedText]}>
+                    Минимальный заказ доставки {formatterRub.format(props.minOrderSum)}
+                  </Text>
+                </Pressable>
+              )}
+            </>
+          )}
+
+          {!isDisabledDeliveryAddress && !isDisabledMinOrderSum && (
+            <Pressable
+              disabled={disabledSubmit}
+              onPress={handleSubmitOrder}
+              style={[styles.footerButton, !disabledSubmit && styles.footerButtonActive]}
+            >
+              <Text
+                style={[styles.footerButtonText, !disabledSubmit && styles.footerButtonTextActive]}
+              >
+                Оформить
+              </Text>
+
+              {!disabledSubmit && (
+                <Text
+                  style={[
+                    styles.footerButtonText,
+                    !disabledSubmit && styles.footerButtonTextActiveTotal,
+                  ]}
+                >
+                  {formatterRub.format(total)}
+                  {orderInfo.totalDiscount > 0 && (
+                    <>
+                      <Text>{"  "}</Text>
+                      <Text style={styles.discountText}>
+                        {formatterRub.format(orderInfo.totalDiscount + orderInfo.total)}
+                      </Text>
+                    </>
+                  )}
+                </Text>
+              )}
+            </Pressable>
+          )}
         </View>
       )}
     </>
@@ -328,6 +371,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
+  },
+  footerButtonFailed: {
+    backgroundColor: "#cd5c5c",
+  },
+  footerButtonFailedText: {
+    color: "white",
+  },
+  footerButtonSecondary: {
+    height: 36,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e1e1e6",
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  footerButtonSecondaryText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#242424",
   },
   footerButtonActive: {
     backgroundColor: "#f86c25",

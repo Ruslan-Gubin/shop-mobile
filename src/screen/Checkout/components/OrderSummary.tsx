@@ -1,11 +1,11 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { FeatureCollection, Polygon } from "geojson";
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { calcBasketInfo } from "../../../shared/helpers/calcBasketInfo";
 import { formatterRub } from "../../../shared/helpers/formatters";
 import { getDeliveryTimeDisplay } from "../../../shared/helpers/getDeliveryTimeDisplay";
-import { getOrderAddress } from "../../../shared/helpers/getOrderAddress";
 import { getSelectDeliveryDate } from "../../../shared/helpers/getSelectDeliveryDate";
 import type { CartDiscountModel } from "../../../shared/types/cart-discount";
 import type { ProductModel } from "../../../shared/types/products";
@@ -24,6 +24,12 @@ type Props = {
   defaultCenter: { lng: number; lat: number };
   isAgreed: boolean;
   onChangeAgreed: (value: boolean) => void;
+  address: AddressItem | null;
+  delivery_price: number;
+  sectors: FeatureCollection<
+    Polygon,
+    { id: number; color: string; price: number; min_sum: number }
+  >;
 };
 
 export const OrderSummary = (props: Props) => {
@@ -33,9 +39,6 @@ export const OrderSummary = (props: Props) => {
   const delivery_date = checkoutStore((store) => store.delivery_date);
   const delivery_time = checkoutStore((store) => store.delivery_time);
   const method_receipt = checkoutStore((store) => store.method_receipt);
-  const activePickup = checkoutStore((store) => store.activePickup);
-  const activeCourier = checkoutStore((store) => store.activeCourier);
-  const courierAddress = checkoutStore((store) => store.courierAddress);
 
   const orderInfo = useMemo(
     () =>
@@ -43,18 +46,8 @@ export const OrderSummary = (props: Props) => {
     [selected, basket, props.basketProducts, props.cartDiscounts, props.promotions],
   );
 
-  const delivery_price = method_receipt === "courier" ? 100 : 0;
   const selectDeliveryDate = getSelectDeliveryDate(delivery_date);
   const deliveryTimeDisplay = getDeliveryTimeDisplay(delivery_date, delivery_time, 10, 19);
-
-  const address = getOrderAddress(
-    props.defaultCenter,
-    props.pickupAddress,
-    courierAddress,
-    method_receipt,
-    activePickup,
-    activeCourier,
-  );
 
   const dateFormatter = new Intl.DateTimeFormat("ru", {
     weekday: "short",
@@ -67,7 +60,7 @@ export const OrderSummary = (props: Props) => {
       <View style={styles.headerLine}>
         <Text style={styles.totalText}>Ваш заказ</Text>
         <Text style={styles.totalText}>
-          {formatterRub.format(orderInfo.total + delivery_price)}
+          {formatterRub.format(orderInfo.total + props.delivery_price)}
         </Text>
       </View>
 
@@ -108,7 +101,7 @@ export const OrderSummary = (props: Props) => {
 
         <View style={styles.line}>
           <Text style={styles.textInfo}>Стоимость доставки</Text>
-          <Text style={styles.textInfo}>{formatterRub.format(delivery_price)}</Text>
+          <Text style={styles.textInfo}>{formatterRub.format(props.delivery_price)}</Text>
         </View>
 
         <View style={styles.line}>
@@ -127,7 +120,7 @@ export const OrderSummary = (props: Props) => {
 
         <View style={styles.line}>
           <Text style={styles.textInfo}>Адрес</Text>
-          <Text style={styles.textInfo}>{address ? address.name : "не выбран"}</Text>
+          <Text style={styles.textInfo}>{props.address ? props.address.name : "не выбран"}</Text>
         </View>
 
         <View style={styles.line}>
@@ -198,7 +191,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: "#868695",
   },
-agreementLink: {
+  agreementLink: {
     color: "#a73afd",
   },
   totalText: {

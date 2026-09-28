@@ -1,13 +1,17 @@
 import type { ParamListBase } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useEffect, useEffectEvent, useState } from "react";
+import type { FeatureCollection, Polygon, Position } from "geojson";
+import { useEffect, useEffectEvent, useMemo, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { CONFIG_APP } from "../../shared/config/config";
 import { fetchService } from "../../shared/fetch-api";
+import { findMapSector } from "../../shared/helpers/findMapSector";
 import { getMessageError } from "../../shared/helpers/getMessageError";
+import { getOrderAddress } from "../../shared/helpers/getOrderAddress";
 import type { CartDiscountModel } from "../../shared/types/cart-discount";
 import type { ProductModel } from "../../shared/types/products";
 import type { PromotionModel } from "../../shared/types/promotion";
+import type { SectorModel } from "../../shared/types/sectors";
 import type { WarehouseModel } from "../../shared/types/warehouse";
 import { ErrorAlert } from "../../shared/ui/ErrorAlert/ErrorAlert";
 import { PageHeader } from "../../shared/ui/header/PageHeader";
@@ -32,29 +36,40 @@ export const CheckoutScreen = (props: Props) => {
   const basketIds = Object.keys(basket).join(",");
   const selected = basketStore((store) => store.selected);
   const checkoutPhone = checkoutStore((store) => store.phone);
+  const method_receipt = checkoutStore((store) => store.method_receipt);
 
   const [basketProducts, setBasketProducts] = useState<ProductModel[]>([]);
   const [cartDiscounts, setCartDiscounts] = useState<CartDiscountModel[]>([]);
   const [promotions, setPromotions] = useState<PromotionModel[]>([]);
   const [pickupAddress, setPickupAddress] = useState<AddressItem[]>([]);
+  const courierAddress = checkoutStore((store) => store.courierAddress);
+  const activePickup = checkoutStore((store) => store.activePickup);
+  const activeCourier = checkoutStore((store) => store.activeCourier);
+
+  const [sectors, setSectors] = useState<
+    FeatureCollection<Polygon, { id: number; color: string; price: number; min_sum: number }>
+  >({ type: "FeatureCollection", features: [] });
   const [defaultCenter, setDefaultCenter] = useState<{ lng: number; lat: number }>({
     lng: CONFIG_APP.DEFAULT_MAP_CENTER_LNG,
     lat: CONFIG_APP.DEFAULT_MAP_CENTER_LAT,
   });
+  const [isDeliveryCourier, setIsDeliveryCourier] = useState<boolean>(false);
+  const [selectModal, setSelectModal] = useState(false);
 
   const [errors, setErrors] = useState<{
     basket: string;
     discounts: string;
     promotions: string;
     warehouses: string;
-  }>({ basket: "", discounts: "", promotions: "", warehouses: "" });
+    sectors: string;
+  }>({ basket: "", discounts: "", promotions: "", warehouses: "", sectors: "" });
   const [isAgreed, setIsAgreed] = useState(true);
 
   const updateError = (
-    key: "basket" | "discounts" | "promotions" | "warehouses",
+    key: "basket" | "discounts" | "promotions" | "warehouses" | "sectors",
     message: string,
   ) => setErrors((prev) => ({ ...prev, [key]: message }));
-  const resetError = (key: "basket" | "discounts" | "promotions" | "warehouses") =>
+  const resetError = (key: "basket" | "discounts" | "promotions" | "warehouses" | "sectors") =>
     setErrors((prev) => ({ ...prev, [key]: "" }));
 
   const fetchWarehouses = useEffectEvent(async () => {
@@ -94,7 +109,7 @@ export const CheckoutScreen = (props: Props) => {
             });
           }
         } else if (response.status === "error") {
-          throw response.message || defaultErrorMessage;
+          throw response.message;
         }
       })
       .catch((error) => {
@@ -115,7 +130,7 @@ export const CheckoutScreen = (props: Props) => {
       });
   });
 
-  const fetchUser = () => {
+  const fetchUser = useEffectEvent(() => {
     fetchService
       .get<{
         email: string | null;
@@ -136,7 +151,7 @@ export const CheckoutScreen = (props: Props) => {
           checkoutAdapter.changeAdditionalInfoInputs(response.data.phone, "phone");
         }
       });
-  };
+  });
 
   const fetchBasketEvent = useEffectEvent(async (ids: string) => {
     if (ids.length > 0) {
@@ -148,7 +163,7 @@ export const CheckoutScreen = (props: Props) => {
           if (response.status === "success" && Array.isArray(response.data)) {
             setBasketProducts(response.data);
           } else if (response.status === "error") {
-            throw response.message || defaultErrorMessage;
+            throw response.message;
           }
         })
         .catch((error) => {
@@ -170,10 +185,6 @@ export const CheckoutScreen = (props: Props) => {
     } else {
       setBasketProducts([]);
     }
-
-    await fetchDiscounts();
-    await fetchPromotions();
-    await fetchWarehouses();
   });
 
   const fetchDiscounts = useEffectEvent(async () => {
@@ -185,7 +196,7 @@ export const CheckoutScreen = (props: Props) => {
         if (response.status === "success" && Array.isArray(response.data)) {
           setCartDiscounts(response.data);
         } else if (response.status === "error") {
-          throw response.message || defaultErrorMessage;
+          throw response.message;
         }
       })
       .catch((error) => {
@@ -215,7 +226,7 @@ export const CheckoutScreen = (props: Props) => {
         if (response.status === "success" && Array.isArray(response.data)) {
           setPromotions(response.data);
         } else if (response.status === "error") {
-          throw response.message || defaultErrorMessage;
+          throw response.message;
         }
       })
       .catch((error) => {
@@ -236,8 +247,58 @@ export const CheckoutScreen = (props: Props) => {
       });
   });
 
+  const fetchDeliverySectors = useEffectEvent(async () => {
+    const defaultErrorMessage = "Не удалось получить список секторов для доставки";
+
+    await fetchService
+      .get<SectorModel[]>({ url: "sectors/delivery" })
+      .then((response) => {
+        if (response.status === "success" && Array.isArray(response.data)) {
+          setSectors({
+            type: "FeatureCollection",
+            features: response.data.map((sector) => ({
+              type: "Feature",
+              properties: {
+                id: sector.id,
+                color: sector.color,
+                price: sector.price,
+                min_sum: sector.min_sum,
+              },
+              geometry: { type: "Polygon", coordinates: [sector.coordinates as Position[]] },
+            })),
+          });
+          setIsDeliveryCourier(response.data.length > 0);
+          if (response.data.length === 0) {
+            checkoutAdapter.setMethodReceipt("pickup");
+          }
+        } else if (response.status === "error") {
+          throw response.message;
+        }
+      })
+      .catch((error) => {
+        const message = getMessageError(error, defaultErrorMessage);
+        updateError("sectors", message);
+
+        Alert.alert("Ошибка", message, [
+          { text: "Отмена", style: "default" },
+          {
+            text: "Повторить",
+            isPreferred: true,
+            onPress: () => {
+              fetchDeliverySectors();
+              resetError("sectors");
+            },
+          },
+        ]);
+      });
+  });
+
   useEffect(() => {
     fetchBasketEvent(basketIds);
+    fetchDiscounts();
+    fetchPromotions();
+    fetchWarehouses();
+    fetchDeliverySectors();
     fetchUser();
   }, [basketIds]);
 
@@ -248,6 +309,43 @@ export const CheckoutScreen = (props: Props) => {
     hasBasketItems && !hasSelectedItems
       ? "Перейдите в корзину и выберите товар"
       : "Перейдите на главную и добавьте товары, которые могут вам понравиться.";
+
+  const address = getOrderAddress(
+    defaultCenter,
+    pickupAddress,
+    courierAddress,
+    method_receipt,
+    activePickup,
+    activeCourier,
+  );
+
+  const minOrderSum = useMemo(() => {
+    let minSum = 0;
+
+    if (method_receipt === "courier" && address) {
+      const sector = findMapSector(sectors.features, address.lng, address.lat);
+
+      if (typeof sector?.properties?.min_sum === "number") {
+        minSum = sector.properties.min_sum;
+      }
+    }
+
+    return minSum;
+  }, [method_receipt, address, sectors.features]);
+
+  const delivery_price = useMemo(() => {
+    let result = 0;
+
+    if (method_receipt === "courier" && address) {
+      const sector = findMapSector(sectors.features, address.lng, address.lat);
+
+      if (typeof sector?.properties?.price === "number") {
+        result = sector.properties.price;
+      }
+    }
+
+    return result;
+  }, [address, method_receipt, sectors.features]);
 
   return (
     <View style={styles.container}>
@@ -274,6 +372,7 @@ export const CheckoutScreen = (props: Props) => {
           {errors.discounts && <ErrorAlert message={errors.discounts} />}
           {errors.promotions && <ErrorAlert message={errors.promotions} />}
           {errors.warehouses && <ErrorAlert message={errors.warehouses} />}
+          {errors.sectors && <ErrorAlert message={errors.sectors} />}
         </View>
       )}
 
@@ -282,12 +381,21 @@ export const CheckoutScreen = (props: Props) => {
           <PaymentMethodCard />
           <DeliveryDateCard />
           <MethodReceiptCard
+            address={address}
+            selectModal={selectModal}
+            setSelectModal={setSelectModal}
+            method_receipt={method_receipt}
+            minOrderSum={minOrderSum}
+            isDeliveryCourier={isDeliveryCourier}
             navigation={props.navigation}
             pickupAddress={pickupAddress}
             defaultCenter={defaultCenter}
           />
           <AdditionalInformation />
           <OrderSummary
+            delivery_price={delivery_price}
+            address={address}
+            sectors={sectors}
             navigation={props.navigation}
             basketProducts={basketProducts}
             cartDiscounts={cartDiscounts}
@@ -301,6 +409,12 @@ export const CheckoutScreen = (props: Props) => {
       )}
 
       <CheckoutFooter
+        delivery_price={delivery_price}
+        address={address}
+        method_receipt={method_receipt}
+        setSelectModal={setSelectModal}
+        minOrderSum={minOrderSum}
+        sectors={sectors}
         isShowButton={hasBasketItems && hasSelectedItems}
         navigation={props.navigation}
         basketProducts={basketProducts}
