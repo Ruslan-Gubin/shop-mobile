@@ -28,13 +28,15 @@ export const MainInfo = (props: Props) => {
 
   return (
     <View style={styles.header}>
-      <View style={styles.headerTopRow}>
-        <View style={styles.headerLeft}>
-          <Text style={[styles.statusBadgeText, { color: getOrderStatusColor(props.status) }]}>
-            {getOrderStatusLabel(props.status)}
-          </Text>
+      {props.status !== "ready" && (
+        <View style={styles.headerTopRow}>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.statusBadgeText, { color: getOrderStatusColor(props.status) }]}>
+              {getOrderStatusLabel(props.status)}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
       {props.status === "ready" && (
         <View style={styles.readyNotice}>
           <View style={styles.readyIcon}>
@@ -128,15 +130,15 @@ const styles = StyleSheet.create({
     columnGap: 10,
     padding: 12,
     borderRadius: 12,
-    backgroundColor: "#22c55e14",
+    backgroundColor: "#f9731614",
     borderWidth: 1,
-    borderColor: "#22c55e30",
+    borderColor: "#f9731630",
   },
   readyIcon: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: "#22c55e",
+    backgroundColor: "#f97316",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -153,7 +155,7 @@ const styles = StyleSheet.create({
   readyTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#15803d",
+    color: "#c2410c",
   },
   readyBody: {
     fontSize: 13,

@@ -190,6 +190,7 @@ export const OrderDetailScreen = (props: Props) => {
           )}
 
           <DetailPaid
+            delivery_price={order.delivery_price}
             discount_name={order.discount_name}
             discount_quantity={order.discount_quantity}
             discount_total={order.discount_total}

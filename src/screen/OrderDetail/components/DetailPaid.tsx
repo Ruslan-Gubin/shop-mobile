@@ -10,6 +10,7 @@ type Props = {
   discount_total: number;
   method_receipt: string;
   total: number;
+  delivery_price: number;
 };
 
 export const DetailPaid = (props: Props) => {
@@ -58,7 +59,7 @@ export const DetailPaid = (props: Props) => {
       {props.method_receipt === "courier" && (
         <View style={styles.totalRow}>
           <Text style={styles.cardLabel}>Стоимость доставки</Text>
-          <Text style={styles.cardValue}>{formatterRub.format(100)}</Text>
+          <Text style={styles.cardValue}>{formatterRub.format(props.delivery_price)}</Text>
         </View>
       )}
       <View style={styles.divider} />

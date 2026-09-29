@@ -17,7 +17,12 @@ type Props = {
 export const OrderCard = (props: Props) => {
   const { order } = props;
   const statusColor = getOrderStatusColor(order.status);
-  const statusLabel = getOrderStatusLabel(order.status);
+  const statusLabel =
+    order.status === "ready"
+      ? order.method_receipt === "courier"
+        ? "Заказ готов к доставке"
+        : "Заказ готов к выдаче"
+      : getOrderStatusLabel(order.status);
 
   const handlePress = () => {
     props.navigation?.navigate("OrderDetail", { id: order.id });

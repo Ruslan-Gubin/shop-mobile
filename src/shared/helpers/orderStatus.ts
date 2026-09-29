@@ -18,7 +18,7 @@ export const orderStatusColors: Record<OrderStatus, string> = {
   cancelled_new: "#ef4444",
   processing: "#f59e0b",
   cancelled_assembly: "#ef4444",
-  ready: "#22c55e",
+  ready: "#f97316",
   cancelled_ready: "#ef4444",
   in_delivery: "#8b5cf6",
   cancelled_delivery: "#ef4444",

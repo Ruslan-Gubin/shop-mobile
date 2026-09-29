@@ -73,4 +73,5 @@ export type OrderModel = {
   price_changes: OrderPriceChangeItem[];
   address?: AddressItem | null;
   warehouse?: WarehouseModel | null;
+  delivery_price: number;
 };
