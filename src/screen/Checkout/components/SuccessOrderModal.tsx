@@ -8,7 +8,6 @@ import { BaseModal } from "../../../widgets/modal/base-modal/BaseModal";
 type Props = {
   active: boolean;
   orderData: OrderModel | null;
-  total: number;
   addressName: string;
   navigation: NativeStackNavigationProp<ParamListBase, string>;
   onClose: () => void;
@@ -19,6 +18,8 @@ export const SuccessOrderModal = (props: Props) => {
   const paymentLabel =
     props.orderData?.payment_method === "card" ? "Банковской картой" : "Наличными";
   const receiptLabel = props.orderData?.method_receipt === "courier" ? "Курьер" : "Самовывоз";
+
+  const total = props.orderData?.total || 0;
 
   const handleGoHome = () => {
     props.onClose();
@@ -59,8 +60,8 @@ export const SuccessOrderModal = (props: Props) => {
         {props.addressName.length > 0 && <Text style={styles.value}>{props.addressName}</Text>}
         {paymentLabel.length > 0 && <Text style={styles.label}>Оплата</Text>}
         {paymentLabel.length > 0 && <Text style={styles.value}>{paymentLabel}</Text>}
-        {props.total > 0 && <Text style={styles.label}>Итого</Text>}
-        {props.total > 0 && <Text style={styles.value}>{formatterRub.format(props.total)}</Text>}
+        {total > 0 && <Text style={styles.label}>Итого</Text>}
+        {total > 0 && <Text style={styles.value}>{formatterRub.format(total)}</Text>}
       </View>
     </BaseModal>
   );

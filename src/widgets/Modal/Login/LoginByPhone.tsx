@@ -279,7 +279,7 @@ export const LoginByPhone = (props: Props) => {
 
           {resendSeconds <= 0 && (
             <Pressable onPress={handleBackToPhone} disabled={isLoading}>
-              <Text style={styles.backLink}>Сменить номер</Text>
+              <Text style={styles.resendLink}>Сменить номер</Text>
             </Pressable>
           )}
           {resendSeconds <= 0 && validPhone && (
@@ -396,12 +396,6 @@ const styles = StyleSheet.create({
     color: "#a73afd",
   },
   resendLink: {
-    fontSize: 14,
-    textAlign: "center",
-    fontWeight: "600",
-    color: "#a73afd",
-  },
-  backLink: {
     fontSize: 14,
     textAlign: "center",
     fontWeight: "600",

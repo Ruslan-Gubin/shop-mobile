@@ -5,7 +5,7 @@ import { useEffect, useEffectEvent, useMemo, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { CONFIG_APP } from "../../shared/config/config";
 import { fetchService } from "../../shared/fetch-api";
-import { findMapSector } from "../../shared/helpers/findMapSector";
+import { getDeliveryParams } from "../../shared/helpers/getDeliveryParams";
 import { getMessageError } from "../../shared/helpers/getMessageError";
 import { getOrderAddress } from "../../shared/helpers/getOrderAddress";
 import type { CartDiscountModel } from "../../shared/types/cart-discount";
@@ -319,33 +319,10 @@ export const CheckoutScreen = (props: Props) => {
     activeCourier,
   );
 
-  const minOrderSum = useMemo(() => {
-    let minSum = 0;
-
-    if (method_receipt === "courier" && address) {
-      const sector = findMapSector(sectors.features, address.lng, address.lat);
-
-      if (typeof sector?.properties?.min_sum === "number") {
-        minSum = sector.properties.min_sum;
-      }
-    }
-
-    return minSum;
-  }, [method_receipt, address, sectors.features]);
-
-  const delivery_price = useMemo(() => {
-    let result = 0;
-
-    if (method_receipt === "courier" && address) {
-      const sector = findMapSector(sectors.features, address.lng, address.lat);
-
-      if (typeof sector?.properties?.price === "number") {
-        result = sector.properties.price;
-      }
-    }
-
-    return result;
-  }, [address, method_receipt, sectors.features]);
+  const deliveryParams = useMemo(
+    () => getDeliveryParams(method_receipt, address, sectors.features),
+    [method_receipt, address, sectors.features],
+  );
 
   return (
     <View style={styles.container}>
@@ -385,7 +362,7 @@ export const CheckoutScreen = (props: Props) => {
             selectModal={selectModal}
             setSelectModal={setSelectModal}
             method_receipt={method_receipt}
-            minOrderSum={minOrderSum}
+            minOrderSum={deliveryParams.min_sum}
             isDeliveryCourier={isDeliveryCourier}
             navigation={props.navigation}
             pickupAddress={pickupAddress}
@@ -393,7 +370,7 @@ export const CheckoutScreen = (props: Props) => {
           />
           <AdditionalInformation />
           <OrderSummary
-            delivery_price={delivery_price}
+            delivery_price={deliveryParams.price}
             address={address}
             sectors={sectors}
             navigation={props.navigation}
@@ -409,11 +386,11 @@ export const CheckoutScreen = (props: Props) => {
       )}
 
       <CheckoutFooter
-        delivery_price={delivery_price}
+        delivery_price={deliveryParams.price}
         address={address}
         method_receipt={method_receipt}
         setSelectModal={setSelectModal}
-        minOrderSum={minOrderSum}
+        minOrderSum={deliveryParams.min_sum}
         sectors={sectors}
         isShowButton={hasBasketItems && hasSelectedItems}
         navigation={props.navigation}

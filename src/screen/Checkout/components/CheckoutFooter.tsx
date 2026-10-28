@@ -277,7 +277,6 @@ export const CheckoutFooter = (props: Props) => {
         navigation={props.navigation}
         active={successOrder.isOpen}
         orderData={successOrder.orderData}
-        total={successOrder?.orderData?.total || 0}
         addressName={props.address ? getFullAddressItem(props.address) : ""}
         onClose={() => setSuccessOrder({ isOpen: false, orderData: null })}
       />
